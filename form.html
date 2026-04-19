@@ -23,12 +23,12 @@
     .lang-switch button.active{background:var(--brand);color:#fff;font-weight:700}
     .hero{background:linear-gradient(180deg,#fff 0%,#fcfcfb 100%);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
     .hero-inner{padding:20px 18px 16px}
-    .customer-hero-top{display:grid;gap:16px}
-    .customer-logo-top{width:110px;height:110px;margin:0 auto;border-radius:18px;background:#fff;border:1px solid #e8e8e4;display:grid;place-items:center;overflow:hidden}
+    .customer-hero-top{display:flex;align-items:center;gap:12px;justify-content:center}
+    .customer-logo-top{width:56px;height:56px;flex-shrink:0;overflow:hidden}
     .customer-logo-top img{width:100%;height:100%;object-fit:contain}
-    .customer-title-center{text-align:center}
-    .brand-text h1{margin:0;font-size:24px;letter-spacing:.02em}
-    .brand-text p{margin:6px 0 0;font-size:13px;color:var(--sub)}
+    .customer-title-center{text-align:left}
+    .brand-text h1{margin:0;font-size:18px;letter-spacing:.01em;white-space:nowrap}
+    .brand-text p{margin:3px 0 0;font-size:12px;color:var(--sub)}
     .info-card{border:1px solid var(--line-dark);background:#fafaf8;border-radius:12px;overflow:hidden}
     .info-table{width:100%;border-collapse:collapse}
     .info-table th,.info-table td{border-bottom:1px solid var(--line);padding:10px 12px;font-size:14px}
@@ -75,7 +75,7 @@
     .sign-wrap{border:1px dashed var(--line-dark);border-radius:12px;background:#fafaf8;padding:10px}
     #signatureCanvas{width:100%;height:180px;border:1px solid #dcdcd7;border-radius:10px;background:#fff;touch-action:none}
     .final-box{margin-top:8px;padding:14px;border:1px solid var(--line);background:#fbfbf8;border-radius:12px;font-size:14px;color:#444}
-    .fixed-mail-box{border:1px solid var(--line);background:#fbfbf8;border-radius:12px;padding:12px 14px;font-size:14px;color:#444;margin-bottom:12px}
+
 
     /* ══ PDF PRINT AREA ══════════════════════════════════════════ */
     #pdfPrintArea{
@@ -406,9 +406,7 @@
         <span data-lang="ja" class="show">5. ご署名・お申込み</span>
         <span data-lang="zh">5. 签名与提交</span>
       </h2>
-      <div class="fixed-mail-box content-switchable">
-        <div data-lang="ja" class="show">申込書PDFは <strong>info@njfregi.jp</strong> へ自動送信されます。</div>
-        <div data-lang="zh">申请书 PDF 将自动发送至 <strong>info@njfregi.jp</strong>。</div>
+      <div data-lang="zh">申请书 PDF 将自动发送至 <strong>info@njfregi.jp</strong>。</div>
       </div>
       <div class="grid two">
         <div><label class="content-switchable"><span data-lang="ja" class="show">記入日</span><span data-lang="zh">填写日期</span></label><input name="signedDate" type="date" required disabled /></div>
@@ -565,6 +563,7 @@
 
 <script>
   const GAS_URL="https://script.google.com/macros/s/AKfycbys7WKipjw7Q1fDvLbWlk3VrSO7bz90nh7VyDA74u3hmmBJV606aV8q4jNLhfyCtRuY/exec";
+  const FIXED_TO_EMAIL="liu922506@gmail.com";
   let PRODUCTS=[],currentLang="ja";
   const form=document.getElementById("contractForm");
   const checkHint=document.getElementById("checkHint");
@@ -708,15 +707,22 @@
     let bin = ""; for(let i=0;i<u8.length;i++) bin+=String.fromCharCode(u8[i]);
     const b64 = btoa(bin);
     const fn  = ("njf-contract-"+code+"-"+shop+".pdf").replace(/[^a-zA-Z0-9\-_.]/g,"_");
-    const fd = new URLSearchParams();
-    fd.append("action","uploadPdf");
-    fd.append("customerCode", code);
-    fd.append("shopName",     shop);
-    fd.append("companyName",  form.companyName.value||"-");
-    fd.append("signedDate",   form.signedDate.value||"-");
-    fd.append("fileName",     fn);
-    fd.append("fileBase64",   b64);
-    const res    = await fetch(GAS_URL,{method:"POST",body:fd});
+    // Build body as plain string to avoid URLSearchParams cloning issues
+    const body = [
+      "action=uploadPdf",
+      "customerCode="+encodeURIComponent(code),
+      "shopName="+encodeURIComponent(shop),
+      "companyName="+encodeURIComponent(form.companyName.value||"-"),
+      "signedDate="+encodeURIComponent(form.signedDate.value||"-"),
+      "fileName="+encodeURIComponent(fn),
+      "fileBase64="+encodeURIComponent(b64)
+    ].join("&");
+    const res    = await fetch(GAS_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/x-www-form-urlencoded"},
+      body: body,
+      redirect:"follow"
+    });
     const result = await res.json();
     if(!result.success) throw new Error(result.message||"Upload failed");
     return result;
@@ -755,19 +761,24 @@
     try{
       const signDataUrl=signature.canvas.toDataURL("image/png");
       const blob=await generatePdfBlob(signDataUrl);
+      // ローカル保存
       const url=URL.createObjectURL(blob);
-      const a=document.createElement("a");a.href=url;a.download=`njf-contract-${customerCodeCell.textContent}.pdf`;a.click();URL.revokeObjectURL(url);
-      statusEl.textContent="PDF保存完了。メール送信中...";statusEl.className="status";
+      const a=document.createElement("a");
+      a.href=url;
+      a.download="njf-contract-"+customerCodeCell.textContent+".pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+      statusEl.textContent="PDFをダウンロードしました。サーバーにアップロード中...";statusEl.className="status";
       try{
-        const uploaded=await uploadPdfToDrive(blob,customerCodeCell.textContent,installNameCell.textContent);
-        statusEl.textContent="✅ 契約申込書PDFをローカルに保存し、サーバーへのアップロードが完了しました。";statusEl.className="status ok";
-      }catch(emailErr){
-        statusEl.textContent=`⚠️ PDFは保存されましたが、メール送信に失敗しました：${emailErr.message}`;statusEl.className="status warn";
+        await uploadPdfToDrive(blob,customerCodeCell.textContent,installNameCell.textContent);
+        statusEl.textContent="✅ 契約申込書PDFの作成・アップロードが完了しました。";statusEl.className="status ok";
+      }catch(uploadErr){
+        statusEl.textContent="⚠️ PDFはダウンロードされましたが、アップロードに失敗しました："+uploadErr.message;statusEl.className="status warn";
       }
     }catch(err){
-      statusEl.textContent=`❌ PDF生成に失敗しました：${err.message}`;statusEl.className="status warn";
+      statusEl.textContent="❌ PDF生成に失敗しました："+err.message;statusEl.className="status warn";
     }finally{submitBtn.disabled=false;}
-  });
+  });;
 
   form.signedDate.value=new Date().toISOString().slice(0,10);
   updateTopDate();switchLanguage("ja");loadRecordById();
