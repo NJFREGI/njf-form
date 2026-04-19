@@ -1,167 +1,835 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>NJF收银系统 申込フォーム</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NJF REGI 契約申込フォーム</title>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --bg: #f5f6f8;
-      --card: #ffffff;
-      --primary: #0f62fe;
-      --primary-dark: #0a4bd2;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --line: #d1d5db;
-      --ok: #047857;
-      --warn: #b91c1c;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "PingFang SC", sans-serif;
+      --bg: #f3f3f1;
+      --paper: #ffffff;
+      --ink: #222;
+      --sub: #666;
+      --line: #cfcfc9;
+      --line-dark: #b4b4ae;
+      --brand: #1389d4;
+      --brand-dark: #0d6faa;
+      --accent: #f8f8f6;
+      --ok: #0b7a43;
+      --warn: #b42318;
+      --shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      --radius: 14px;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
+        "Yu Gothic", "Noto Sans JP", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--text); }
-    .wrap { max-width: 760px; margin: 0 auto; padding: 14px; }
-    .hero { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .hero h1 { margin: 0 0 8px; font-size: 20px; }
-    .hero p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body { line-height: 1.75; }
 
-    .card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .title { font-size: 16px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
-    .title::before { content: ""; width: 4px; height: 16px; border-radius: 4px; background: var(--primary); }
-
-    .checklist { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 8px; }
-    .check-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; gap: 10px; align-items: flex-start; }
-    .check-item input { margin-top: 2px; }
-    .check-item span { font-size: 13px; line-height: 1.45; }
-
-    .grid { display: grid; gap: 10px; }
-    .grid.two { grid-template-columns: 1fr; }
-    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
-    input, textarea, button, select {
-      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line);
-      font-size: 14px; font-family: inherit; background: #fff;
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 18px 14px 32px;
     }
-    textarea { min-height: 80px; resize: vertical; }
-    input:disabled { background: #f3f4f6; }
 
-    .btn-row { display: flex; gap: 8px; }
-    .btn { border: none; background: var(--primary); color: #fff; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: var(--primary-dark); }
-    .btn.secondary { background: #e5e7eb; color: #111827; }
+    .topbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
 
-    .pricing-table { width: 100%; border-collapse: collapse; }
-    .pricing-table th, .pricing-table td { border-bottom: 1px solid var(--line); padding: 8px 4px; text-align: left; font-size: 13px; }
-    .pricing-table th { color: var(--muted); font-size: 12px; }
-    .pricing-table input { padding: 8px; }
-    .money { text-align: right; white-space: nowrap; }
+    .lang-switch {
+      display: inline-flex;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
 
-    .sum-box { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
-    .sum-row { display: flex; justify-content: space-between; font-size: 14px; }
-    .sum-row strong { font-size: 16px; color: var(--ok); }
+    .lang-switch button {
+      width: auto;
+      min-width: 84px;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      color: #444;
+    }
 
-    .sign-wrap { border: 1px dashed var(--line); border-radius: 10px; padding: 8px; background: #fafafa; }
-    #signatureCanvas { width: 100%; height: 180px; border-radius: 8px; border: 1px solid #e5e7eb; background: white; touch-action: none; }
+    .lang-switch button.active {
+      background: var(--brand);
+      color: #fff;
+      font-weight: 700;
+    }
 
-    .status { font-size: 12px; margin-top: 8px; }
+    .hero {
+      background: linear-gradient(180deg, #ffffff 0%, #fcfcfb 100%);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .hero-inner {
+      padding: 20px 18px 16px;
+    }
+
+    .hero-head {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #e8e8e4;
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 0 0 1px rgba(19, 137, 212, 0.03);
+    }
+
+    .brand-logo .logo-mark {
+      color: var(--brand);
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-text p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--sub);
+    }
+
+    .info-card {
+      border: 1px solid var(--line-dark);
+      background: #fafaf8;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .info-table th,
+    .info-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    .info-table tr:last-child th,
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .info-table th {
+      width: 38%;
+      background: #f4f4f1;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .info-table td {
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .notice-bar {
+      padding: 12px 18px 18px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 14px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 5px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--brand);
+      display: inline-block;
+    }
+
+    .subnote {
+      margin: -4px 0 12px;
+      font-size: 13px;
+      color: var(--sub);
+    }
+
+    .jp-box {
+      border: 1px solid var(--line);
+      background: #fcfcfa;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .jp-box h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+
+    .jp-box p {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .jp-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    .content-switchable [data-lang] {
+      display: none;
+    }
+
+    .content-switchable [data-lang].show {
+      display: block;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .check-item {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 12px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .check-item input {
+      margin-top: 4px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--brand);
+      flex: 0 0 auto;
+    }
+
+    .check-item span {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
     .status.ok { color: var(--ok); }
     .status.warn { color: var(--warn); }
 
-    .hidden { display: none; }
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
 
-    @media (min-width: 640px) {
-      .wrap { padding: 20px; }
-      .grid.two { grid-template-columns: 1fr 1fr; }
+    .grid.two {
+      grid-template-columns: 1fr;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #555;
+      font-weight: 600;
+    }
+
+    input, textarea, button, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: #222;
+    }
+
+    input:disabled,
+    textarea:disabled {
+      background: #f7f7f5;
+      color: #666;
+    }
+
+    textarea {
+      min-height: 84px;
+      resize: vertical;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      background: var(--brand);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 12px rgba(19, 137, 212, 0.2);
+    }
+
+    .btn:hover {
+      background: var(--brand-dark);
+    }
+
+    .btn.secondary {
+      background: #f0f0ec;
+      color: #333;
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    .pricing-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .pricing-table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    .pricing-table th,
+    .pricing-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      font-size: 14px;
+    }
+
+    .pricing-table thead th {
+      background: #f5f5f2;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .pricing-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .money {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .sum-box {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      background: #fbfbf9;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .sum-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+    }
+
+    .sum-row strong {
+      font-size: 20px;
+      color: var(--ok);
+      letter-spacing: 0.04em;
+    }
+
+    .sign-wrap {
+      border: 1px dashed var(--line-dark);
+      border-radius: 12px;
+      background: #fafaf8;
+      padding: 10px;
+    }
+
+    #signatureCanvas {
+      width: 100%;
+      height: 180px;
+      border: 1px solid #dcdcd7;
+      border-radius: 10px;
+      background: #fff;
+      touch-action: none;
+    }
+
+    .final-box {
+      margin-top: 8px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: #fbfbf8;
+      border-radius: 12px;
+      font-size: 14px;
+      color: #444;
+    }
+
+    @media (min-width: 760px) {
+      .hero-head {
+        grid-template-columns: 1.2fr 0.9fr;
+      }
+
+      .grid.two {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .wrap {
+        padding: 22px 18px 36px;
+      }
+
+      .hero-inner,
+      .notice-bar {
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+
+      .section {
+        padding: 20px;
+      }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
+    <div class="topbar">
+      <div class="lang-switch">
+        <button type="button" id="langJaBtn" class="active">日本語</button>
+        <button type="button" id="langZhBtn">中文</button>
+      </div>
+    </div>
+
     <section class="hero">
-      <h1>NJF REGI 契約申込フォーム（手机版）</h1>
-      <p>先勾选上方事项确认，再填写公司/店铺信息。输入日本邮编后可自动取得地址，再手动补充门牌号。最后签名并送信（生成PDF）。</p>
+      <div class="hero-inner">
+        <div class="hero-head">
+          <div class="brand-row">
+            <div class="brand-logo">
+              <div class="logo-mark">NJF</div>
+            </div>
+            <div class="brand-text content-switchable">
+              <h1 data-lang="ja" class="show">NJF REGI 契約申込フォーム</h1>
+              <h1 data-lang="zh">NJF REGI 合同申请表</h1>
+
+              <p data-lang="ja" class="show">
+                ご契約前に重要事項をご確認いただき、必要事項をご入力のうえお申し込みください。
+              </p>
+              <p data-lang="zh">
+                请在签约前确认重要事项，并填写相关信息后提交申请。
+              </p>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <table class="info-table">
+              <tr>
+                <th class="content-switchable">
+                  <span data-lang="ja" class="show">顧客コード</span>
+                  <span data-lang="zh">客户代码</span>
+                </th>
+                <td>20260117001</td>
+              </tr>
+              <tr>
+                <th class="content-switchable">
+                  <span data-lang="ja" class="show">設置先名称</span>
+                  <span data-lang="zh">安装店铺名称</span>
+                </th>
+                <td>赤坂麻辣湯</td>
+              </tr>
+              <tr>
+                <th class="content-switchable">
+                  <span data-lang="ja" class="show">申込日</span>
+                  <span data-lang="zh">申请日期</span>
+                </th>
+                <td id="topApplyDate">-</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="notice-bar content-switchable">
+        <div data-lang="ja" class="show">
+          ご契約時は、下記に掲載されている確認事項を必ずご確認いただきますようお願い申し上げます。
+        </div>
+        <div data-lang="zh">
+          签约时请务必先确认下列重要事项后再继续填写申请内容。
+        </div>
+      </div>
     </section>
 
     <form id="contractForm">
-      <section class="card">
-        <h2 class="title">1) 事项确认（全部确认后解锁）</h2>
+      <section class="section">
+        <h2 class="section-title content-switchable">
+          <span data-lang="ja" class="show">1. 契約内容のご確認</span>
+          <span data-lang="zh">1. 合同内容确认</span>
+        </h2>
+        <p class="subnote content-switchable">
+          <span data-lang="ja" class="show">
+            内容説明は中日切替対応、下記の確認チェック項目は日本語固定です。
+          </span>
+          <span data-lang="zh">
+            说明内容支持中日切换，下方确认勾选项目固定为日语显示。
+          </span>
+        </p>
+
+        <div class="jp-box content-switchable">
+          <div data-lang="ja" class="show">
+            <h3>契約重要事項説明書</h3>
+            <p>本サービスの契約期間は2年間です。契約期間満了後は、2年毎の自動更新となります。</p>
+            <p>ご利用開始日は、本サービス・オプションサービス専用機器の設置（設定を含む）が完了した日とさせていただきます。ご利用開始日以降になる場合がございます。</p>
+            <p>利用開始日より24ヶ月（最低利用期間）経過前にご利用契約を中途解約する場合は、既にお支払い済みの利用料金を除く最低利用期間分の利用料金をお支払いいただきます。</p>
+            <p>ご契約者様がご利用される無線機器、プリンター等の接続機器について、当社推奨機器以外をご利用される場合は当社は一切の動作保証を行いません。</p>
+            <p>外部接続機器メーカー保証外の故障の場合は、機器の再購入又は修理費用が発生致します。</p>
+            <p>お客様のデータ保存期間は最大24ヶ月です。25ヶ月目以降データは消去されますので、お客様ご自身でデータのバックアップをお願い致します。</p>
+          </div>
+
+          <div data-lang="zh">
+            <h3>合同重要事项说明</h3>
+            <p>本服务合同期限为 2 年，合同期满后将按每 2 年自动续约。</p>
+            <p>服务开始日原则上为本服务及可选服务相关设备安装与设定完成之日，实际启用日可能晚于该日期。</p>
+            <p>自服务开始日起未满 24 个月（最低使用期间）而中途解约时，需支付扣除已支付部分后的最低使用期间剩余费用。</p>
+            <p>对于客户自行使用的无线设备、打印机等连接设备，如非本公司推荐机型，本公司不承担任何运行保证责任。</p>
+            <p>如属于外接设备厂商保修范围外的故障，将产生设备重新购买或维修费用。</p>
+            <p>客户数据保存期限最长为 24 个月，超过 25 个月后数据可能被删除，请客户自行做好备份。</p>
+          </div>
+        </div>
+
+        <div class="jp-box content-switchable">
+          <div data-lang="ja" class="show">
+            <h3>個人情報の取り扱いについて</h3>
+            <p>本サービスにおいて取得する顧客の氏名、住所、電話番号、メールアドレス、注文履歴その他の個人情報は、個人情報保護法その他関係法令に基づき、適切に管理・保護されるものとします。</p>
+            <p>事業者は、取得した個人情報を以下の目的に限り利用するものとし、本人の同意なくこれ以外の目的に利用しません。</p>
+            <p>（1）業務および注文処理の遂行 （2）売上管理・分析およびサービス改善 （3）顧客からの問い合わせ対応 （4）法令に基づく対応</p>
+            <p>事業者は、個人情報を第三者に提供・開示することはありません。ただし、法令に基づく場合等を除きます。</p>
+          </div>
+
+          <div data-lang="zh">
+            <h3>个人信息的处理</h3>
+            <p>本服务中取得的客户姓名、住址、电话号码、邮箱地址、订单记录等个人信息，将依据日本个人信息保护法及相关法规进行妥善管理与保护。</p>
+            <p>取得的个人信息仅用于以下目的，未经本人同意不会用于其他用途。</p>
+            <p>（1）业务及订单处理 （2）销售管理、分析与服务改善 （3）客户咨询对应 （4）依法应对</p>
+            <p>除法律法规要求等情况外，原则上不会向第三方提供或公开个人信息。</p>
+          </div>
+        </div>
+
+        <div class="jp-box content-switchable">
+          <div data-lang="ja" class="show">
+            <h3>業務データの取扱いおよび保護</h3>
+            <p>本サービスを通じて蓄積される売上情報、注文履歴、顧客属性、在庫情報、従業員の勤務データその他店舗運営に関するあらゆる情報は、利用店舗に帰属するものとします。</p>
+            <p>新日本富士アシスト株式会社は、業務データの機密性を保持し、正当な理由なく第三者に開示、漏洩、転用しないものとします。</p>
+            <p>業務データは、サービス提供およびメンテナンス、統計処理に基づく機能改善、法令に基づく対応の範囲内で利用されるものとします。</p>
+            <p>業務データのバックアップは原則として利用店舗の責任において行うものとし、サービス終了後は保存期間を経て安全に削除されるものとします。</p>
+          </div>
+
+          <div data-lang="zh">
+            <h3>业务数据的处理与保护</h3>
+            <p>通过本服务积累的销售数据、订单记录、客户属性、库存信息、员工出勤数据及其他与店铺运营相关的数据，原则上归使用店铺所有。</p>
+            <p>新日本富士アシスト株式会社将保持业务数据的机密性，除正当理由外，不会向第三方披露、泄露或转作他用。</p>
+            <p>业务数据仅在服务提供与维护、基于统计处理的功能改善、以及依法应对的范围内使用。</p>
+            <p>业务数据的备份原则上由使用店铺自行负责，服务终止后将在保存期限届满后进行安全删除。</p>
+          </div>
+        </div>
+
         <ul class="checklist" id="checklist"></ul>
-        <p id="checkHint" class="status warn">请先确认所有事项。</p>
+        <p id="checkHint" class="status warn">すべての確認項目にチェックを入れてください。</p>
       </section>
 
-      <section class="card">
-        <h2 class="title">2) 契约公司信息</h2>
+      <section class="section">
+        <h2 class="section-title content-switchable">
+          <span data-lang="ja" class="show">2. 契約会社情報</span>
+          <span data-lang="zh">2. 合同公司信息</span>
+        </h2>
+
         <div class="grid two">
-          <div><label>会社名</label><input name="companyName" required disabled></div>
-          <div><label>法人番号（任意）</label><input name="companyNumber" disabled></div>
-          <div><label>担当者名</label><input name="companyContact" required disabled></div>
-          <div><label>电话</label><input name="companyPhone" required disabled></div>
-          <div><label>邮箱</label><input name="companyEmail" type="email" required disabled></div>
-        </div>
-        <div class="grid two" style="margin-top:10px;">
           <div>
-            <label>邮编 (例: 1000001)</label>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">会社名</span>
+              <span data-lang="zh">公司名称</span>
+            </label>
+            <input name="companyName" required disabled />
+          </div>
+
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">法人番号（任意）</span>
+              <span data-lang="zh">法人编号（选填）</span>
+            </label>
+            <input name="companyNumber" disabled />
+          </div>
+
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">担当者名</span>
+              <span data-lang="zh">负责人姓名</span>
+            </label>
+            <input name="companyContact" required disabled />
+          </div>
+
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">電話番号</span>
+              <span data-lang="zh">电话</span>
+            </label>
+            <input name="companyPhone" required disabled />
+          </div>
+
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">メールアドレス</span>
+              <span data-lang="zh">邮箱</span>
+            </label>
+            <input name="companyEmail" type="email" required disabled />
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top:12px;">
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">郵便番号（例: 1000001）</span>
+              <span data-lang="zh">邮编（例: 1000001）</span>
+            </label>
             <div class="btn-row">
-              <input name="companyZip" maxlength="8" placeholder="1000001" disabled>
-              <button class="btn secondary" type="button" id="lookupCompany">地址取得</button>
+              <input name="companyZip" maxlength="8" placeholder="1000001" disabled />
+              <button class="btn secondary content-switchable" type="button" id="lookupCompany">
+                <span data-lang="ja" class="show">住所取得</span>
+                <span data-lang="zh">获取地址</span>
+              </button>
             </div>
           </div>
-          <div><label>都道府県・市区町村（自动）</label><input name="companyAddrAuto" disabled></div>
-          <div style="grid-column: 1 / -1;"><label>门牌号・楼层（手动）</label><input name="companyAddrDetail" disabled></div>
+
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">都道府県・市区町村（自動）</span>
+              <span data-lang="zh">都道府县・市区町村（自动）</span>
+            </label>
+            <input name="companyAddrAuto" disabled />
+          </div>
+
+          <div style="grid-column: 1 / -1;">
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">番地・建物名・階数（手入力）</span>
+              <span data-lang="zh">门牌号・楼层・大楼名（手动）</span>
+            </label>
+            <input name="companyAddrDetail" disabled />
+          </div>
         </div>
       </section>
 
-      <section class="card">
-        <h2 class="title">3) 契约店铺信息</h2>
-        <div class="btn-row" style="margin-bottom:10px;">
-          <button class="btn secondary" type="button" id="sameAddress">店铺地址同上</button>
+      <section class="section">
+        <h2 class="section-title content-switchable">
+          <span data-lang="ja" class="show">3. 契約店舗情報</span>
+          <span data-lang="zh">3. 合同店铺信息</span>
+        </h2>
+
+        <div class="btn-row" style="margin-bottom:12px;">
+          <button class="btn secondary content-switchable" type="button" id="sameAddress">
+            <span data-lang="ja" class="show">会社住所をコピー</span>
+            <span data-lang="zh">复制公司地址</span>
+          </button>
         </div>
+
         <div class="grid two">
-          <div><label>店铺名</label><input name="shopName" required disabled></div>
-          <div><label>店铺电话</label><input name="shopPhone" required disabled></div>
           <div>
-            <label>店铺邮编</label>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">店舗名</span>
+              <span data-lang="zh">店铺名称</span>
+            </label>
+            <input name="shopName" required disabled />
+          </div>
+
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">店舗電話番号</span>
+              <span data-lang="zh">店铺电话</span>
+            </label>
+            <input name="shopPhone" required disabled />
+          </div>
+
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">店舗郵便番号</span>
+              <span data-lang="zh">店铺邮编</span>
+            </label>
             <div class="btn-row">
-              <input name="shopZip" maxlength="8" placeholder="1000001" disabled>
-              <button class="btn secondary" type="button" id="lookupShop">地址取得</button>
+              <input name="shopZip" maxlength="8" placeholder="1000001" disabled />
+              <button class="btn secondary content-switchable" type="button" id="lookupShop">
+                <span data-lang="ja" class="show">住所取得</span>
+                <span data-lang="zh">获取地址</span>
+              </button>
             </div>
           </div>
-          <div><label>都道府県・市区町村（自动）</label><input name="shopAddrAuto" disabled></div>
-          <div style="grid-column: 1 / -1;"><label>门牌号・楼层（手动）</label><input name="shopAddrDetail" disabled></div>
+
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">都道府県・市区町村（自動）</span>
+              <span data-lang="zh">都道府县・市区町村（自动）</span>
+            </label>
+            <input name="shopAddrAuto" disabled />
+          </div>
+
+          <div style="grid-column: 1 / -1;">
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">番地・建物名・階数（手入力）</span>
+              <span data-lang="zh">门牌号・楼层・大楼名（手动）</span>
+            </label>
+            <input name="shopAddrDetail" disabled />
+          </div>
         </div>
       </section>
 
-      <section class="card">
-        <h2 class="title">4) 设备与服务（自动合计）</h2>
-        <table class="pricing-table" id="pricingTable">
-          <thead>
-            <tr><th>项目</th><th class="money">单价(¥)</th><th>数量</th><th class="money">小计(¥)</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <section class="section">
+        <h2 class="section-title content-switchable">
+          <span data-lang="ja" class="show">4. 設備・サービス内容</span>
+          <span data-lang="zh">4. 设备与服务内容</span>
+        </h2>
+
+        <div class="pricing-wrap">
+          <table class="pricing-table" id="pricingTable">
+            <thead>
+              <tr class="content-switchable">
+                <th><span data-lang="ja" class="show">項目</span><span data-lang="zh">项目</span></th>
+                <th class="money"><span data-lang="ja" class="show">単価(¥)</span><span data-lang="zh">单价(¥)</span></th>
+                <th><span data-lang="ja" class="show">数量</span><span data-lang="zh">数量</span></th>
+                <th class="money"><span data-lang="ja" class="show">小計(¥)</span><span data-lang="zh">小计(¥)</span></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
         <div class="sum-box">
-          <div class="sum-row"><span>税前合计</span><span id="subtotal">¥0</span></div>
-          <div class="sum-row"><span>税额（10%）</span><span id="tax">¥0</span></div>
-          <div class="sum-row"><span>总计</span><strong id="total">¥0</strong></div>
+          <div class="sum-row content-switchable">
+            <span data-lang="ja" class="show">税抜合計</span>
+            <span data-lang="zh">税前合计</span>
+            <span id="subtotal">¥0</span>
+          </div>
+          <div class="sum-row content-switchable">
+            <span data-lang="ja" class="show">消費税（10%）</span>
+            <span data-lang="zh">税额（10%）</span>
+            <span id="tax">¥0</span>
+          </div>
+          <div class="sum-row content-switchable">
+            <span data-lang="ja" class="show">合計金額</span>
+            <span data-lang="zh">总计</span>
+            <strong id="total">¥0</strong>
+          </div>
         </div>
       </section>
 
-      <section class="card">
-        <h2 class="title">5) 顾客签名与送信</h2>
+      <section class="section">
+        <h2 class="section-title content-switchable">
+          <span data-lang="ja" class="show">5. ご署名・お申込み</span>
+          <span data-lang="zh">5. 签名与提交</span>
+        </h2>
+
         <div class="grid two">
-          <div><label>送信先邮箱（指定收件地址）</label><input name="toEmail" type="email" required disabled></div>
-          <div><label>签署日期</label><input name="signedDate" type="date" required disabled></div>
-        </div>
-        <div style="margin-top:10px;"><label>备注（任意）</label><textarea name="notes" disabled></textarea></div>
-        <div class="sign-wrap" style="margin-top:10px;">
-          <canvas id="signatureCanvas"></canvas>
-          <div class="btn-row" style="margin-top:8px;">
-            <button class="btn secondary" type="button" id="clearSign">清除签名</button>
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">送信先メールアドレス</span>
+              <span data-lang="zh">接收邮箱</span>
+            </label>
+            <input name="toEmail" type="email" required disabled />
+          </div>
+
+          <div>
+            <label class="content-switchable">
+              <span data-lang="ja" class="show">記入日</span>
+              <span data-lang="zh">填写日期</span>
+            </label>
+            <input name="signedDate" type="date" required disabled />
           </div>
         </div>
-        <div class="btn-row" style="margin-top:12px;">
-          <button class="btn" type="submit" id="submitBtn" disabled>送信（生成PDF）</button>
+
+        <div style="margin-top:12px;">
+          <label class="content-switchable">
+            <span data-lang="ja" class="show">備考（任意）</span>
+            <span data-lang="zh">备注（选填）</span>
+          </label>
+          <textarea name="notes" disabled></textarea>
         </div>
+
+        <div class="sign-wrap" style="margin-top:12px;">
+          <canvas id="signatureCanvas"></canvas>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn secondary content-switchable" type="button" id="clearSign">
+              <span data-lang="ja" class="show">署名をクリア</span>
+              <span data-lang="zh">清除签名</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="final-box content-switchable">
+          <div data-lang="ja" class="show">
+            上記内容を確認のうえ、必要事項をご記入いただき、ご署名後にお申し込みください。
+          </div>
+          <div data-lang="zh">
+            请确认以上内容，填写必要信息并签名后提交申请。
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn content-switchable" type="submit" id="submitBtn" disabled>
+            <span data-lang="ja" class="show">申込書を作成する（PDF保存）</span>
+            <span data-lang="zh">生成申请书（PDF保存）</span>
+          </button>
+        </div>
+
         <p class="status" id="sendStatus"></p>
       </section>
     </form>
@@ -169,24 +837,21 @@
 
   <script>
     const CHECK_ITEMS = [
-      "本サービスの契約期間は2年間であり、自動更新されること。",
-      "利用開始日は設置完了日基準となる場合があること。",
-      "途中解約時に最低利用期間分の費用が必要な場合があること。",
-      "推奨外の接続機器では動作保証外になる場合があること。",
-      "データ保管期限およびバックアップ責任に同意すること。"
+      "契約重要事項説明書の内容を確認しました。",
+      "個人情報の取り扱いについて確認し、同意しました。",
+      "業務データの取扱いおよび保護について確認し、同意しました。"
     ];
 
     const PRODUCTS = [
-      { name: "NJF POS 本体", price: 78000, qty: 1 },
-      { name: "キャッシュドロワ", price: 12000, qty: 1 },
-      { name: "レシートプリンタ", price: 28000, qty: 1 },
-      { name: "月額クラウド利用料", price: 9800, qty: 1 },
-      { name: "保守サポート", price: 5000, qty: 1 }
+      { nameJa: "NJF POS 本体", nameZh: "NJF POS 主机", price: 78000, qty: 1 },
+      { nameJa: "キャッシュドロワ", nameZh: "钱箱", price: 12000, qty: 1 },
+      { nameJa: "レシートプリンタ", nameZh: "小票打印机", price: 28000, qty: 1 },
+      { nameJa: "月額クラウド利用料", nameZh: "月额云服务费", price: 9800, qty: 1 },
+      { nameJa: "保守サポート", nameZh: "维护支持", price: 5000, qty: 1 }
     ];
 
-    // 若需要自动邮件发送，请把这里替换成你自己的API。
-    // API 需接收 multipart/form-data: toEmail, file(PDF)
     const SEND_ENDPOINT = "";
+    let currentLang = "ja";
 
     const form = document.getElementById("contractForm");
     const checklistEl = document.getElementById("checklist");
@@ -197,17 +862,88 @@
     const subtotalEl = document.getElementById("subtotal");
     const taxEl = document.getElementById("tax");
     const totalEl = document.getElementById("total");
+    const langJaBtn = document.getElementById("langJaBtn");
+    const langZhBtn = document.getElementById("langZhBtn");
+    const topApplyDate = document.getElementById("topApplyDate");
 
     function formatJPY(num) {
       return new Intl.NumberFormat("ja-JP").format(num);
     }
 
+    function formatDateJP(dateStr) {
+      if (!dateStr) return "-";
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr;
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      return `${y}年${m}月${day}日`;
+    }
+
+    function formatDateZH(dateStr) {
+      if (!dateStr) return "-";
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr;
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      return `${y}年${m}月${day}日`;
+    }
+
+    function updateTopDate() {
+      const v = form.signedDate.value;
+      topApplyDate.textContent = currentLang === "ja" ? formatDateJP(v) : formatDateZH(v);
+    }
+
+    function switchLanguage(lang) {
+      currentLang = lang;
+
+      document.querySelectorAll(".content-switchable").forEach(group => {
+        const items = group.querySelectorAll("[data-lang]");
+        items.forEach(el => el.classList.remove("show"));
+        group.querySelectorAll(`[data-lang="${lang}"]`).forEach(el => el.classList.add("show"));
+      });
+
+      langJaBtn.classList.toggle("active", lang === "ja");
+      langZhBtn.classList.toggle("active", lang === "zh");
+
+      renderProducts(true);
+      updateTopDate();
+
+      if (statusEl.dataset.key) {
+        const map = {
+          unlocked: {
+            ja: "確認が完了しました。下記フォームをご入力ください。",
+            zh: "已完成确认，可填写下方表格。"
+          },
+          locked: {
+            ja: "すべての確認項目にチェックを入れてください。",
+            zh: "请先勾选全部确认事项。"
+          }
+        };
+        if (map[statusEl.dataset.key]) {
+          checkHint.textContent = map[statusEl.dataset.key][lang];
+        }
+      }
+    }
+
     function renderChecklist() {
+      checklistEl.innerHTML = "";
       CHECK_ITEMS.forEach((text, i) => {
         const li = document.createElement("li");
         li.className = "check-item";
-        li.innerHTML = `<input type="checkbox" class="confirm-check" id="c${i}"><span>${text}</span>`;
+        li.innerHTML = `
+          <input type="checkbox" class="confirm-check" id="c${i}">
+          <span>${text}</span>
+        `;
         checklistEl.appendChild(li);
+      });
+
+      document.querySelectorAll(".confirm-check").forEach((el) => {
+        el.addEventListener("change", () => {
+          checkAllConfirmed();
+          setProductInputsEnabled([...document.querySelectorAll(".confirm-check")].every(x => x.checked));
+        });
       });
     }
 
@@ -217,11 +953,26 @@
           el.disabled = !enabled;
         }
       });
+
       submitBtn.disabled = !enabled;
-      checkHint.textContent = enabled ? "已完成确认，可以填写下方表格。" : "请先确认所有事项。";
-      checkHint.className = `status ${enabled ? "ok" : "warn"}`;
+
+      if (enabled) {
+        checkHint.textContent = currentLang === "ja"
+          ? "確認が完了しました。下記フォームをご入力ください。"
+          : "已完成确认，可填写下方表格。";
+        checkHint.className = "status ok";
+        statusEl.dataset.key = "unlocked";
+      } else {
+        checkHint.textContent = currentLang === "ja"
+          ? "すべての確認項目にチェックを入れてください。"
+          : "请先勾选全部确认事项。";
+        checkHint.className = "status warn";
+        statusEl.dataset.key = "locked";
+      }
+
       if (enabled && !form.signedDate.value) {
         form.signedDate.value = new Date().toISOString().slice(0, 10);
+        updateTopDate();
       }
     }
 
@@ -233,13 +984,13 @@
     async function lookupAddress(zip) {
       const cleaned = (zip || "").replace(/[^0-9]/g, "");
       if (cleaned.length !== 7) {
-        throw new Error("邮编需为7位数字");
+        throw new Error(currentLang === "ja" ? "郵便番号は7桁で入力してください" : "邮编需输入7位数字");
       }
       const url = `https://zipcloud.ibsnet.co.jp/api/search?zipcode=${cleaned}`;
       const res = await fetch(url);
       const data = await res.json();
       if (!data.results || !data.results[0]) {
-        throw new Error("未找到该邮编地址");
+        throw new Error(currentLang === "ja" ? "該当住所が見つかりませんでした" : "未找到该邮编对应地址");
       }
       const r = data.results[0];
       return `${r.address1}${r.address2}${r.address3}`;
@@ -252,12 +1003,12 @@
 
       async function doLookup() {
         try {
-          autoInput.value = "検索中...";
+          autoInput.value = currentLang === "ja" ? "検索中..." : "查询中...";
           const address = await lookupAddress(zipInput.value);
           autoInput.value = address;
         } catch (error) {
           autoInput.value = "";
-          statusEl.textContent = `地址取得失败: ${error.message}`;
+          statusEl.textContent = error.message;
           statusEl.className = "status warn";
         }
       }
@@ -268,17 +1019,31 @@
       });
     }
 
-    function renderProducts() {
+    function renderProducts(keepQty = false) {
+      const oldQtys = keepQty
+        ? [...document.querySelectorAll(".qty-input")].map(input => Number(input.value || 0))
+        : PRODUCTS.map(p => p.qty);
+
+      priceBody.innerHTML = "";
+
       PRODUCTS.forEach((item, index) => {
         const tr = document.createElement("tr");
+        const itemName = currentLang === "ja" ? item.nameJa : item.nameZh;
+        const qtyValue = oldQtys[index] ?? item.qty;
+
         tr.innerHTML = `
-          <td>${item.name}</td>
-          <td class="money">${formatJPY(item.price)}</td>
-          <td><input type="number" min="0" value="${item.qty}" data-index="${index}" class="qty-input" disabled></td>
-          <td class="money" id="line-${index}">0</td>
+          <td>${itemName}</td>
+          <td class="money">¥${formatJPY(item.price)}</td>
+          <td><input type="number" min="0" value="${qtyValue}" data-index="${index}" class="qty-input" disabled></td>
+          <td class="money" id="line-${index}">¥0</td>
         `;
         priceBody.appendChild(tr);
       });
+
+      document.querySelectorAll(".qty-input").forEach(input => {
+        input.addEventListener("input", calcTotals);
+      });
+
       calcTotals();
     }
 
@@ -290,7 +1055,7 @@
         const qty = Math.max(0, Number(input.value || 0));
         const line = PRODUCTS[index].price * qty;
         subtotal += line;
-        document.getElementById(`line-${index}`).textContent = formatJPY(line);
+        document.getElementById(`line-${index}`).textContent = `¥${formatJPY(line)}`;
       });
       const tax = Math.round(subtotal * 0.1);
       const total = subtotal + tax;
@@ -313,12 +1078,14 @@
 
       function resizeCanvas() {
         const ratio = window.devicePixelRatio || 1;
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * ratio;
+        canvas.height = rect.height * ratio;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(ratio, ratio);
         ctx.lineWidth = 2;
         ctx.lineCap = "round";
-        ctx.strokeStyle = "#111827";
+        ctx.strokeStyle = "#222";
       }
 
       function pointFromEvent(event) {
@@ -342,7 +1109,9 @@
         ctx.stroke();
       }
 
-      function end() { drawing = false; }
+      function end() {
+        drawing = false;
+      }
 
       canvas.addEventListener("mousedown", start);
       canvas.addEventListener("mousemove", move);
@@ -359,12 +1128,21 @@
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
 
-      return canvas;
+      return { canvas, ctx };
+    }
+
+    function hasSignature(canvas) {
+      const ctx = canvas.getContext("2d");
+      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      for (let i = 3; i < pixels.length; i += 4) {
+        if (pixels[i] !== 0) return true;
+      }
+      return false;
     }
 
     function buildPdfData() {
       const totals = calcTotals();
-      const payload = {
+      return {
         company: {
           name: form.companyName.value,
           number: form.companyNumber.value,
@@ -383,7 +1161,8 @@
           detail: form.shopAddrDetail.value
         },
         items: [...document.querySelectorAll(".qty-input")].map((input, i) => ({
-          name: PRODUCTS[i].name,
+          nameJa: PRODUCTS[i].nameJa,
+          nameZh: PRODUCTS[i].nameZh,
           unitPrice: PRODUCTS[i].price,
           qty: Number(input.value || 0),
           line: PRODUCTS[i].price * Number(input.value || 0)
@@ -392,73 +1171,86 @@
         signedDate: form.signedDate.value,
         notes: form.notes.value
       };
-      return payload;
     }
 
-    function generatePdf(canvas) {
+    function generatePdf(signatureCanvas) {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: "mm", format: "a4" });
       const d = buildPdfData();
-      let y = 12;
-      doc.setFontSize(14);
+      let y = 14;
+
+      doc.setFontSize(15);
       doc.text("NJF REGI 契約申込書", 10, y);
-      y += 8;
+      y += 9;
 
       doc.setFontSize(10);
+      doc.text(`申込日: ${formatDateJP(d.signedDate)}`, 10, y);
+      y += 7;
+
       doc.text(`会社名: ${d.company.name}`, 10, y); y += 6;
       doc.text(`会社住所: ${d.company.auto} ${d.company.detail}`, 10, y); y += 6;
-      doc.text(`担当者: ${d.company.contact} / TEL: ${d.company.phone}`, 10, y); y += 6;
-      doc.text(`店名: ${d.shop.name} / TEL: ${d.shop.phone}`, 10, y); y += 6;
-      doc.text(`店铺地址: ${d.shop.auto} ${d.shop.detail}`, 10, y); y += 8;
+      doc.text(`担当者: ${d.company.contact}`, 10, y); y += 6;
+      doc.text(`電話: ${d.company.phone} / Email: ${d.company.email}`, 10, y); y += 7;
 
-      doc.text("設備・サービス", 10, y); y += 6;
-      d.items.forEach((item) => {
-        if (item.qty === 0) return;
-        doc.text(`${item.name}  単価:${item.unitPrice}  数量:${item.qty}  小計:${item.line}`, 10, y);
-        y += 5;
+      doc.text(`店舗名: ${d.shop.name}`, 10, y); y += 6;
+      doc.text(`店舗住所: ${d.shop.auto} ${d.shop.detail}`, 10, y); y += 8;
+
+      doc.setFontSize(11);
+      doc.text("確認事項", 10, y); y += 6;
+      doc.setFontSize(10);
+      CHECK_ITEMS.forEach(item => {
+        doc.text(`・${item}`, 12, y, { maxWidth: 184 });
+        y += 6;
       });
 
-      y += 4;
-      doc.text(`税前: ${d.totals.subtotal} / 税: ${d.totals.tax} / 合計: ${d.totals.total}`, 10, y);
-      y += 6;
-      doc.text(`署名日: ${d.signedDate}`, 10, y);
+      y += 2;
+      doc.setFontSize(11);
+      doc.text("設備・サービス内容", 10, y); y += 6;
+      doc.setFontSize(10);
+
+      d.items.forEach(item => {
+        if (item.qty === 0) return;
+        doc.text(`${item.nameJa} / 単価: ¥${formatJPY(item.unitPrice)} / 数量: ${item.qty} / 小計: ¥${formatJPY(item.line)}`, 10, y, { maxWidth: 190 });
+        y += 6;
+      });
+
+      y += 2;
+      doc.text(`税抜合計: ¥${formatJPY(d.totals.subtotal)}`, 10, y); y += 6;
+      doc.text(`消費税: ¥${formatJPY(d.totals.tax)}`, 10, y); y += 6;
+      doc.text(`合計金額: ¥${formatJPY(d.totals.total)}`, 10, y); y += 8;
 
       if (d.notes) {
-        y += 6;
         doc.text(`備考: ${d.notes}`, 10, y, { maxWidth: 190 });
+        y += 12;
       }
 
-      const signImage = canvas.toDataURL("image/png");
-      y = Math.max(y + 12, 180);
-      doc.text("署名:", 10, y);
-      doc.addImage(signImage, "PNG", 24, y - 18, 70, 24);
+      const signImage = signatureCanvas.toDataURL("image/png");
+      y = Math.max(y, 220);
+      doc.text("ご署名:", 10, y);
+      doc.addImage(signImage, "PNG", 28, y - 16, 75, 24);
 
       return doc;
     }
 
     async function sendPdf(pdfBlob, toEmail) {
-      if (!SEND_ENDPOINT) return { sent: false, reason: "未配置发送API，已仅生成下载文件。" };
+      if (!SEND_ENDPOINT) {
+        return { sent: false, reason: currentLang === "ja" ? "送信API未設定のため、PDF保存のみ実行しました。" : "未配置发送接口，当前仅保存 PDF。" };
+      }
+
       const data = new FormData();
       data.append("toEmail", toEmail);
       data.append("file", pdfBlob, "njf-contract.pdf");
 
       const res = await fetch(SEND_ENDPOINT, { method: "POST", body: data });
-      if (!res.ok) throw new Error("邮件发送接口返回失败");
+      if (!res.ok) throw new Error(currentLang === "ja" ? "メール送信APIエラー" : "邮件发送接口返回失败");
       return { sent: true };
     }
 
     renderChecklist();
     renderProducts();
-    const signCanvas = initSignature();
+    const signature = initSignature();
 
-    document.querySelectorAll(".confirm-check").forEach((el) => el.addEventListener("change", () => {
-      checkAllConfirmed();
-      setProductInputsEnabled([...document.querySelectorAll(".confirm-check")].every((x) => x.checked));
-    }));
-
-    document.addEventListener("input", (e) => {
-      if (e.target.classList.contains("qty-input")) calcTotals();
-    });
+    setFormEnabled(false);
 
     bindAddressLookup("companyZip", "companyAddrAuto", "lookupCompany");
     bindAddressLookup("shopZip", "shopAddrAuto", "lookupShop");
@@ -469,29 +1261,49 @@
       form.shopAddrDetail.value = form.companyAddrDetail.value;
     });
 
+    form.signedDate.addEventListener("input", updateTopDate);
+
+    langJaBtn.addEventListener("click", () => switchLanguage("ja"));
+    langZhBtn.addEventListener("click", () => switchLanguage("zh"));
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      statusEl.textContent = "正在生成PDF...";
+
+      if (!hasSignature(signature.canvas)) {
+        statusEl.textContent = currentLang === "ja" ? "署名をご記入ください。" : "请先签名。";
+        statusEl.className = "status warn";
+        return;
+      }
+
+      statusEl.textContent = currentLang === "ja" ? "PDFを生成しています..." : "正在生成 PDF...";
       statusEl.className = "status";
 
-      const doc = generatePdf(signCanvas);
+      const doc = generatePdf(signature.canvas);
       const blob = doc.output("blob");
       doc.save("njf-contract.pdf");
 
       try {
         const result = await sendPdf(blob, form.toEmail.value);
         if (result.sent) {
-          statusEl.textContent = "送信完成：PDF已生成并发送到指定邮箱。";
+          statusEl.textContent = currentLang === "ja"
+            ? "申込書PDFを作成し、メール送信が完了しました。"
+            : "申请书 PDF 已生成并发送完成。";
           statusEl.className = "status ok";
         } else {
-          statusEl.textContent = `PDF已下载。${result.reason}`;
+          statusEl.textContent = result.reason;
           statusEl.className = "status warn";
         }
       } catch (error) {
-        statusEl.textContent = `PDF已下载，但送信失败：${error.message}`;
+        statusEl.textContent = currentLang === "ja"
+          ? `PDFは保存されましたが、送信に失敗しました：${error.message}`
+          : `PDF 已保存，但发送失败：${error.message}`;
         statusEl.className = "status warn";
       }
     });
+
+    form.signedDate.value = new Date().toISOString().slice(0, 10);
+    updateTopDate();
+    switchLanguage("ja");
   </script>
 </body>
 </html>
