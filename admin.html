@@ -215,7 +215,7 @@
     <section class="section">
       <h2 class="section-title">2. 設備・サービス設定</h2>
       <p class="subnote">
-        手机端已改成卡片式输入。这里新增的项目会自动保存到当前浏览器，刷新后仍保留。
+        这里设置好设备内容后，点“生成短链接”，数据会保存到 Google Sheets，并返回短链接。
       </p>
 
       <div class="device-list" id="deviceList"></div>
@@ -238,9 +238,9 @@
     </section>
 
     <section class="section">
-      <h2 class="section-title">4. 専用リンク生成</h2>
+      <h2 class="section-title">4. 短链接生成</h2>
       <div class="btn-row">
-        <button type="button" class="btn" id="generateBtn">専用リンクを生成</button>
+        <button type="button" class="btn" id="generateBtn">短链接を生成</button>
         <button type="button" class="btn secondary" id="copyBtn">リンクをコピー</button>
       </div>
 
@@ -253,7 +253,8 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "njf_regi_admin_config_v4";
+    const STORAGE_KEY = "njf_regi_admin_config_v5";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxc7ilkbZ-NVErnNVEvi4aW4tWrw2qIM6b-iSe_UEz9_2CcjXJYhVtCkS6w57EK13_Z/exec";
 
     const deviceListEl = document.getElementById("deviceList");
     const customerCodeEl = document.getElementById("customerCode");
@@ -347,7 +348,7 @@
       return current.toString();
     }
 
-    function generateLink() {
+    async function generateShortLink() {
       const code = customerCodeEl.value.trim();
       const shop = installNameEl.value.trim();
       const items = collectDevices();
@@ -365,12 +366,36 @@
         return;
       }
 
-      const payload = { code, shop, items };
-      const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
-      const url = `${getFormUrl()}?data=${encoded}`;
+      showStatus("正在保存到 Google Sheets 并生成短链接...", true);
 
-      generatedLinkEl.textContent = url;
-      showStatus("专用链接已生成。当前无数据库版本中，链接较长属于正常现象。", true);
+      try {
+        const payload = {
+          customerCode: code,
+          installName: shop,
+          items: items
+        };
+
+        const formData = new URLSearchParams();
+        formData.append("action", "createRecord");
+        formData.append("payload", JSON.stringify(payload));
+
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (!result.success) {
+          throw new Error(result.message || "create failed");
+        }
+
+        const shortUrl = `${getFormUrl()}?id=${result.id}`;
+        generatedLinkEl.textContent = shortUrl;
+        showStatus(`短链接已生成，ID：${result.id}`, true);
+      } catch (err) {
+        showStatus(`生成失败：${err.message}`, false);
+      }
     }
 
     function showStatus(text, ok) {
@@ -451,7 +476,7 @@
       saveConfig();
     });
 
-    document.getElementById("generateBtn").addEventListener("click", generateLink);
+    document.getElementById("generateBtn").addEventListener("click", generateShortLink);
     document.getElementById("copyBtn").addEventListener("click", copyLink);
     document.getElementById("loadSampleBtn").addEventListener("click", loadSample);
     document.getElementById("clearAllBtn").addEventListener("click", clearAll);
