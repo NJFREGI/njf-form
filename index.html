@@ -848,14 +848,11 @@
   </main>
 
   <script>
-    const FIXED_TO_EMAIL = "liu922506@gmail.com";
+    const FIXED_TO_EMAIL = "info@njfregi.jp";
     const SEND_ENDPOINT = "";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxc7ilkbZ-NVErnNVEvi4aW4tWrw2qIM6b-iSe_UEz9_2CcjXJYhVtCkS6w57EK13_Z/exec";
 
-    let PRODUCTS = [
-      { nameJa: "NJF POS 本体", nameZh: "NJF POS 主机", price: 78000, qty: 1 },
-      { nameJa: "レシートプリンタ", nameZh: "小票打印机", price: 28000, qty: 1 }
-    ];
-
+    let PRODUCTS = [];
     let currentLang = "ja";
 
     const form = document.getElementById("contractForm");
@@ -1227,38 +1224,41 @@
       return { sent: true };
     }
 
-    function decodePayloadFromUrl() {
+    async function loadRecordById() {
       const params = new URLSearchParams(window.location.search);
-      const data = params.get("data");
-      if (!data) return null;
+      const id = params.get("id");
+      if (!id) {
+        statusEl.textContent = "未检测到短链接 ID。";
+        statusEl.className = "status warn";
+        return;
+      }
 
       try {
-        const json = decodeURIComponent(escape(atob(decodeURIComponent(data))));
-        return JSON.parse(json);
-      } catch (e) {
-        return null;
-      }
-    }
+        const res = await fetch(`${GAS_URL}?action=getRecord&id=${encodeURIComponent(id)}`);
+        const result = await res.json();
 
-    function loadLinkData() {
-      const payload = decodePayloadFromUrl();
-      if (!payload) return;
+        if (!result.success) {
+          throw new Error(result.message || "record not found");
+        }
 
-      customerCodeCell.textContent = payload.code || "-";
-      installNameCell.textContent = payload.shop || "-";
+        const data = result.data;
+        customerCodeCell.textContent = data.customerCode || "-";
+        installNameCell.textContent = data.installName || "-";
 
-      if (Array.isArray(payload.items) && payload.items.length) {
-        PRODUCTS = payload.items.map(item => ({
+        PRODUCTS = (data.items || []).map(item => ({
           nameJa: item.name || "",
           nameZh: item.name || "",
           price: Number(item.price || 0),
           qty: Number(item.qty || 0)
         }));
+
+        renderFixedDevices();
+      } catch (err) {
+        statusEl.textContent = `读取短链接失败：${err.message}`;
+        statusEl.className = "status warn";
       }
     }
 
-    loadLinkData();
-    renderFixedDevices();
     const signature = initSignature();
 
     setFormEnabled(false);
@@ -1321,6 +1321,7 @@
     form.signedDate.value = new Date().toISOString().slice(0, 10);
     updateTopDate();
     switchLanguage("ja");
+    loadRecordById();
   </script>
 </body>
 </html>
