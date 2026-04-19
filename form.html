@@ -6,7 +6,6 @@
   <title>NJF REGI 契約申込フォーム</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     :root {
       --bg:#f3f3f1;--paper:#ffffff;--ink:#222;--sub:#666;--line:#cfcfc9;--line-dark:#b4b4ae;
@@ -565,13 +564,7 @@
 </div>
 
 <script>
-  const FIXED_TO_EMAIL="liu922506@gmail.com";
-  const GAS_URL="https://script.google.com/macros/s/AKfycbxc7ilkbZ-NVErnNVEvi4aW4tWrw2qIM6b-iSe_UEz9_2CcjXJYhVtCkS6w57EK13_Z/exec";
-  // EmailJS設定
-  const EMAILJS_SERVICE_ID="service_gppc5jk";
-  const EMAILJS_TEMPLATE_ID="template_z0zzxdp";
-  const EMAILJS_PUBLIC_KEY="MQnMBhm7v8VWf3WMY";
-  emailjs.init(EMAILJS_PUBLIC_KEY);
+  const GAS_URL="https://script.google.com/macros/s/AKfycbys7WKipjw7Q1fDvLbWlk3VrSO7bz90nh7VyDA74u3hmmBJV606aV8q4jNLhfyCtRuY/exec";
   let PRODUCTS=[],currentLang="ja";
   const form=document.getElementById("contractForm");
   const checkHint=document.getElementById("checkHint");
@@ -709,17 +702,24 @@
     return doc.output("blob");
   }
 
-  async function sendPdfViaEmailJS(blob,code,shop){
-    const now=new Date().toLocaleString("ja-JP",{timeZone:"Asia/Tokyo"});
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      customer_code: code,
-      shop_name: shop,
-      company_name: form.companyName.value||"-",
-      contact_name: form.companyContact.value||"-",
-      send_time: now,
-      reply_to: form.companyEmail.value||"",
-      name: form.companyContact.value||"申込者"
-    });
+  async function uploadPdfToDrive(blob, code, shop){
+    const ab = await blob.arrayBuffer();
+    const u8 = new Uint8Array(ab);
+    let bin = ""; for(let i=0;i<u8.length;i++) bin+=String.fromCharCode(u8[i]);
+    const b64 = btoa(bin);
+    const fn  = ("njf-contract-"+code+"-"+shop+".pdf").replace(/[^a-zA-Z0-9\-_.]/g,"_");
+    const fd = new URLSearchParams();
+    fd.append("action","uploadPdf");
+    fd.append("customerCode", code);
+    fd.append("shopName",     shop);
+    fd.append("companyName",  form.companyName.value||"-");
+    fd.append("signedDate",   form.signedDate.value||"-");
+    fd.append("fileName",     fn);
+    fd.append("fileBase64",   b64);
+    const res    = await fetch(GAS_URL,{method:"POST",body:fd});
+    const result = await res.json();
+    if(!result.success) throw new Error(result.message||"Upload failed");
+    return result;
   }
 
   async function loadRecordById(){
@@ -759,8 +759,8 @@
       const a=document.createElement("a");a.href=url;a.download=`njf-contract-${customerCodeCell.textContent}.pdf`;a.click();URL.revokeObjectURL(url);
       statusEl.textContent="PDF保存完了。メール送信中...";statusEl.className="status";
       try{
-        await sendPdfViaEmailJS(blob,customerCodeCell.textContent,installNameCell.textContent);
-        statusEl.textContent=`✅ 契約申込書PDFを保存し、${FIXED_TO_EMAIL} への送信が完了しました。`;statusEl.className="status ok";
+        const uploaded=await uploadPdfToDrive(blob,customerCodeCell.textContent,installNameCell.textContent);
+        statusEl.textContent="✅ 契約申込書PDFをローカルに保存し、サーバーへのアップロードが完了しました。";statusEl.className="status ok";
       }catch(emailErr){
         statusEl.textContent=`⚠️ PDFは保存されましたが、メール送信に失敗しました：${emailErr.message}`;statusEl.className="status warn";
       }
