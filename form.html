@@ -23,11 +23,11 @@
     .lang-switch button.active{background:var(--brand);color:#fff;font-weight:700}
     .hero{background:linear-gradient(180deg,#fff 0%,#fcfcfb 100%);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
     .hero-inner{padding:20px 18px 16px}
-    .customer-hero-top{display:flex;align-items:center;gap:12px;justify-content:center}
-    .customer-logo-top{width:56px;height:56px;flex-shrink:0;overflow:hidden}
+    .customer-hero-top{display:grid;gap:14px}
+    .customer-logo-top{width:64px;height:64px;margin:0 auto;overflow:hidden}
     .customer-logo-top img{width:100%;height:100%;object-fit:contain}
-    .customer-title-center{text-align:left}
-    .brand-text h1{margin:0;font-size:18px;letter-spacing:.01em;white-space:nowrap}
+    .customer-title-center{text-align:center}
+    .brand-text h1{margin:0;font-size:20px;letter-spacing:.02em;white-space:nowrap}
     .brand-text p{margin:3px 0 0;font-size:12px;color:var(--sub)}
     .info-card{border:1px solid var(--line-dark);background:#fafaf8;border-radius:12px;overflow:hidden}
     .info-table{width:100%;border-collapse:collapse}
@@ -704,27 +704,42 @@
   async function uploadPdfToDrive(blob, code, shop){
     const ab = await blob.arrayBuffer();
     const u8 = new Uint8Array(ab);
-    let bin = ""; for(let i=0;i<u8.length;i++) bin+=String.fromCharCode(u8[i]);
-    const b64 = btoa(bin);
-    const fn  = ("njf-contract-"+code+"-"+shop+".pdf").replace(/[^a-zA-Z0-9\-_.]/g,"_");
-    // Build body as plain string to avoid URLSearchParams cloning issues
-    const body = [
-      "action=uploadPdf",
-      "customerCode="+encodeURIComponent(code),
-      "shopName="+encodeURIComponent(shop),
-      "companyName="+encodeURIComponent(form.companyName.value||"-"),
-      "signedDate="+encodeURIComponent(form.signedDate.value||"-"),
-      "fileName="+encodeURIComponent(fn),
-      "fileBase64="+encodeURIComponent(b64)
-    ].join("&");
-    const res    = await fetch(GAS_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/x-www-form-urlencoded"},
-      body: body,
-      redirect:"follow"
+
+    // base64 変換（チャンク処理でスタックオーバーフロー回避）
+    let b64 = "";
+    const chunkSize = 8192;
+    for(let i = 0; i < u8.length; i += chunkSize){
+      b64 += String.fromCharCode.apply(null, u8.subarray(i, i + chunkSize));
+    }
+    b64 = btoa(b64);
+
+    const fn = ("njf-contract-"+code+"-"+shop+".pdf").replace(/[^a-zA-Z0-9\-_.]/g,"_");
+
+    // GAS は e.postData.contents で受け取るので text/plain + JSON で送る
+    // GAS側の doPost で e.postData.contents を JSON.parse する
+    const payload = JSON.stringify({
+      action:       "uploadPdf",
+      customerCode: code,
+      shopName:     shop,
+      companyName:  form.companyName ? (form.companyName.value || "-") : "-",
+      signedDate:   form.signedDate  ? (form.signedDate.value  || "-") : "-",
+      fileName:     fn,
+      fileBase64:   b64
     });
-    const result = await res.json();
-    if(!result.success) throw new Error(result.message||"Upload failed");
+
+    const res = await fetch(GAS_URL, {
+      method:   "POST",
+      headers:  { "Content-Type": "text/plain;charset=utf-8" },
+      body:     payload,
+      redirect: "follow"
+    });
+
+    const text = await res.text();
+    let result;
+    try { result = JSON.parse(text); }
+    catch(e) { throw new Error("GASレスポンスが不正です: " + text.slice(0,200)); }
+
+    if(!result.success) throw new Error(result.message || "Upload failed");
     return result;
   }
 
