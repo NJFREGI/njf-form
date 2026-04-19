@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NJF REGI 管理ページ</title>
+  <title>NJFREGI管理页面</title>
   <style>
     :root{
       --bg:#f3f3f1;
@@ -18,7 +18,6 @@
       --ok:#0d7a43;
       --warn:#b42318;
       --shadow:0 6px 20px rgba(0,0,0,.06);
-      --radius:16px;
       font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP","PingFang SC","Microsoft YaHei",sans-serif;
     }
     *{box-sizing:border-box}
@@ -30,68 +29,114 @@
       border-radius:20px;
       box-shadow:var(--shadow);
     }
-    .hero{padding:22px 20px;margin-bottom:16px}
-    .hero-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
-    .brand{display:flex;gap:14px;align-items:center}
-    .logo-box{
-      width:84px;height:84px;border-radius:16px;background:#fff;border:1px solid #e8e8e3;
-      display:grid;place-items:center;overflow:hidden;flex:0 0 auto;
+    .hero{
+      padding:26px 20px;
+      margin-bottom:16px;
     }
-    .logo-box img{
-      width:100%;height:100%;object-fit:contain;
+    .admin-hero-center{
+      text-align:center;
     }
-    .hero h1{margin:0;font-size:26px}
-    .hero p{margin:8px 0 0;color:var(--sub);font-size:14px;line-height:1.8}
-    .badge{
-      padding:10px 14px;border-radius:999px;background:#f5fbff;border:1px solid #cfe8f7;
-      color:#0a6ea8;font-weight:700;font-size:13px;white-space:nowrap
+    .admin-hero-center h1{
+      margin:0;
+      font-size:28px;
+      font-weight:800;
+      letter-spacing:.04em;
     }
+
     .section{padding:18px;margin-bottom:16px}
     .section-title{
-      margin:0 0 14px;display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800
+      margin:0 0 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:18px;
+      font-weight:800
     }
     .section-title::before{
-      content:"";width:5px;height:20px;border-radius:999px;background:var(--brand)
+      content:"";
+      width:5px;
+      height:20px;
+      border-radius:999px;
+      background:var(--brand)
     }
+
     .grid{display:grid;gap:12px}
     .grid.two{grid-template-columns:1fr}
-    label{display:block;margin-bottom:6px;font-size:13px;color:#555;font-weight:700}
-    input,textarea,button{
-      width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);
-      font-size:14px;font-family:inherit;background:#fff;color:#222
+
+    label{
+      display:block;
+      margin-bottom:6px;
+      font-size:13px;
+      color:#555;
+      font-weight:700
     }
-    textarea{min-height:90px;resize:vertical}
-    .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+
+    input,button{
+      width:100%;
+      padding:11px 12px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      font-size:14px;
+      font-family:inherit;
+      background:#fff;
+      color:#222
+    }
+
+    .btn-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap
+    }
+
     .btn{
-      width:auto;min-width:140px;border:none;background:var(--brand);color:#fff;font-weight:700;
-      cursor:pointer;box-shadow:0 4px 12px rgba(19,137,212,.20)
+      width:auto;
+      min-width:140px;
+      border:none;
+      background:var(--brand);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(19,137,212,.20)
     }
     .btn:hover{background:var(--brand-dark)}
+
     .btn.secondary{
-      background:#f0f0ec;color:#333;border:1px solid var(--line);box-shadow:none
+      background:#f0f0ec;
+      color:#333;
+      border:1px solid var(--line);
+      box-shadow:none
     }
-    .subnote{font-size:13px;color:var(--sub);margin:-4px 0 10px}
-    .table-wrap{
-      overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#fff
+
+    .subnote{
+      font-size:13px;
+      color:var(--sub);
+      margin:-4px 0 10px
     }
-    table{width:100%;border-collapse:collapse;min-width:700px}
-    th,td{padding:10px 8px;border-bottom:1px solid var(--line);font-size:14px}
-    thead th{background:#f5f5f2;color:#555;font-size:13px}
-    tr:last-child td{border-bottom:none}
-    .money{text-align:right;white-space:nowrap}
-    .small-btn{
-      width:auto;padding:8px 12px;border-radius:8px;border:none;background:#efefea;cursor:pointer
-    }
+
     .result-box{
-      border:1px dashed var(--line-dark);background:var(--soft);padding:14px;border-radius:12px
+      border:1px dashed var(--line-dark);
+      background:var(--soft);
+      padding:14px;
+      border-radius:12px
     }
+
     .link-box{
-      word-break:break-all;background:#fff;border:1px solid var(--line);border-radius:10px;
-      padding:12px;font-size:13px;line-height:1.7
+      word-break:break-all;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:12px;
+      font-size:13px;
+      line-height:1.7
     }
-    .status{font-size:13px;margin-top:10px}
+
+    .status{
+      font-size:13px;
+      margin-top:10px
+    }
     .status.ok{color:var(--ok)}
     .status.warn{color:var(--warn)}
+
     .preview{
       border:1px solid var(--line);
       border-radius:12px;
@@ -100,52 +145,61 @@
       font-size:14px;
       line-height:1.8
     }
-    .preview strong{display:inline-block;min-width:110px}
-    .fixed-note{
-      background:#f8fbff;
-      border:1px solid #d7e9f7;
-      color:#0d6ea8;
-      padding:12px 14px;
-      border-radius:12px;
-      font-size:13px;
-      line-height:1.8;
+    .preview strong{
+      display:inline-block;
+      min-width:110px
     }
+
+    .device-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .device-card{
+      border:1px solid var(--line);
+      background:#fcfcfa;
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .device-card .row{
+      display:grid;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .device-card .row:last-child{
+      margin-bottom:0;
+    }
+
+    .small-btn{
+      width:auto;
+      padding:9px 12px;
+      border-radius:8px;
+      border:none;
+      background:#efefea;
+      cursor:pointer;
+    }
+
     @media (min-width:760px){
       .grid.two{grid-template-columns:1fr 1fr}
       .wrap{padding:24px 18px 44px}
+      .device-card .row.two{
+        grid-template-columns:1fr 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="hero">
-      <div class="hero-head">
-        <div class="brand">
-          <div class="logo-box">
-            <img src="logo.jpg" alt="NJF REGI Logo">
-          </div>
-          <div>
-            <h1>NJF REGI 管理ページ</h1>
-            <p>
-              顧客ごとの専用申込リンクを作成するための管理ページです。<br>
-              顧客コード、設置先名称、設備内容を設定後、専用リンクを生成して顧客へ送付してください。
-            </p>
-          </div>
-        </div>
-        <div class="badge">専用リンク生成モード</div>
+      <div class="admin-hero-center">
+        <h1>NJFREGI管理页面</h1>
       </div>
     </section>
 
     <section class="section">
-      <h2 class="section-title">1. 固定設定</h2>
-      <div class="fixed-note">
-        顧客へ送信された申込フォームは、同じフォルダ内の <strong>form.html</strong> を自動で参照します。<br>
-        また、PDF送信先メールアドレスは固定運用を想定しているため、毎回入力不要です。
-      </div>
-    </section>
-
-    <section class="section">
-      <h2 class="section-title">2. 顧客基本情報</h2>
+      <h2 class="section-title">1. 顧客基本情報</h2>
       <div class="grid two">
         <div>
           <label>顧客コード</label>
@@ -156,30 +210,15 @@
           <input id="installName" placeholder="例: 赤坂麻辣湯">
         </div>
       </div>
-      <p class="subnote">
-        顾客代码和安装店铺名称会自动带入顾客填写页面。
-      </p>
     </section>
 
     <section class="section">
-      <h2 class="section-title">3. 設備・サービス設定</h2>
+      <h2 class="section-title">2. 設備・サービス設定</h2>
       <p class="subnote">
-        这里新增的项目会自动保存到当前浏览器。刷新页面后也会保留。不同顾客生成链接前，请确认设备内容是否正确。
+        手机端已改成卡片式输入。这里新增的项目会自动保存到当前浏览器，刷新后仍保留。
       </p>
 
-      <div class="table-wrap">
-        <table id="deviceTable">
-          <thead>
-            <tr>
-              <th style="width:42%">設備名称</th>
-              <th class="money" style="width:20%">単価(¥)</th>
-              <th style="width:15%">数量</th>
-              <th style="width:23%">操作</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <div class="device-list" id="deviceList"></div>
 
       <div class="btn-row" style="margin-top:12px;">
         <button type="button" class="btn secondary" id="addRowBtn">＋ 設備を追加</button>
@@ -189,7 +228,7 @@
     </section>
 
     <section class="section">
-      <h2 class="section-title">4. 内容预览</h2>
+      <h2 class="section-title">3. 内容预览</h2>
       <div class="preview" id="previewBox">
         <div><strong>顧客コード：</strong><span id="previewCode">-</span></div>
         <div><strong>設置先名称：</strong><span id="previewShop">-</span></div>
@@ -199,7 +238,7 @@
     </section>
 
     <section class="section">
-      <h2 class="section-title">5. 専用リンク生成</h2>
+      <h2 class="section-title">4. 専用リンク生成</h2>
       <div class="btn-row">
         <button type="button" class="btn" id="generateBtn">専用リンクを生成</button>
         <button type="button" class="btn secondary" id="copyBtn">リンクをコピー</button>
@@ -214,9 +253,9 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "njf_regi_admin_config_v2";
+    const STORAGE_KEY = "njf_regi_admin_config_v4";
 
-    const deviceTableBody = document.querySelector("#deviceTable tbody");
+    const deviceListEl = document.getElementById("deviceList");
     const customerCodeEl = document.getElementById("customerCode");
     const installNameEl = document.getElementById("installName");
     const generatedLinkEl = document.getElementById("generatedLink");
@@ -230,23 +269,39 @@
         .replace(/>/g, "&gt;");
     }
 
-    function addDeviceRow(name = "", price = "", qty = "1") {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td><input class="device-name" placeholder="例: レシートプリンタ" value="${escapeHtml(name)}"></td>
-        <td class="money"><input class="device-price" type="number" min="0" placeholder="28000" value="${escapeHtml(price)}"></td>
-        <td><input class="device-qty" type="number" min="0" placeholder="1" value="${escapeHtml(qty)}"></td>
-        <td><button type="button" class="small-btn remove-row">削除</button></td>
+    function addDeviceCard(name = "", price = "", qty = "1") {
+      const card = document.createElement("div");
+      card.className = "device-card";
+      card.innerHTML = `
+        <div class="row">
+          <div>
+            <label>設備名称</label>
+            <input class="device-name" placeholder="例: レシートプリンタ" value="${escapeHtml(name)}">
+          </div>
+        </div>
+        <div class="row two">
+          <div>
+            <label>単価(¥)</label>
+            <input class="device-price" type="number" min="0" placeholder="28000" value="${escapeHtml(price)}">
+          </div>
+          <div>
+            <label>数量</label>
+            <input class="device-qty" type="number" min="0" placeholder="1" value="${escapeHtml(qty)}">
+          </div>
+        </div>
+        <div class="row">
+          <button type="button" class="small-btn remove-row">この設備を削除</button>
+        </div>
       `;
-      deviceTableBody.appendChild(tr);
+      deviceListEl.appendChild(card);
 
-      tr.querySelector(".remove-row").addEventListener("click", () => {
-        tr.remove();
+      card.querySelector(".remove-row").addEventListener("click", () => {
+        card.remove();
         updatePreview();
         saveConfig();
       });
 
-      tr.querySelectorAll("input").forEach(input => {
+      card.querySelectorAll("input").forEach(input => {
         input.addEventListener("input", () => {
           updatePreview();
           saveConfig();
@@ -254,14 +309,18 @@
       });
     }
 
+    function qtyValid(qty) {
+      return Number(qty) > 0;
+    }
+
     function collectDevices() {
-      const rows = [...deviceTableBody.querySelectorAll("tr")];
-      return rows.map(row => {
-        const name = row.querySelector(".device-name").value.trim();
-        const price = Number(row.querySelector(".device-price").value || 0);
-        const qty = Number(row.querySelector(".device-qty").value || 0);
+      const cards = [...deviceListEl.querySelectorAll(".device-card")];
+      return cards.map(card => {
+        const name = card.querySelector(".device-name").value.trim();
+        const price = Number(card.querySelector(".device-price").value || 0);
+        const qty = Number(card.querySelector(".device-qty").value || 0);
         return { name, price, qty };
-      }).filter(item => item.name && item.qty > 0);
+      }).filter(item => item.name && qtyValid(item.qty));
     }
 
     function updatePreview() {
@@ -311,7 +370,7 @@
       const url = `${getFormUrl()}?data=${encoded}`;
 
       generatedLinkEl.textContent = url;
-      showStatus("专用链接已生成。可以复制后发给顾客。", true);
+      showStatus("专用链接已生成。当前无数据库版本中，链接较长属于正常现象。", true);
     }
 
     function showStatus(text, ok) {
@@ -350,13 +409,13 @@
         const data = JSON.parse(raw);
         customerCodeEl.value = data.customerCode || "";
         installNameEl.value = data.installName || "";
-        deviceTableBody.innerHTML = "";
+        deviceListEl.innerHTML = "";
 
         if (Array.isArray(data.devices) && data.devices.length) {
-          data.devices.forEach(item => addDeviceRow(item.name, item.price, item.qty));
+          data.devices.forEach(item => addDeviceCard(item.name, item.price, item.qty));
         } else {
-          addDeviceRow("NJF POS 本体", "78000", "1");
-          addDeviceRow("レシートプリンタ", "28000", "1");
+          addDeviceCard("NJF POS 本体", "78000", "1");
+          addDeviceCard("レシートプリンタ", "28000", "1");
         }
         return true;
       } catch (e) {
@@ -365,12 +424,12 @@
     }
 
     function loadSample() {
-      deviceTableBody.innerHTML = "";
-      addDeviceRow("NJF POS 本体", "78000", "1");
-      addDeviceRow("キャッシュドロワ", "12000", "1");
-      addDeviceRow("レシートプリンタ", "28000", "1");
-      addDeviceRow("月額クラウド利用料", "9800", "1");
-      addDeviceRow("保守サポート", "5000", "1");
+      deviceListEl.innerHTML = "";
+      addDeviceCard("NJF POS 本体", "78000", "1");
+      addDeviceCard("キャッシュドロワ", "12000", "1");
+      addDeviceCard("レシートプリンタ", "28000", "1");
+      addDeviceCard("月額クラウド利用料", "9800", "1");
+      addDeviceCard("保守サポート", "5000", "1");
       updatePreview();
       saveConfig();
     }
@@ -378,8 +437,8 @@
     function clearAll() {
       customerCodeEl.value = "";
       installNameEl.value = "";
-      deviceTableBody.innerHTML = "";
-      addDeviceRow();
+      deviceListEl.innerHTML = "";
+      addDeviceCard();
       generatedLinkEl.textContent = "まだ生成されていません";
       showStatus("内容已初始化。", true);
       updatePreview();
@@ -387,7 +446,7 @@
     }
 
     document.getElementById("addRowBtn").addEventListener("click", () => {
-      addDeviceRow();
+      addDeviceCard();
       updatePreview();
       saveConfig();
     });
@@ -405,8 +464,8 @@
     });
 
     if (!loadConfig()) {
-      addDeviceRow("NJF POS 本体", "78000", "1");
-      addDeviceRow("レシートプリンタ", "28000", "1");
+      addDeviceCard("NJF POS 本体", "78000", "1");
+      addDeviceCard("レシートプリンタ", "28000", "1");
     }
     updatePreview();
   </script>
