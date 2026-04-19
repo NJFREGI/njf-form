@@ -77,35 +77,31 @@
       padding: 20px 18px 16px;
     }
 
-    .hero-head {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-      align-items: start;
+    .customer-hero-top{
+      display:grid;
+      gap:16px;
     }
 
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+    .customer-logo-top{
+      width:110px;
+      height:110px;
+      margin:0 auto;
+      border-radius:18px;
+      background:#fff;
+      border:1px solid #e8e8e4;
+      display:grid;
+      place-items:center;
+      overflow:hidden;
     }
 
-    .brand-logo {
-      width: 84px;
-      height: 84px;
-      border-radius: 14px;
-      background: #fff;
-      border: 1px solid #e8e8e4;
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-      flex: 0 0 auto;
+    .customer-logo-top img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
     }
 
-    .brand-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+    .customer-title-center{
+      text-align:center;
     }
 
     .brand-text h1 {
@@ -337,40 +333,40 @@
       box-shadow: none;
     }
 
-    .pricing-wrap {
+    .device-fixed-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .device-fixed-card {
       border: 1px solid var(--line);
       border-radius: 12px;
-      overflow: hidden;
       background: #fff;
+      padding: 14px;
     }
 
-    .pricing-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
+    .device-fixed-name {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      word-break: break-word;
     }
 
-    .pricing-table th,
-    .pricing-table td {
-      border-bottom: 1px solid var(--line);
-      padding: 10px 8px;
+    .device-fixed-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
       font-size: 14px;
-      vertical-align: top;
+      color: #444;
+      margin-bottom: 8px;
     }
 
-    .pricing-table thead th {
-      background: #f5f5f2;
-      font-size: 13px;
-      color: #555;
-    }
-
-    .pricing-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .money {
-      text-align: right;
-      white-space: nowrap;
+    .device-fixed-subtotal {
+      font-size: 15px;
+      font-weight: 700;
+      color: #222;
     }
 
     .sum-box {
@@ -434,10 +430,6 @@
     }
 
     @media (min-width: 760px) {
-      .hero-head {
-        grid-template-columns: 1.2fr 0.9fr;
-      }
-
       .grid.two {
         grid-template-columns: 1fr 1fr;
       }
@@ -456,58 +448,6 @@
         padding: 20px;
       }
     }
-
-    @media (max-width: 640px) {
-      .pricing-table thead {
-        display: none;
-      }
-
-      .pricing-table,
-      .pricing-table tbody,
-      .pricing-table tr,
-      .pricing-table td {
-        display: block;
-        width: 100%;
-      }
-
-      .pricing-table tr {
-        border-bottom: 1px solid var(--line);
-        padding: 6px 0;
-      }
-
-      .pricing-table tr:last-child {
-        border-bottom: none;
-      }
-
-      .pricing-table td {
-        border: none;
-        padding: 6px 12px;
-      }
-
-      .pricing-table td::before {
-        content: attr(data-label);
-        display: block;
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 2px;
-      }
-
-      .pricing-table td.item-name {
-        font-weight: 700;
-        line-height: 1.6;
-        word-break: break-word;
-      }
-
-      .pricing-table td.item-name::before {
-        content: attr(data-label);
-        font-weight: 500;
-      }
-
-      .pricing-table td .qty-input {
-        width: 100%;
-        max-width: 120px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -521,22 +461,21 @@
 
     <section class="hero">
       <div class="hero-inner">
-        <div class="hero-head">
-          <div class="brand-row">
-            <div class="brand-logo">
-              <img src="logo.jpg" alt="NJF REGI Logo">
-            </div>
-            <div class="brand-text content-switchable">
-              <h1 data-lang="ja" class="show">NJF REGI 契約申込フォーム</h1>
-              <h1 data-lang="zh">NJF REGI 合同申请表</h1>
+        <div class="customer-hero-top">
+          <div class="customer-logo-top">
+            <img src="logo.jpg" alt="NJF REGI Logo">
+          </div>
 
-              <p data-lang="ja" class="show">
-                ご契約前に重要事項をご確認いただき、必要事項をご入力のうえお申し込みください。
-              </p>
-              <p data-lang="zh">
-                请在签约前确认重要事项，并填写相关信息后提交申请。
-              </p>
-            </div>
+          <div class="brand-text content-switchable customer-title-center">
+            <h1 data-lang="ja" class="show">NJF REGI 契約申込フォーム</h1>
+            <h1 data-lang="zh">NJF REGI 合同申请表</h1>
+
+            <p data-lang="ja" class="show">
+              ご契約前に重要事項をご確認いただき、必要事項をご入力のうえお申し込みください。
+            </p>
+            <p data-lang="zh">
+              请在签约前确认重要事项，并填写相关信息后提交申请。
+            </p>
           </div>
 
           <div class="info-card">
@@ -823,19 +762,7 @@
           <span data-lang="zh">4. 设备与服务内容</span>
         </h2>
 
-        <div class="pricing-wrap">
-          <table class="pricing-table" id="pricingTable">
-            <thead>
-              <tr class="content-switchable">
-                <th><span data-lang="ja" class="show">項目</span><span data-lang="zh">项目</span></th>
-                <th class="money"><span data-lang="ja" class="show">単価(¥)</span><span data-lang="zh">单价(¥)</span></th>
-                <th><span data-lang="ja" class="show">数量</span><span data-lang="zh">数量</span></th>
-                <th class="money"><span data-lang="ja" class="show">小計(¥)</span><span data-lang="zh">小计(¥)</span></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="device-fixed-list" id="deviceFixedList"></div>
 
         <div class="sum-box">
           <div class="sum-row content-switchable">
@@ -921,14 +848,8 @@
   </main>
 
   <script>
-    const FIXED_TO_EMAIL = "info@njfregi.jp"; // ← 改成你固定接收PDF的邮箱
-    const SEND_ENDPOINT = ""; // ← 如果接入Google Apps Script，这里填部署后的URL
-
-    const CHECK_TEXTS = [
-      "契約重要事項説明書の内容を確認し、同意しました。",
-      "個人情報の取り扱いについて確認し、同意しました。",
-      "業務データの取扱いおよび保護について確認し、同意しました。"
-    ];
+    const FIXED_TO_EMAIL = "info@njfregi.jp";
+    const SEND_ENDPOINT = "";
 
     let PRODUCTS = [
       { nameJa: "NJF POS 本体", nameZh: "NJF POS 主机", price: 78000, qty: 1 },
@@ -941,7 +862,6 @@
     const checkHint = document.getElementById("checkHint");
     const submitBtn = document.getElementById("submitBtn");
     const statusEl = document.getElementById("sendStatus");
-    const priceBody = document.querySelector("#pricingTable tbody");
     const subtotalEl = document.getElementById("subtotal");
     const taxEl = document.getElementById("tax");
     const totalEl = document.getElementById("total");
@@ -950,6 +870,7 @@
     const topApplyDate = document.getElementById("topApplyDate");
     const customerCodeCell = document.getElementById("customerCodeCell");
     const installNameCell = document.getElementById("installNameCell");
+    const deviceFixedListEl = document.getElementById("deviceFixedList");
 
     function formatJPY(num) {
       return new Intl.NumberFormat("ja-JP").format(num);
@@ -986,7 +907,7 @@
       langJaBtn.classList.toggle("active", lang === "ja");
       langZhBtn.classList.toggle("active", lang === "zh");
 
-      renderProducts(true);
+      renderFixedDevices();
       updateTopDate();
       updateCheckHint();
     }
@@ -1062,31 +983,26 @@
       });
     }
 
-    function renderProducts(keepQty = false) {
-      const oldQtys = keepQty
-        ? [...document.querySelectorAll(".qty-input")].map(input => Number(input.value || 0))
-        : PRODUCTS.map(p => p.qty);
+    function renderFixedDevices() {
+      deviceFixedListEl.innerHTML = "";
 
-      priceBody.innerHTML = "";
+      PRODUCTS.forEach((item) => {
+        const name = currentLang === "ja" ? item.nameJa : item.nameZh;
+        const subtotal = item.price * item.qty;
 
-      PRODUCTS.forEach((item, index) => {
-        const tr = document.createElement("tr");
-        const itemName = currentLang === "ja" ? item.nameJa : item.nameZh;
-        const qtyValue = oldQtys[index] ?? item.qty;
-
-        tr.innerHTML = `
-          <td class="item-name" data-label="${currentLang === "ja" ? "項目" : "项目"}">${itemName}</td>
-          <td class="money" data-label="${currentLang === "ja" ? "単価(¥)" : "单价(¥)"}">¥${formatJPY(item.price)}</td>
-          <td data-label="${currentLang === "ja" ? "数量" : "数量"}">
-            <input type="number" min="0" value="${qtyValue}" data-index="${index}" class="qty-input" disabled>
-          </td>
-          <td class="money" data-label="${currentLang === "ja" ? "小計(¥)" : "小计(¥)"}" id="line-${index}">¥0</td>
+        const card = document.createElement("div");
+        card.className = "device-fixed-card";
+        card.innerHTML = `
+          <div class="device-fixed-name">${name}</div>
+          <div class="device-fixed-meta">
+            <span>${currentLang === "ja" ? "単価" : "单价"}：¥${formatJPY(item.price)}</span>
+            <span>${currentLang === "ja" ? "数量" : "数量"}：${item.qty}</span>
+          </div>
+          <div class="device-fixed-subtotal">
+            ${currentLang === "ja" ? "小計" : "小计"}：¥${formatJPY(subtotal)}
+          </div>
         `;
-        priceBody.appendChild(tr);
-      });
-
-      document.querySelectorAll(".qty-input").forEach(input => {
-        input.addEventListener("input", calcTotals);
+        deviceFixedListEl.appendChild(card);
       });
 
       calcTotals();
@@ -1094,26 +1010,17 @@
 
     function calcTotals() {
       let subtotal = 0;
-      const qtyInputs = [...document.querySelectorAll(".qty-input")];
-      qtyInputs.forEach((input) => {
-        const index = Number(input.dataset.index);
-        const qty = Math.max(0, Number(input.value || 0));
-        const line = PRODUCTS[index].price * qty;
-        subtotal += line;
-        document.getElementById(`line-${index}`).textContent = `¥${formatJPY(line)}`;
+      PRODUCTS.forEach(item => {
+        subtotal += item.price * item.qty;
       });
       const tax = Math.round(subtotal * 0.1);
       const total = subtotal + tax;
+
       subtotalEl.textContent = `¥${formatJPY(subtotal)}`;
       taxEl.textContent = `¥${formatJPY(tax)}`;
       totalEl.textContent = `¥${formatJPY(total)}`;
-      return { subtotal, tax, total };
-    }
 
-    function setProductInputsEnabled(enabled) {
-      document.querySelectorAll(".qty-input").forEach((input) => {
-        input.disabled = !enabled;
-      });
+      return { subtotal, tax, total };
     }
 
     function initSignature() {
@@ -1208,12 +1115,12 @@
           auto: form.shopAddrAuto.value,
           detail: form.shopAddrDetail.value
         },
-        items: [...document.querySelectorAll(".qty-input")].map((input, i) => ({
-          nameJa: PRODUCTS[i].nameJa,
-          nameZh: PRODUCTS[i].nameZh,
-          unitPrice: PRODUCTS[i].price,
-          qty: Number(input.value || 0),
-          line: PRODUCTS[i].price * Number(input.value || 0)
+        items: PRODUCTS.map(item => ({
+          nameJa: item.nameJa,
+          nameZh: item.nameZh,
+          unitPrice: item.price,
+          qty: item.qty,
+          line: item.price * item.qty
         })),
         totals,
         signedDate: form.signedDate.value,
@@ -1247,18 +1154,15 @@
       doc.setFontSize(11);
       doc.text("確認事項", 10, y); y += 6;
       doc.setFontSize(10);
-      CHECK_TEXTS.forEach(item => {
-        doc.text(`・${item}`, 12, y, { maxWidth: 184 });
-        y += 6;
-      });
+      doc.text("・契約重要事項説明書の内容を確認し、同意しました。", 12, y); y += 6;
+      doc.text("・個人情報の取り扱いについて確認し、同意しました。", 12, y); y += 6;
+      doc.text("・業務データの取扱いおよび保護について確認し、同意しました。", 12, y); y += 8;
 
-      y += 2;
       doc.setFontSize(11);
       doc.text("設備・サービス内容", 10, y); y += 6;
       doc.setFontSize(10);
 
       d.items.forEach(item => {
-        if (item.qty === 0) return;
         doc.text(`${item.nameJa} / 単価: ¥${formatJPY(item.unitPrice)} / 数量: ${item.qty} / 小計: ¥${formatJPY(item.line)}`, 10, y, { maxWidth: 190 });
         y += 6;
       });
@@ -1354,7 +1258,7 @@
     }
 
     loadLinkData();
-    renderProducts();
+    renderFixedDevices();
     const signature = initSignature();
 
     setFormEnabled(false);
@@ -1376,7 +1280,6 @@
     document.querySelectorAll(".confirm-check").forEach((el) => {
       el.addEventListener("change", () => {
         checkAllConfirmed();
-        setProductInputsEnabled([...document.querySelectorAll(".confirm-check")].every(x => x.checked));
       });
     });
 
