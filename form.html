@@ -581,6 +581,12 @@
 
   function fmt(n){return new Intl.NumberFormat("ja-JP").format(n)}
   function fmtDate(s){if(!s)return"-";const d=new Date(s+"T00:00:00");if(isNaN(d))return s;return`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;}
+  function todayJST(){
+    // UTC+9 で正しい今日の日付を返す（toISOString()はUTCなので深夜に前日になる問題を修正）
+    const now=new Date();
+    const jst=new Date(now.getTime()+9*60*60*1000);
+    return jst.toISOString().slice(0,10);
+  }
   function updateTopDate(){topApplyDate.textContent=fmtDate(form.signedDate.value)}
 
   function switchLanguage(lang){
@@ -603,7 +609,7 @@
   function setFormEnabled(enabled){
     [...form.querySelectorAll("input,textarea")].forEach(el=>{if(!["checkbox","button","submit"].includes(el.type))el.disabled=!enabled;});
     submitBtn.disabled=!enabled;updateCheckHint();
-    if(enabled&&!form.signedDate.value){form.signedDate.value=new Date().toISOString().slice(0,10);updateTopDate();}
+    if(enabled&&!form.signedDate.value){form.signedDate.value=todayJST();updateTopDate();}
   }
 
   function checkAllConfirmed(){const all=[...document.querySelectorAll(".confirm-check")].every(el=>el.checked);setFormEnabled(all);}
@@ -795,7 +801,7 @@
     }finally{submitBtn.disabled=false;}
   });;
 
-  form.signedDate.value=new Date().toISOString().slice(0,10);
+  form.signedDate.value=todayJST();
   updateTopDate();switchLanguage("ja");loadRecordById();
 </script>
 </body>
