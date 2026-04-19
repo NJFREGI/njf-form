@@ -15,11 +15,9 @@
       --line-dark: #b4b4ae;
       --brand: #1389d4;
       --brand-dark: #0d6faa;
-      --accent: #f8f8f6;
       --ok: #0b7a43;
       --warn: #b42318;
       --shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-      --radius: 14px;
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
         "Yu Gothic", "Noto Sans JP", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
@@ -93,21 +91,21 @@
     }
 
     .brand-logo {
-      width: 72px;
-      height: 72px;
+      width: 84px;
+      height: 84px;
       border-radius: 14px;
       background: #fff;
       border: 1px solid #e8e8e4;
       display: grid;
       place-items: center;
-      box-shadow: inset 0 0 0 1px rgba(19, 137, 212, 0.03);
+      overflow: hidden;
+      flex: 0 0 auto;
     }
 
-    .brand-logo .logo-mark {
-      color: var(--brand);
-      font-size: 28px;
-      font-weight: 800;
-      line-height: 1;
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     .brand-text h1 {
@@ -157,6 +155,7 @@
       text-align: center;
       font-weight: 700;
       letter-spacing: 0.04em;
+      word-break: break-word;
     }
 
     .notice-bar {
@@ -231,35 +230,37 @@
       display: block;
     }
 
-    .checklist {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: 10px;
-    }
-
-    .check-item {
+    .confirm-inline {
+      margin-top: 12px;
       border: 1px solid var(--line);
       background: #fff;
       border-radius: 12px;
-      padding: 12px 12px;
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
+      padding: 12px;
     }
 
-    .check-item input {
-      margin-top: 4px;
+    .confirm-inline label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 0;
+      cursor: pointer;
+      font-size: 14px;
+      color: #222;
+      font-weight: 500;
+      line-height: 1.7;
+    }
+
+    .confirm-inline input[type="checkbox"] {
       width: 18px;
       height: 18px;
+      margin-top: 4px;
       accent-color: var(--brand);
       flex: 0 0 auto;
     }
 
-    .check-item span {
-      font-size: 14px;
-      line-height: 1.7;
+    .confirm-summary {
+      margin-top: 12px;
+      font-size: 13px;
     }
 
     .status {
@@ -287,7 +288,7 @@
       font-weight: 600;
     }
 
-    input, textarea, button, select {
+    input, textarea, button {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -337,14 +338,14 @@
     }
 
     .pricing-wrap {
-      overflow-x: auto;
       border: 1px solid var(--line);
       border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
     }
 
     .pricing-table {
       width: 100%;
-      min-width: 620px;
       border-collapse: collapse;
       background: #fff;
     }
@@ -354,6 +355,7 @@
       border-bottom: 1px solid var(--line);
       padding: 10px 8px;
       font-size: 14px;
+      vertical-align: top;
     }
 
     .pricing-table thead th {
@@ -421,6 +423,16 @@
       color: #444;
     }
 
+    .fixed-mail-box {
+      border: 1px solid var(--line);
+      background: #fbfbf8;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #444;
+      margin-bottom: 12px;
+    }
+
     @media (min-width: 760px) {
       .hero-head {
         grid-template-columns: 1.2fr 0.9fr;
@@ -444,6 +456,58 @@
         padding: 20px;
       }
     }
+
+    @media (max-width: 640px) {
+      .pricing-table thead {
+        display: none;
+      }
+
+      .pricing-table,
+      .pricing-table tbody,
+      .pricing-table tr,
+      .pricing-table td {
+        display: block;
+        width: 100%;
+      }
+
+      .pricing-table tr {
+        border-bottom: 1px solid var(--line);
+        padding: 6px 0;
+      }
+
+      .pricing-table tr:last-child {
+        border-bottom: none;
+      }
+
+      .pricing-table td {
+        border: none;
+        padding: 6px 12px;
+      }
+
+      .pricing-table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 2px;
+      }
+
+      .pricing-table td.item-name {
+        font-weight: 700;
+        line-height: 1.6;
+        word-break: break-word;
+      }
+
+      .pricing-table td.item-name::before {
+        content: attr(data-label);
+        font-weight: 500;
+      }
+
+      .pricing-table td .qty-input {
+        width: 100%;
+        max-width: 120px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -460,7 +524,7 @@
         <div class="hero-head">
           <div class="brand-row">
             <div class="brand-logo">
-              <div class="logo-mark">NJF</div>
+              <img src="logo.jpg" alt="NJF REGI Logo">
             </div>
             <div class="brand-text content-switchable">
               <h1 data-lang="ja" class="show">NJF REGI 契約申込フォーム</h1>
@@ -482,14 +546,14 @@
                   <span data-lang="ja" class="show">顧客コード</span>
                   <span data-lang="zh">客户代码</span>
                 </th>
-                <td>20260117001</td>
+                <td id="customerCodeCell">-</td>
               </tr>
               <tr>
                 <th class="content-switchable">
                   <span data-lang="ja" class="show">設置先名称</span>
                   <span data-lang="zh">安装店铺名称</span>
                 </th>
-                <td>赤坂麻辣湯</td>
+                <td id="installNameCell">-</td>
               </tr>
               <tr>
                 <th class="content-switchable">
@@ -521,10 +585,10 @@
         </h2>
         <p class="subnote content-switchable">
           <span data-lang="ja" class="show">
-            内容説明は中日切替対応、下記の確認チェック項目は日本語固定です。
+            内容説明は中日切替対応です。各項目を確認後、直下の確認欄にチェックを入れてください。
           </span>
           <span data-lang="zh">
-            说明内容支持中日切换，下方确认勾选项目固定为日语显示。
+            说明内容支持中日切换。请阅读每项内容后，在其下方立即勾选确认。
           </span>
         </p>
 
@@ -548,6 +612,13 @@
             <p>如属于外接设备厂商保修范围外的故障，将产生设备重新购买或维修费用。</p>
             <p>客户数据保存期限最长为 24 个月，超过 25 个月后数据可能被删除，请客户自行做好备份。</p>
           </div>
+
+          <div class="confirm-inline">
+            <label>
+              <input type="checkbox" class="confirm-check" data-check-id="1">
+              <span>契約重要事項説明書の内容を確認し、同意しました。</span>
+            </label>
+          </div>
         </div>
 
         <div class="jp-box content-switchable">
@@ -565,6 +636,13 @@
             <p>取得的个人信息仅用于以下目的，未经本人同意不会用于其他用途。</p>
             <p>（1）业务及订单处理 （2）销售管理、分析与服务改善 （3）客户咨询对应 （4）依法应对</p>
             <p>除法律法规要求等情况外，原则上不会向第三方提供或公开个人信息。</p>
+          </div>
+
+          <div class="confirm-inline">
+            <label>
+              <input type="checkbox" class="confirm-check" data-check-id="2">
+              <span>個人情報の取り扱いについて確認し、同意しました。</span>
+            </label>
           </div>
         </div>
 
@@ -584,10 +662,16 @@
             <p>业务数据仅在服务提供与维护、基于统计处理的功能改善、以及依法应对的范围内使用。</p>
             <p>业务数据的备份原则上由使用店铺自行负责，服务终止后将在保存期限届满后进行安全删除。</p>
           </div>
+
+          <div class="confirm-inline">
+            <label>
+              <input type="checkbox" class="confirm-check" data-check-id="3">
+              <span>業務データの取扱いおよび保護について確認し、同意しました。</span>
+            </label>
+          </div>
         </div>
 
-        <ul class="checklist" id="checklist"></ul>
-        <p id="checkHint" class="status warn">すべての確認項目にチェックを入れてください。</p>
+        <p id="checkHint" class="confirm-summary status warn">すべての確認項目にチェックを入れてください。</p>
       </section>
 
       <section class="section">
@@ -778,15 +862,16 @@
           <span data-lang="zh">5. 签名与提交</span>
         </h2>
 
-        <div class="grid two">
-          <div>
-            <label class="content-switchable">
-              <span data-lang="ja" class="show">送信先メールアドレス</span>
-              <span data-lang="zh">接收邮箱</span>
-            </label>
-            <input name="toEmail" type="email" required disabled />
+        <div class="fixed-mail-box content-switchable">
+          <div data-lang="ja" class="show">
+            申込書PDFは、あらかじめ設定された管理者メールアドレス宛に送信されます。
           </div>
+          <div data-lang="zh">
+            申请书 PDF 将发送到预先设置好的管理员邮箱。
+          </div>
+        </div>
 
+        <div class="grid two">
           <div>
             <label class="content-switchable">
               <span data-lang="ja" class="show">記入日</span>
@@ -836,25 +921,23 @@
   </main>
 
   <script>
-    const CHECK_ITEMS = [
-      "契約重要事項説明書の内容を確認しました。",
+    const FIXED_TO_EMAIL = "info@njfregi.jp"; // ← 改成你固定接收PDF的邮箱
+    const SEND_ENDPOINT = ""; // ← 如果接入Google Apps Script，这里填部署后的URL
+
+    const CHECK_TEXTS = [
+      "契約重要事項説明書の内容を確認し、同意しました。",
       "個人情報の取り扱いについて確認し、同意しました。",
       "業務データの取扱いおよび保護について確認し、同意しました。"
     ];
 
-    const PRODUCTS = [
+    let PRODUCTS = [
       { nameJa: "NJF POS 本体", nameZh: "NJF POS 主机", price: 78000, qty: 1 },
-      { nameJa: "キャッシュドロワ", nameZh: "钱箱", price: 12000, qty: 1 },
-      { nameJa: "レシートプリンタ", nameZh: "小票打印机", price: 28000, qty: 1 },
-      { nameJa: "月額クラウド利用料", nameZh: "月额云服务费", price: 9800, qty: 1 },
-      { nameJa: "保守サポート", nameZh: "维护支持", price: 5000, qty: 1 }
+      { nameJa: "レシートプリンタ", nameZh: "小票打印机", price: 28000, qty: 1 }
     ];
 
-    const SEND_ENDPOINT = "";
     let currentLang = "ja";
 
     const form = document.getElementById("contractForm");
-    const checklistEl = document.getElementById("checklist");
     const checkHint = document.getElementById("checkHint");
     const submitBtn = document.getElementById("submitBtn");
     const statusEl = document.getElementById("sendStatus");
@@ -865,6 +948,8 @@
     const langJaBtn = document.getElementById("langJaBtn");
     const langZhBtn = document.getElementById("langZhBtn");
     const topApplyDate = document.getElementById("topApplyDate");
+    const customerCodeCell = document.getElementById("customerCodeCell");
+    const installNameCell = document.getElementById("installNameCell");
 
     function formatJPY(num) {
       return new Intl.NumberFormat("ja-JP").format(num);
@@ -874,20 +959,14 @@
       if (!dateStr) return "-";
       const d = new Date(dateStr);
       if (Number.isNaN(d.getTime())) return dateStr;
-      const y = d.getFullYear();
-      const m = d.getMonth() + 1;
-      const day = d.getDate();
-      return `${y}年${m}月${day}日`;
+      return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
     }
 
     function formatDateZH(dateStr) {
       if (!dateStr) return "-";
       const d = new Date(dateStr);
       if (Number.isNaN(d.getTime())) return dateStr;
-      const y = d.getFullYear();
-      const m = d.getMonth() + 1;
-      const day = d.getDate();
-      return `${y}年${m}月${day}日`;
+      return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
     }
 
     function updateTopDate() {
@@ -909,42 +988,19 @@
 
       renderProducts(true);
       updateTopDate();
-
-      if (statusEl.dataset.key) {
-        const map = {
-          unlocked: {
-            ja: "確認が完了しました。下記フォームをご入力ください。",
-            zh: "已完成确认，可填写下方表格。"
-          },
-          locked: {
-            ja: "すべての確認項目にチェックを入れてください。",
-            zh: "请先勾选全部确认事项。"
-          }
-        };
-        if (map[statusEl.dataset.key]) {
-          checkHint.textContent = map[statusEl.dataset.key][lang];
-        }
-      }
+      updateCheckHint();
     }
 
-    function renderChecklist() {
-      checklistEl.innerHTML = "";
-      CHECK_ITEMS.forEach((text, i) => {
-        const li = document.createElement("li");
-        li.className = "check-item";
-        li.innerHTML = `
-          <input type="checkbox" class="confirm-check" id="c${i}">
-          <span>${text}</span>
-        `;
-        checklistEl.appendChild(li);
-      });
-
-      document.querySelectorAll(".confirm-check").forEach((el) => {
-        el.addEventListener("change", () => {
-          checkAllConfirmed();
-          setProductInputsEnabled([...document.querySelectorAll(".confirm-check")].every(x => x.checked));
-        });
-      });
+    function updateCheckHint() {
+      const allChecked = [...document.querySelectorAll(".confirm-check")].every(el => el.checked);
+      checkHint.textContent = allChecked
+        ? (currentLang === "ja"
+            ? "確認が完了しました。下記フォームをご入力ください。"
+            : "已完成确认，可填写下方表格。")
+        : (currentLang === "ja"
+            ? "すべての確認項目にチェックを入れてください。"
+            : "请先勾选全部确认事项。");
+      checkHint.className = `confirm-summary status ${allChecked ? "ok" : "warn"}`;
     }
 
     function setFormEnabled(enabled) {
@@ -955,20 +1011,7 @@
       });
 
       submitBtn.disabled = !enabled;
-
-      if (enabled) {
-        checkHint.textContent = currentLang === "ja"
-          ? "確認が完了しました。下記フォームをご入力ください。"
-          : "已完成确认，可填写下方表格。";
-        checkHint.className = "status ok";
-        statusEl.dataset.key = "unlocked";
-      } else {
-        checkHint.textContent = currentLang === "ja"
-          ? "すべての確認項目にチェックを入れてください。"
-          : "请先勾选全部确认事项。";
-        checkHint.className = "status warn";
-        statusEl.dataset.key = "locked";
-      }
+      updateCheckHint();
 
       if (enabled && !form.signedDate.value) {
         form.signedDate.value = new Date().toISOString().slice(0, 10);
@@ -1032,10 +1075,12 @@
         const qtyValue = oldQtys[index] ?? item.qty;
 
         tr.innerHTML = `
-          <td>${itemName}</td>
-          <td class="money">¥${formatJPY(item.price)}</td>
-          <td><input type="number" min="0" value="${qtyValue}" data-index="${index}" class="qty-input" disabled></td>
-          <td class="money" id="line-${index}">¥0</td>
+          <td class="item-name" data-label="${currentLang === "ja" ? "項目" : "项目"}">${itemName}</td>
+          <td class="money" data-label="${currentLang === "ja" ? "単価(¥)" : "单价(¥)"}">¥${formatJPY(item.price)}</td>
+          <td data-label="${currentLang === "ja" ? "数量" : "数量"}">
+            <input type="number" min="0" value="${qtyValue}" data-index="${index}" class="qty-input" disabled>
+          </td>
+          <td class="money" data-label="${currentLang === "ja" ? "小計(¥)" : "小计(¥)"}" id="line-${index}">¥0</td>
         `;
         priceBody.appendChild(tr);
       });
@@ -1143,6 +1188,9 @@
     function buildPdfData() {
       const totals = calcTotals();
       return {
+        customerCode: customerCodeCell.textContent,
+        installName: installNameCell.textContent,
+        fixedToEmail: FIXED_TO_EMAIL,
         company: {
           name: form.companyName.value,
           number: form.companyNumber.value,
@@ -1184,8 +1232,9 @@
       y += 9;
 
       doc.setFontSize(10);
-      doc.text(`申込日: ${formatDateJP(d.signedDate)}`, 10, y);
-      y += 7;
+      doc.text(`顧客コード: ${d.customerCode}`, 10, y); y += 6;
+      doc.text(`設置先名称: ${d.installName}`, 10, y); y += 6;
+      doc.text(`申込日: ${formatDateJP(d.signedDate)}`, 10, y); y += 7;
 
       doc.text(`会社名: ${d.company.name}`, 10, y); y += 6;
       doc.text(`会社住所: ${d.company.auto} ${d.company.detail}`, 10, y); y += 6;
@@ -1198,7 +1247,7 @@
       doc.setFontSize(11);
       doc.text("確認事項", 10, y); y += 6;
       doc.setFontSize(10);
-      CHECK_ITEMS.forEach(item => {
+      CHECK_TEXTS.forEach(item => {
         doc.text(`・${item}`, 12, y, { maxWidth: 184 });
         y += 6;
       });
@@ -1217,7 +1266,8 @@
       y += 2;
       doc.text(`税抜合計: ¥${formatJPY(d.totals.subtotal)}`, 10, y); y += 6;
       doc.text(`消費税: ¥${formatJPY(d.totals.tax)}`, 10, y); y += 6;
-      doc.text(`合計金額: ¥${formatJPY(d.totals.total)}`, 10, y); y += 8;
+      doc.text(`合計金額: ¥${formatJPY(d.totals.total)}`, 10, y); y += 6;
+      doc.text(`送信先: ${d.fixedToEmail}`, 10, y); y += 8;
 
       if (d.notes) {
         doc.text(`備考: ${d.notes}`, 10, y, { maxWidth: 190 });
@@ -1232,21 +1282,78 @@
       return doc;
     }
 
-    async function sendPdf(pdfBlob, toEmail) {
+    async function sendPdf(pdfBlob) {
       if (!SEND_ENDPOINT) {
-        return { sent: false, reason: currentLang === "ja" ? "送信API未設定のため、PDF保存のみ実行しました。" : "未配置发送接口，当前仅保存 PDF。" };
+        return {
+          sent: false,
+          reason: currentLang === "ja"
+            ? "送信API未設定のため、PDF保存のみ実行しました。"
+            : "未配置发送接口，当前仅保存 PDF。"
+        };
       }
 
-      const data = new FormData();
-      data.append("toEmail", toEmail);
-      data.append("file", pdfBlob, "njf-contract.pdf");
+      const arrayBuffer = await pdfBlob.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
 
-      const res = await fetch(SEND_ENDPOINT, { method: "POST", body: data });
-      if (!res.ok) throw new Error(currentLang === "ja" ? "メール送信APIエラー" : "邮件发送接口返回失败");
+      let binary = "";
+      for (let i = 0; i < uint8Array.length; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      const base64 = btoa(binary);
+
+      const formData = new URLSearchParams();
+      formData.append("fileBase64", base64);
+      formData.append("fileName", "njf-contract.pdf");
+      formData.append("toEmail", FIXED_TO_EMAIL);
+
+      const res = await fetch(SEND_ENDPOINT, {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) {
+        throw new Error(currentLang === "ja" ? "メール送信APIエラー" : "邮件发送接口返回失败");
+      }
+
+      const result = await res.json();
+      if (!result.success) {
+        throw new Error(result.message || "send failed");
+      }
+
       return { sent: true };
     }
 
-    renderChecklist();
+    function decodePayloadFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const data = params.get("data");
+      if (!data) return null;
+
+      try {
+        const json = decodeURIComponent(escape(atob(decodeURIComponent(data))));
+        return JSON.parse(json);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function loadLinkData() {
+      const payload = decodePayloadFromUrl();
+      if (!payload) return;
+
+      customerCodeCell.textContent = payload.code || "-";
+      installNameCell.textContent = payload.shop || "-";
+
+      if (Array.isArray(payload.items) && payload.items.length) {
+        PRODUCTS = payload.items.map(item => ({
+          nameJa: item.name || "",
+          nameZh: item.name || "",
+          price: Number(item.price || 0),
+          qty: Number(item.qty || 0)
+        }));
+      }
+    }
+
+    loadLinkData();
     renderProducts();
     const signature = initSignature();
 
@@ -1266,6 +1373,13 @@
     langJaBtn.addEventListener("click", () => switchLanguage("ja"));
     langZhBtn.addEventListener("click", () => switchLanguage("zh"));
 
+    document.querySelectorAll(".confirm-check").forEach((el) => {
+      el.addEventListener("change", () => {
+        checkAllConfirmed();
+        setProductInputsEnabled([...document.querySelectorAll(".confirm-check")].every(x => x.checked));
+      });
+    });
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
@@ -1283,7 +1397,7 @@
       doc.save("njf-contract.pdf");
 
       try {
-        const result = await sendPdf(blob, form.toEmail.value);
+        const result = await sendPdf(blob);
         if (result.sent) {
           statusEl.textContent = currentLang === "ja"
             ? "申込書PDFを作成し、メール送信が完了しました。"
