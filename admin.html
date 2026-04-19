@@ -2,752 +2,702 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>NJF REGI 管理システム</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <title>NJF REGI 管理</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet"/>
   <style>
-    /* ══════════════════════════════════════════════
-       DESIGN: Industrial-precision dark sidebar layout
-       Sharp geometry, confident typography, #0a0a0f base
-    ══════════════════════════════════════════════ */
-    :root {
-      --sidebar-w: 240px;
-      --bg:        #0d0d12;
-      --sidebar:   #0a0a0f;
-      --surface:   #15151e;
-      --surface2:  #1c1c28;
-      --surface3:  #222232;
-      --border:    rgba(255,255,255,.07);
-      --border2:   rgba(255,255,255,.12);
-      --ink:       #f0f0f5;
-      --ink2:      #9898b0;
-      --ink3:      #6060788;
-      --accent:    #4f8ef7;
-      --accent2:   #3a6fd4;
-      --green:     #34c77b;
-      --red:       #f05252;
-      --yellow:    #f5a623;
-      --shadow:    0 8px 32px rgba(0,0,0,.4);
-      --radius:    12px;
-      font-family: "Noto Sans JP", -apple-system, sans-serif;
+    :root{
+      --bg:       #f4f6fb;
+      --paper:    #ffffff;
+      --surface:  #f0f3fa;
+      --border:   #e2e8f5;
+      --border2:  #d0d8ee;
+      --ink:      #1a1f36;
+      --ink2:     #64738f;
+      --ink3:     #a0aec0;
+      --accent:   #3b82f6;
+      --accent-l: #eff6ff;
+      --accent-d: #2563eb;
+      --green:    #10b981;
+      --green-l:  #ecfdf5;
+      --red:      #ef4444;
+      --red-l:    #fef2f2;
+      --yellow:   #f59e0b;
+      --yellow-l: #fffbeb;
+      --shadow-s: 0 1px 4px rgba(60,80,140,.08);
+      --shadow:   0 4px 20px rgba(60,80,140,.10);
+      --radius:   14px;
+      --nav-h:    64px;
+      font-family:"Noto Sans JP",-apple-system,sans-serif;
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: var(--bg); color: var(--ink); }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{min-height:100%;background:var(--bg);color:var(--ink)}
 
-    /* ── Layout shell ── */
-    .shell { display: flex; height: 100vh; overflow: hidden; }
-
-    /* ── Sidebar ── */
-    .sidebar {
-      width: var(--sidebar-w);
-      flex-shrink: 0;
-      background: var(--sidebar);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+    /* ══ TOP HEADER ══ */
+    .topbar{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      height:56px;
+      background:var(--paper);
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 16px;
+      box-shadow:var(--shadow-s);
     }
-
-    .sidebar-brand {
-      padding: 22px 20px 18px;
-      border-bottom: 1px solid var(--border);
+    .topbar-brand{display:flex;align-items:center;gap:10px}
+    .brand-icon{
+      width:34px;height:34px;border-radius:9px;
+      background:linear-gradient(135deg,#3b82f6,#2563eb);
+      display:grid;place-items:center;
+      font-size:13px;font-weight:900;color:#fff;
+      box-shadow:0 2px 8px rgba(59,130,246,.35);
     }
-    .brand-mark {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 4px;
-    }
-    .brand-icon {
-      width: 36px; height: 36px;
-      background: var(--accent);
-      border-radius: 9px;
-      display: grid; place-items: center;
-      font-weight: 900; font-size: 15px; color: #fff;
-      flex-shrink: 0;
-      box-shadow: 0 0 20px rgba(79,142,247,.35);
-    }
-    .brand-name { font-size: 15px; font-weight: 900; letter-spacing: .06em; color: var(--ink); }
-    .brand-sub  { font-size: 10px; color: var(--ink2); letter-spacing: .08em; margin-top: 1px; }
-
-    .sidebar-nav { flex: 1; padding: 14px 10px; overflow-y: auto; }
-    .nav-section-label {
-      font-size: 9.5px; font-weight: 700; letter-spacing: .12em;
-      color: var(--ink2); padding: 14px 10px 6px; text-transform: uppercase;
-    }
-    .nav-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px; border-radius: 9px; margin-bottom: 2px;
-      cursor: pointer; font-size: 13px; font-weight: 500; color: var(--ink2);
-      transition: background .15s, color .15s;
-      border: none; background: none; width: 100%; text-align: left;
-      font-family: inherit;
-    }
-    .nav-item:hover { background: var(--surface2); color: var(--ink); }
-    .nav-item.active { background: rgba(79,142,247,.15); color: var(--accent); font-weight: 700; }
-    .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
-    .nav-badge {
-      margin-left: auto; background: var(--accent);
-      color: #fff; font-size: 10px; font-weight: 700;
-      padding: 1px 7px; border-radius: 99px; min-width: 20px; text-align: center;
+    .brand-name{font-size:15px;font-weight:900;color:var(--ink);letter-spacing:.02em}
+    .brand-sub{font-size:10px;color:var(--ink2)}
+    .topbar-right{display:flex;align-items:center;gap:8px}
+    .refresh-btn{
+      background:var(--accent-l);border:none;color:var(--accent);
+      width:36px;height:36px;border-radius:9px;font-size:16px;
+      cursor:pointer;display:grid;place-items:center;
     }
 
-    .sidebar-footer {
-      padding: 14px 16px;
-      border-top: 1px solid var(--border);
-      font-size: 11px; color: var(--ink2);
+    /* ══ PAGE WRAPPER ══ */
+    .page-wrap{
+      padding-top:56px;
+      padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+      min-height:100vh;
     }
 
-    /* ── Main content ── */
-    .main-area {
-      flex: 1; overflow-y: auto;
-      display: flex; flex-direction: column;
+    /* ══ VIEWS ══ */
+    .view{display:none;padding:16px;animation:fadeIn .18s ease}
+    .view.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ══ BOTTOM NAV ══ */
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;z-index:100;
+      height:var(--nav-h);
+      padding-bottom:env(safe-area-inset-bottom);
+      background:var(--paper);
+      border-top:1px solid var(--border);
+      display:grid;grid-template-columns:repeat(3,1fr);
+      box-shadow:0 -4px 20px rgba(60,80,140,.08);
+    }
+    .nav-tab{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:3px;cursor:pointer;border:none;background:none;
+      font-family:inherit;color:var(--ink3);transition:color .15s;
+      padding:6px 0;
+    }
+    .nav-tab.active{color:var(--accent)}
+    .nav-tab-icon{font-size:20px;line-height:1}
+    .nav-tab-label{font-size:10px;font-weight:700;letter-spacing:.04em}
+    .nav-badge{
+      position:absolute;top:-2px;right:-6px;
+      background:var(--red);color:#fff;
+      font-size:9px;font-weight:900;
+      min-width:16px;height:16px;border-radius:99px;
+      display:flex;align-items:center;justify-content:center;
+      padding:0 4px;
+    }
+    .nav-tab-icon-wrap{position:relative;display:inline-flex}
+
+    /* ══ CARDS ══ */
+    .card{
+      background:var(--paper);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-s);
+      overflow:hidden;
+      margin-bottom:14px;
+    }
+    .card-header{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      gap:10px;
+    }
+    .card-title{font-size:14px;font-weight:800;color:var(--ink)}
+    .card-sub{font-size:11px;color:var(--ink2);margin-top:2px}
+    .card-body{padding:16px}
+
+    /* ══ STATS ══ */
+    .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .stat-card{
+      background:var(--paper);border:1px solid var(--border);
+      border-radius:var(--radius);padding:14px 16px;
+      box-shadow:var(--shadow-s);
+    }
+    .stat-label{font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.06em;margin-bottom:6px}
+    .stat-val{font-size:26px;font-weight:900;line-height:1}
+    .stat-val.blue{color:var(--accent)}
+    .stat-val.green{color:var(--green)}
+    .stat-val.yellow{color:var(--yellow)}
+    .stat-sub{font-size:10px;color:var(--ink3);margin-top:4px}
+
+    /* ══ FORM FIELDS ══ */
+    .field{margin-bottom:12px}
+    .field-label{
+      display:block;font-size:11px;font-weight:700;
+      color:var(--ink2);letter-spacing:.05em;margin-bottom:5px;
+    }
+    .field input,.field textarea{
+      width:100%;background:var(--surface);
+      border:1.5px solid var(--border2);border-radius:10px;
+      padding:11px 13px;font-size:14px;font-family:inherit;color:var(--ink);
+      transition:border-color .15s,box-shadow .15s;
+      -webkit-appearance:none;appearance:none;
+    }
+    .field input:focus,.field textarea:focus{
+      outline:none;border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(59,130,246,.12);
+    }
+    .field input::placeholder{color:var(--ink3)}
+    .field textarea{min-height:70px;resize:vertical}
+
+    /* ══ DEVICE CARD (mobile-friendly vertical) ══ */
+    .device-item{
+      background:var(--surface);
+      border:1.5px solid var(--border2);
+      border-radius:12px;
+      padding:14px;
+      margin-bottom:10px;
+      position:relative;
+    }
+    .device-item .dev-name-field{margin-bottom:8px}
+    .device-item .dev-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .device-item .dev-label{
+      font-size:10px;font-weight:700;color:var(--ink2);
+      letter-spacing:.05em;margin-bottom:4px;
+    }
+    .device-item input{
+      width:100%;background:var(--paper);
+      border:1.5px solid var(--border2);border-radius:9px;
+      padding:9px 11px;font-size:14px;font-family:inherit;color:var(--ink);
+      -webkit-appearance:none;
+    }
+    .device-item input:focus{
+      outline:none;border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(59,130,246,.12);
+    }
+    .device-item input::placeholder{color:var(--ink3)}
+    .device-remove{
+      position:absolute;top:12px;right:12px;
+      width:28px;height:28px;border-radius:7px;
+      background:var(--red-l);border:1px solid rgba(239,68,68,.2);
+      color:var(--red);font-size:13px;
+      cursor:pointer;display:grid;place-items:center;
+    }
+    .device-num{
+      position:absolute;top:14px;left:14px;
+      width:20px;height:20px;border-radius:6px;
+      background:var(--accent-l);color:var(--accent);
+      font-size:10px;font-weight:900;
+      display:grid;place-items:center;
+    }
+    .device-item.has-num{padding-left:42px}
+
+    /* ══ BUTTONS ══ */
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      padding:12px 20px;border-radius:11px;
+      font-size:14px;font-weight:700;cursor:pointer;
+      border:none;font-family:inherit;
+      transition:opacity .15s,transform .1s;
+      width:100%;
+    }
+    .btn:active{transform:scale(.97)}
+    .btn-primary{
+      background:linear-gradient(135deg,var(--accent),var(--accent-d));
+      color:#fff;
+      box-shadow:0 4px 14px rgba(59,130,246,.3);
+    }
+    .btn-primary:hover{opacity:.9}
+    .btn-outline{
+      background:var(--accent-l);color:var(--accent);
+      border:1.5px solid rgba(59,130,246,.25);
+    }
+    .btn-ghost{
+      background:var(--surface);color:var(--ink2);
+      border:1.5px solid var(--border2);
+    }
+    .btn-danger{
+      background:var(--red-l);color:var(--red);
+      border:1.5px solid rgba(239,68,68,.2);
+    }
+    .btn-sm{padding:8px 14px;font-size:13px;width:auto}
+    .btn-xs{padding:6px 11px;font-size:12px;width:auto}
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* ══ STATUS MESSAGES ══ */
+    .msg{
+      padding:12px 14px;border-radius:10px;
+      font-size:13px;font-weight:600;margin-top:10px;
+      display:none;line-height:1.5;
+    }
+    .msg.show{display:block}
+    .msg-ok{background:var(--green-l);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+    .msg-err{background:var(--red-l);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+    .msg-info{background:var(--accent-l);color:var(--accent);border:1px solid rgba(59,130,246,.2)}
+
+    /* ══ LINK BOX ══ */
+    .link-box{
+      background:var(--accent-l);border:1.5px solid rgba(59,130,246,.25);
+      border-radius:11px;padding:14px;margin-top:12px;
+      display:none;
+    }
+    .link-box.show{display:block}
+    .link-box-label{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.06em;margin-bottom:8px}
+    .link-url-wrap{
+      background:var(--paper);border:1px solid var(--border);
+      border-radius:9px;padding:10px 12px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .link-url-text{
+      flex:1;font-size:12px;color:var(--accent-d);
+      word-break:break-all;line-height:1.5;
+    }
+    .copy-btn{
+      background:var(--accent);color:#fff;border:none;
+      padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;
+      cursor:pointer;font-family:inherit;flex-shrink:0;
+    }
+    .link-hint{font-size:11px;color:var(--ink2);margin-top:8px;line-height:1.6}
+
+    /* ══ SUBMISSIONS TABLE (mobile card style) ══ */
+    .sub-card{
+      background:var(--paper);border:1px solid var(--border);
+      border-radius:12px;padding:14px;margin-bottom:10px;
+      box-shadow:var(--shadow-s);
+    }
+    .sub-card-top{
+      display:flex;align-items:flex-start;justify-content:space-between;
+      margin-bottom:10px;gap:8px;
+    }
+    .sub-code{
+      display:inline-block;background:var(--accent-l);color:var(--accent);
+      font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;
+      letter-spacing:.04em;
+    }
+    .sub-shop{font-size:15px;font-weight:800;color:var(--ink);margin-top:5px}
+    .sub-company{font-size:12px;color:var(--ink2);margin-top:2px}
+    .sub-meta{
+      display:flex;gap:16px;flex-wrap:wrap;
+      font-size:11px;color:var(--ink3);margin-bottom:12px;
+      padding-bottom:10px;border-bottom:1px solid var(--border);
+    }
+    .sub-meta span{display:flex;align-items:center;gap:4px}
+    .sub-actions{display:flex;gap:8px}
+    .sa-btn{
+      flex:1;display:flex;align-items:center;justify-content:center;
+      gap:5px;padding:9px;border-radius:9px;font-size:13px;font-weight:700;
+      cursor:pointer;border:none;font-family:inherit;text-decoration:none;
+    }
+    .sa-view{background:var(--accent-l);color:var(--accent)}
+    .sa-dl{background:var(--green-l);color:var(--green)}
+
+    /* ══ SEARCH ══ */
+    .search-wrap{position:relative;margin-bottom:14px}
+    .search-wrap input{
+      width:100%;background:var(--paper);
+      border:1.5px solid var(--border2);border-radius:11px;
+      padding:11px 14px 11px 40px;font-size:14px;font-family:inherit;color:var(--ink);
+      box-shadow:var(--shadow-s);-webkit-appearance:none;
+    }
+    .search-wrap input:focus{outline:none;border-color:var(--accent)}
+    .search-icon{
+      position:absolute;left:13px;top:50%;transform:translateY(-50%);
+      font-size:16px;color:var(--ink3);pointer-events:none;
     }
 
-    .topbar {
-      background: var(--sidebar);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0;
-      position: sticky; top: 0; z-index: 50;
+    /* ══ LOADING ══ */
+    .loading-wrap{text-align:center;padding:48px 20px;color:var(--ink2)}
+    .spinner{
+      display:inline-block;width:32px;height:32px;
+      border:3px solid var(--border2);border-top-color:var(--accent);
+      border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px;
     }
-    .topbar-title { font-size: 16px; font-weight: 800; color: var(--ink); }
-    .topbar-sub   { font-size: 11px; color: var(--ink2); margin-top: 1px; }
-    .topbar-actions { display: flex; gap: 8px; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{font-size:13px;color:var(--ink2)}
 
-    .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 700;
-      cursor: pointer; border: none; font-family: inherit;
-      transition: opacity .15s, transform .1s;
-    }
-    .btn:hover { opacity: .88; }
-    .btn:active { transform: scale(.97); }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-ghost {
-      background: var(--surface2); color: var(--ink2);
-      border: 1px solid var(--border2);
-    }
-    .btn-ghost:hover { color: var(--ink); }
-    .btn-danger { background: rgba(240,82,82,.15); color: var(--red); border: 1px solid rgba(240,82,82,.25); }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    /* ══ EMPTY ══ */
+    .empty-wrap{text-align:center;padding:48px 20px;color:var(--ink2)}
+    .empty-icon{font-size:44px;margin-bottom:12px}
+    .empty-title{font-size:15px;font-weight:700;color:var(--ink2);margin-bottom:4px}
+    .empty-sub{font-size:12px;color:var(--ink3);line-height:1.6}
 
-    .page-content { flex: 1; padding: 24px; }
+    /* ══ PREVIEW SECTION ══ */
+    .preview-section{
+      background:var(--surface);border:1.5px solid var(--border);
+      border-radius:11px;padding:14px;margin-bottom:14px;
+    }
+    .preview-title{font-size:11px;font-weight:700;color:var(--ink2);letter-spacing:.06em;margin-bottom:10px}
+    .preview-row{
+      display:flex;justify-content:space-between;align-items:baseline;
+      padding:4px 0;font-size:13px;
+    }
+    .preview-row:not(:last-child){border-bottom:1px solid var(--border)}
+    .preview-key{color:var(--ink2);font-size:12px}
+    .preview-val{font-weight:700;color:var(--ink);text-align:right;flex:1;margin-left:8px}
+    .total-row{
+      margin-top:10px;padding-top:10px;border-top:2px solid var(--border2);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .total-label{font-size:12px;font-weight:700;color:var(--ink2)}
+    .total-val{font-size:20px;font-weight:900;color:var(--accent)}
 
-    /* ── View panels ── */
-    .view { display: none; }
-    .view.active { display: block; }
-
-    /* ── Stats grid ── */
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(4,1fr); gap: 14px;
-      margin-bottom: 24px;
+    /* ══ DASHBOARD RECENT ══ */
+    .recent-item{
+      display:flex;align-items:center;gap:12px;
+      padding:12px 16px;border-bottom:1px solid var(--border);
     }
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
+    .recent-item:last-child{border-bottom:none}
+    .recent-dot{
+      width:8px;height:8px;border-radius:50%;
+      background:var(--green);flex-shrink:0;
     }
-    .stat-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--ink2); margin-bottom: 8px; }
-    .stat-val { font-size: 30px; font-weight: 900; line-height: 1; }
-    .stat-val.blue   { color: var(--accent); }
-    .stat-val.green  { color: var(--green); }
-    .stat-val.yellow { color: var(--yellow); }
-    .stat-val.white  { color: var(--ink); }
-    .stat-sub { font-size: 11px; color: var(--ink2); margin-top: 5px; }
-
-    /* ── Card ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .card-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .card-title { font-size: 14px; font-weight: 800; color: var(--ink); }
-    .card-sub   { font-size: 11px; color: var(--ink2); margin-top: 2px; }
-    .card-body  { padding: 20px; }
-
-    /* ── Form elements ── */
-    .field { margin-bottom: 14px; }
-    .field-label {
-      display: block; font-size: 11px; font-weight: 700;
-      letter-spacing: .06em; color: var(--ink2); margin-bottom: 6px;
-      text-transform: uppercase;
-    }
-    .field input, .field textarea {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      border-radius: 9px;
-      padding: 10px 13px;
-      font-size: 13.5px;
-      font-family: inherit;
-      color: var(--ink);
-      transition: border-color .15s;
-    }
-    .field input:focus, .field textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(79,142,247,.15);
-    }
-    .field input::placeholder, .field textarea::placeholder { color: var(--ink2); opacity: .6; }
-    .field textarea { min-height: 70px; resize: vertical; }
-
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-
-    /* ── Device list ── */
-    .device-list { display: grid; gap: 10px; margin-bottom: 14px; }
-    .device-row {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
-      display: grid;
-      grid-template-columns: 1fr 130px 90px auto;
-      gap: 10px;
-      align-items: center;
-    }
-    .device-row input {
-      background: var(--surface3) !important;
-      border-color: var(--border2) !important;
-    }
-    .device-sub {
-      display: flex; gap: 6px;
-    }
-    .remove-device {
-      background: rgba(240,82,82,.1);
-      border: 1px solid rgba(240,82,82,.2);
-      color: var(--red);
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: grid; place-items: center;
-      font-size: 14px;
-      flex-shrink: 0;
-      transition: background .15s;
-    }
-    .remove-device:hover { background: rgba(240,82,82,.2); }
-
-    /* ── Link result box ── */
-    .link-result {
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-top: 14px;
-      display: none;
-    }
-    .link-result.show { display: block; }
-    .link-label { font-size: 11px; font-weight: 700; color: var(--ink2); letter-spacing: .06em; margin-bottom: 8px; }
-    .link-url {
-      font-size: 13px; color: var(--accent); word-break: break-all;
-      background: var(--surface3); padding: 10px 12px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    }
-    .link-url span { flex: 1; }
-    .copy-btn {
-      background: var(--surface2); border: 1px solid var(--border2);
-      color: var(--ink2); padding: 5px 10px; border-radius: 7px;
-      cursor: pointer; font-size: 11px; font-weight: 700; font-family: inherit;
-      white-space: nowrap; transition: color .15s;
-    }
-    .copy-btn:hover { color: var(--accent); }
-
-    /* ── Status messages ── */
-    .status-msg {
-      font-size: 12px; padding: 10px 12px; border-radius: 8px; margin-top: 10px;
-      display: none;
-    }
-    .status-msg.show { display: block; }
-    .status-ok   { background: rgba(52,199,123,.1); color: var(--green); border: 1px solid rgba(52,199,123,.2); }
-    .status-err  { background: rgba(240,82,82,.1);  color: var(--red);   border: 1px solid rgba(240,82,82,.2); }
-    .status-info { background: rgba(79,142,247,.1); color: var(--accent); border: 1px solid rgba(79,142,247,.2); }
-
-    /* ── Submissions table ── */
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead tr { border-bottom: 1px solid var(--border2); }
-    thead th {
-      padding: 11px 14px; text-align: left;
-      font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
-      color: var(--ink2); white-space: nowrap;
-    }
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background .12s;
-    }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: var(--surface2); }
-    tbody td { padding: 13px 14px; vertical-align: middle; }
-
-    .tag {
-      display: inline-block; padding: 3px 9px; border-radius: 6px;
-      font-size: 11px; font-weight: 700; letter-spacing: .04em;
-    }
-    .tag-blue   { background: rgba(79,142,247,.15); color: var(--accent); }
-    .tag-green  { background: rgba(52,199,123,.12); color: var(--green); }
-
-    .td-main { font-weight: 700; color: var(--ink); }
-    .td-sub  { font-size: 11px; color: var(--ink2); margin-top: 2px; }
-
-    .action-group { display: flex; gap: 6px; }
-    .a-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 5px 10px; border-radius: 7px; font-size: 11px; font-weight: 700;
-      cursor: pointer; border: none; font-family: inherit; text-decoration: none;
-      transition: opacity .15s;
-    }
-    .a-btn:hover { opacity: .8; }
-    .a-view { background: rgba(79,142,247,.15); color: var(--accent); }
-    .a-dl   { background: rgba(52,199,123,.12);  color: var(--green); }
-
-    /* ── Empty / loading ── */
-    .empty { text-align: center; padding: 56px 20px; color: var(--ink2); }
-    .empty-icon { font-size: 40px; margin-bottom: 12px; }
-    .empty-t { font-size: 15px; font-weight: 700; color: var(--ink2); margin-bottom: 4px; }
-    .empty-s { font-size: 12px; }
-
-    .spin-wrap { text-align: center; padding: 48px; }
-    .spinner {
-      display: inline-block; width: 28px; height: 28px;
-      border: 3px solid var(--surface3); border-top-color: var(--accent);
-      border-radius: 50%; animation: spin .7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Search ── */
-    .search-bar {
-      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-      padding: 14px 20px; border-bottom: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .search-input-wrap { position: relative; flex: 1; min-width: 180px; }
-    .search-input-wrap input {
-      width: 100%; background: var(--surface2);
-      border: 1px solid var(--border2); border-radius: 9px;
-      padding: 8px 12px 8px 34px; font-size: 13px; font-family: inherit; color: var(--ink);
-    }
-    .search-input-wrap input:focus { outline: none; border-color: var(--accent); }
-    .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--ink2); }
-    .result-count { font-size: 12px; color: var(--ink2); white-space: nowrap; }
-
-    /* ── Preview section ── */
-    .preview-box {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 13px;
-      line-height: 2;
-      color: var(--ink2);
-    }
-    .preview-box strong { color: var(--ink); }
-
-    /* ── Mobile ── */
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .stats-grid { grid-template-columns: 1fr 1fr; }
-      .device-row { grid-template-columns: 1fr; }
-      .grid2, .grid3 { grid-template-columns: 1fr; }
-      .topbar { padding: 12px 16px; }
-      .page-content { padding: 16px; }
+    .recent-body{flex:1;min-width:0}
+    .recent-shop{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .recent-meta{font-size:11px;color:var(--ink2);margin-top:2px}
+    .recent-code{
+      font-size:11px;font-weight:700;
+      background:var(--accent-l);color:var(--accent);
+      padding:2px 7px;border-radius:5px;flex-shrink:0;
     }
 
-    /* ── Divider ── */
-    .divider { height: 1px; background: var(--border); margin: 20px 0; }
-
-    /* ── Notification toast ── */
-    .toast {
-      position: fixed; bottom: 24px; right: 24px;
-      background: var(--surface2); border: 1px solid var(--border2);
-      color: var(--ink); padding: 12px 18px; border-radius: 10px;
-      font-size: 13px; font-weight: 600; box-shadow: var(--shadow);
-      z-index: 999; display: none;
-      animation: slideUp .25s ease;
+    /* ══ TOAST ══ */
+    .toast{
+      position:fixed;bottom:calc(var(--nav-h) + 12px);left:50%;transform:translateX(-50%);
+      background:var(--ink);color:#fff;
+      padding:11px 20px;border-radius:99px;font-size:13px;font-weight:600;
+      white-space:nowrap;z-index:200;
+      opacity:0;transition:opacity .2s;pointer-events:none;
+      box-shadow:0 4px 20px rgba(0,0,0,.2);
     }
-    .toast.show { display: block; }
-    @keyframes slideUp {
-      from { transform: translateY(12px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
+    .toast.show{opacity:1}
+
+    /* ══ SECTION LABEL ══ */
+    .section-label{
+      font-size:11px;font-weight:700;color:var(--ink2);
+      letter-spacing:.08em;margin-bottom:10px;
     }
 
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 99px; }
+    /* ══ DIVIDER ══ */
+    .divider{height:1px;background:var(--border);margin:14px 0}
+
+    /* ══ DESKTOP overrides ══ */
+    @media(min-width:768px){
+      .topbar{padding:0 24px}
+      .view{padding:24px;max-width:720px;margin:0 auto}
+      .stats-row{grid-template-columns:repeat(4,1fr)}
+      .bottom-nav{max-width:600px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;border:1px solid var(--border)}
+      .toast{bottom:calc(var(--nav-h) + 16px)}
+    }
   </style>
 </head>
 <body>
-<div class="shell">
 
-  <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-mark">
-        <div class="brand-icon">NJF</div>
+<!-- ══ TOP BAR ══════════════════════════════════════════════ -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-icon">NJF</div>
+    <div>
+      <div class="brand-name">NJF REGI</div>
+      <div class="brand-sub">管理システム</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="refresh-btn" onclick="refreshCurrent()" title="更新">↻</button>
+  </div>
+</header>
+
+<!-- ══ PAGE CONTENT ══════════════════════════════════════════ -->
+<div class="page-wrap">
+
+  <!-- ─ DASHBOARD ─────────────────────────────────────────── -->
+  <div class="view active" id="view-dash">
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">総申込件数</div>
+        <div class="stat-val blue" id="st-total">—</div>
+        <div class="stat-sub">累計受信</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">今月</div>
+        <div class="stat-val green" id="st-month">—</div>
+        <div class="stat-sub" id="st-month-lbl">申込</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
         <div>
-          <div class="brand-name">NJF REGI</div>
-          <div class="brand-sub">管理システム</div>
+          <div class="card-title">📬 最近の申込</div>
+          <div class="card-sub">直近5件</div>
+        </div>
+        <button class="btn btn-outline btn-xs" onclick="goTab('sub')">全件 →</button>
+      </div>
+      <div id="dash-loading" class="loading-wrap">
+        <div class="spinner"></div>
+        <div class="loading-text">読込中…</div>
+      </div>
+      <div id="dash-recent"></div>
+      <div class="empty-wrap" id="dash-empty" style="display:none">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">まだ申込がありません</div>
+        <div class="empty-sub">新規申込作成から<br>顧客リンクを発行してください</div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="card" style="cursor:pointer;margin-bottom:0" onclick="goTab('new')">
+        <div class="card-body" style="text-align:center;padding:18px 12px">
+          <div style="font-size:28px;margin-bottom:6px">✚</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:3px">新規作成</div>
+          <div style="font-size:11px;color:var(--ink2)">申込リンクを発行</div>
+        </div>
+      </div>
+      <div class="card" style="cursor:pointer;margin-bottom:0" onclick="goTab('sub')">
+        <div class="card-body" style="text-align:center;padding:18px 12px">
+          <div style="font-size:28px;margin-bottom:6px">📋</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:3px">申込一覧</div>
+          <div style="font-size:11px;color:var(--ink2)">PDF閲覧・DL</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─ NEW RECORD ─────────────────────────────────────────── -->
+  <div class="view" id="view-new">
+
+    <!-- Customer info -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">👤 顧客基本情報</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label class="field-label">顧客コード ＊</label>
+          <input id="f-code" type="text" placeholder="例: 20260418001" oninput="updatePreview();saveLocal()"/>
+        </div>
+        <div class="field">
+          <label class="field-label">設置先名称 ＊</label>
+          <input id="f-shop" type="text" placeholder="例: 赤坂麻辣湯" oninput="updatePreview();saveLocal()"/>
         </div>
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">メインメニュー</div>
-      <button class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
-        <span class="nav-icon">📊</span> ダッシュボード
-      </button>
-      <button class="nav-item" data-view="newRecord" onclick="switchView('newRecord')">
-        <span class="nav-icon">✚</span> 新規申込作成
-      </button>
-      <button class="nav-item" data-view="submissions" onclick="switchView('submissions')">
-        <span class="nav-icon">📋</span> 申込受信一覧
-        <span class="nav-badge" id="sidebarBadge">-</span>
-      </button>
-    </nav>
-
-    <div class="sidebar-footer">
-      新日本富士アシスト株式会社<br>
-      <span style="opacity:.5">NJF REGI Admin v2.0</span>
-    </div>
-  </aside>
-
-  <!-- ══ MAIN ════════════════════════════════════════════════ -->
-  <div class="main-area">
-
-    <!-- Topbar -->
-    <div class="topbar">
-      <div>
-        <div class="topbar-title" id="topTitle">ダッシュボード</div>
-        <div class="topbar-sub" id="topSub">全体の申込状況をご確認いただけます</div>
+    <!-- Devices -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">⚙️ 設備・サービス</div>
+          <div class="card-sub">申込フォームに表示される内容</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-xs" onclick="loadSample()">サンプル</button>
+          <button class="btn btn-outline btn-xs" onclick="addDevice()">＋ 追加</button>
+        </div>
       </div>
-      <div class="topbar-actions">
-        <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ 更新</button>
+      <div class="card-body" style="padding-bottom:8px">
+        <div id="device-list"></div>
+        <button class="btn btn-ghost" style="margin-top:4px" onclick="addDevice()">＋ 設備を追加</button>
       </div>
     </div>
 
-    <div class="page-content">
-
-      <!-- ══ DASHBOARD VIEW ══════════════════════════════════ -->
-      <div class="view active" id="view-dashboard">
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-label">総申込件数</div>
-            <div class="stat-val blue" id="ds-total">—</div>
-            <div class="stat-sub">累計受信</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">今月の申込</div>
-            <div class="stat-val green" id="ds-month">—</div>
-            <div class="stat-sub" id="ds-month-label">—</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">発行済みリンク</div>
-            <div class="stat-val yellow" id="ds-links">—</div>
-            <div class="stat-sub">顧客コード数</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">最終受信</div>
-            <div class="stat-val white" id="ds-last" style="font-size:13px;line-height:1.5;padding-top:4px">—</div>
-          </div>
-        </div>
-
-        <!-- Recent submissions -->
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">📬 最近の申込受信</div>
-              <div class="card-sub">直近5件を表示</div>
-            </div>
-            <button class="btn btn-ghost btn-sm" onclick="switchView('submissions')">全件表示 →</button>
-          </div>
-          <div class="table-wrap">
-            <div id="ds-recent-loading" class="spin-wrap"><div class="spinner"></div></div>
-            <table id="ds-recent-table" style="display:none">
-              <thead>
-                <tr>
-                  <th>顧客コード</th>
-                  <th>設置先名称</th>
-                  <th>申込日</th>
-                  <th>受信日時</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody id="ds-recent-body"></tbody>
-            </table>
-            <div class="empty" id="ds-recent-empty" style="display:none">
-              <div class="empty-icon">📭</div>
-              <div class="empty-t">まだ申込がありません</div>
-              <div class="empty-s">新規申込作成から顧客リンクを発行してください</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick create shortcut -->
-        <div style="margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-          <div class="card" style="cursor:pointer" onclick="switchView('newRecord')">
-            <div class="card-body" style="display:flex;align-items:center;gap:16px">
-              <div style="font-size:32px">✚</div>
-              <div>
-                <div style="font-weight:800;font-size:14px;margin-bottom:4px">新規申込作成</div>
-                <div style="font-size:12px;color:var(--ink2)">顧客情報と設備を入力して<br>申込リンクを発行します</div>
-              </div>
-            </div>
-          </div>
-          <div class="card" style="cursor:pointer" onclick="switchView('submissions')">
-            <div class="card-body" style="display:flex;align-items:center;gap:16px">
-              <div style="font-size:32px">📋</div>
-              <div>
-                <div style="font-weight:800;font-size:14px;margin-bottom:4px">申込一覧を見る</div>
-                <div style="font-size:12px;color:var(--ink2)">受信したPDF申込書を<br>閲覧・ダウンロードします</div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- Preview -->
+    <div class="preview-section" id="preview-section" style="display:none">
+      <div class="preview-title">📊 内容プレビュー</div>
+      <div class="preview-row">
+        <span class="preview-key">顧客コード</span>
+        <span class="preview-val" id="pv-code">-</span>
       </div>
-
-      <!-- ══ NEW RECORD VIEW ══════════════════════════════════ -->
-      <div class="view" id="view-newRecord">
-
-        <div style="display:grid;grid-template-columns:1fr 380px;gap:20px">
-
-          <!-- Left: Form -->
-          <div>
-            <!-- Customer info -->
-            <div class="card" style="margin-bottom:16px">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">👤 顧客基本情報</div>
-                  <div class="card-sub">顧客コードと設置先を入力してください</div>
-                </div>
-              </div>
-              <div class="card-body">
-                <div class="grid2">
-                  <div class="field">
-                    <label class="field-label">顧客コード *</label>
-                    <input id="f-code" type="text" placeholder="例: 20260418001" oninput="updatePreview()"/>
-                  </div>
-                  <div class="field">
-                    <label class="field-label">設置先名称 *</label>
-                    <input id="f-shop" type="text" placeholder="例: 赤坂麻辣湯" oninput="updatePreview()"/>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Devices -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">⚙️ 設備・サービス設定</div>
-                  <div class="card-sub">申込フォームに表示される設備内容を設定します</div>
-                </div>
-                <div style="display:flex;gap:8px">
-                  <button class="btn btn-ghost btn-sm" onclick="loadSample()">サンプル</button>
-                  <button class="btn btn-primary btn-sm" onclick="addDevice()">＋ 追加</button>
-                </div>
-              </div>
-              <div class="card-body">
-
-                <div style="display:grid;grid-template-columns:1fr 130px 90px 32px;gap:8px;padding:0 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px">
-                  <div style="font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.06em">設備名称</div>
-                  <div style="font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.06em">単価（¥）</div>
-                  <div style="font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.06em">数量</div>
-                  <div></div>
-                </div>
-
-                <div id="device-list"></div>
-
-                <div id="device-total" style="text-align:right;margin-top:12px;font-size:13px;color:var(--ink2);display:none">
-                  税抜合計: <strong style="color:var(--ink);font-size:16px" id="device-total-val">¥0</strong>
-                </div>
-
-                <button class="btn btn-ghost" style="width:100%;margin-top:14px;justify-content:center" onclick="addDevice()">
-                  ＋ 設備を追加
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: Preview + Generate -->
-          <div style="display:flex;flex-direction:column;gap:16px">
-
-            <!-- Preview -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">👁 内容プレビュー</div>
-              </div>
-              <div class="card-body">
-                <div class="preview-box" id="preview-box">
-                  <div><strong>顧客コード：</strong><span id="pv-code">-</span></div>
-                  <div><strong>設置先名称：</strong><span id="pv-shop">-</span></div>
-                  <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px" id="pv-items-wrap">
-                    <div style="font-size:11px;color:var(--ink2)">設備未設定</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Generate -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">🔗 申込リンク発行</div>
-              </div>
-              <div class="card-body">
-                <p style="font-size:12px;color:var(--ink2);margin-bottom:14px;line-height:1.7">
-                  内容を確認後、ボタンを押してGoogle Sheetsにデータを保存し、顧客用の申込リンクを発行します。
-                </p>
-                <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateLink()" id="gen-btn">
-                  🔗 申込リンクを発行する
-                </button>
-                <div class="link-result" id="link-result">
-                  <div class="link-label">発行されたリンク</div>
-                  <div class="link-url">
-                    <span id="link-url-text"></span>
-                    <button class="copy-btn" onclick="copyLink()">コピー</button>
-                  </div>
-                  <div style="margin-top:8px;font-size:11px;color:var(--ink2)">
-                    このリンクを顧客に送付してください。顧客はフォームに必要事項を記入し、契約申込書PDFを作成します。
-                  </div>
-                </div>
-                <div class="status-msg" id="gen-status"></div>
-              </div>
-            </div>
-
-            <!-- Reset -->
-            <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="resetForm()">
-              🗑 入力内容をリセット
-            </button>
-          </div>
-        </div>
+      <div class="preview-row">
+        <span class="preview-key">設置先名称</span>
+        <span class="preview-val" id="pv-shop">-</span>
       </div>
-
-      <!-- ══ SUBMISSIONS VIEW ═══════════════════════════════ -->
-      <div class="view" id="view-submissions">
-
-        <div class="card">
-          <div class="search-bar">
-            <div class="search-input-wrap">
-              <span class="search-icon">🔍</span>
-              <input type="text" id="sub-search" placeholder="顧客コード・設置先名称・会社名で検索…" oninput="filterSubs()"/>
-            </div>
-            <div class="result-count" id="sub-count"></div>
-            <button class="btn btn-ghost btn-sm" onclick="loadSubmissions()">↻ 更新</button>
-          </div>
-
-          <div id="sub-loading" class="spin-wrap"><div class="spinner"></div></div>
-
-          <div class="table-wrap" id="sub-table-wrap" style="display:none">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:110px">顧客コード</th>
-                  <th>設置先名称 / 会社名</th>
-                  <th style="width:100px">申込日</th>
-                  <th style="width:150px">受信日時</th>
-                  <th style="width:160px">操作</th>
-                </tr>
-              </thead>
-              <tbody id="sub-body"></tbody>
-            </table>
-            <div class="empty" id="sub-empty" style="display:none">
-              <div class="empty-icon">📭</div>
-              <div class="empty-t">申込データが見つかりません</div>
-              <div class="empty-s">検索条件を変更するか、顧客からの申込をお待ちください</div>
-            </div>
-          </div>
-        </div>
+      <div id="pv-items"></div>
+      <div class="total-row" id="pv-total-row" style="display:none">
+        <span class="total-label">税抜合計</span>
+        <span class="total-val" id="pv-total">¥0</span>
       </div>
+    </div>
 
-    </div><!-- /.page-content -->
-  </div><!-- /.main-area -->
-</div><!-- /.shell -->
+    <!-- Generate -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔗 申込リンク発行</div>
+      </div>
+      <div class="card-body">
+        <button class="btn btn-primary" onclick="generateLink()" id="gen-btn">
+          🔗 申込リンクを発行する
+        </button>
+        <div class="link-box" id="link-box">
+          <div class="link-box-label">✅ 発行されたリンク</div>
+          <div class="link-url-wrap">
+            <span class="link-url-text" id="link-url-text"></span>
+            <button class="copy-btn" onclick="copyLink()">コピー</button>
+          </div>
+          <div class="link-hint">このリンクを顧客に送付してください。顧客はフォームに必要事項を記入し契約申込書PDFを作成します。</div>
+        </div>
+        <div class="msg" id="gen-msg"></div>
+      </div>
+    </div>
+
+    <button class="btn btn-danger" onclick="resetForm()" style="margin-bottom:8px">
+      🗑 入力内容をリセット
+    </button>
+  </div>
+
+  <!-- ─ SUBMISSIONS ─────────────────────────────────────────── -->
+  <div class="view" id="view-sub">
+
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="sub-search" placeholder="顧客コード・店舗名・会社名で検索…" oninput="filterSubs()"/>
+    </div>
+
+    <div class="section-label" id="sub-count-label"></div>
+
+    <div id="sub-loading" class="loading-wrap">
+      <div class="spinner"></div>
+      <div class="loading-text">申込データを読込中…</div>
+    </div>
+
+    <div id="sub-list"></div>
+
+    <div class="empty-wrap" id="sub-empty" style="display:none">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">申込データが見つかりません</div>
+      <div class="empty-sub">検索条件を変えるか<br>顧客からの申込をお待ちください</div>
+    </div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+<!-- ══ BOTTOM NAV ════════════════════════════════════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" id="tab-dash" onclick="goTab('dash')">
+    <span class="nav-tab-icon-wrap">
+      <span class="nav-tab-icon">📊</span>
+    </span>
+    <span class="nav-tab-label">ホーム</span>
+  </button>
+  <button class="nav-tab" id="tab-new" onclick="goTab('new')">
+    <span class="nav-tab-icon">✚</span>
+    <span class="nav-tab-label">新規作成</span>
+  </button>
+  <button class="nav-tab" id="tab-sub" onclick="goTab('sub')">
+    <span class="nav-tab-icon-wrap">
+      <span class="nav-tab-icon">📋</span>
+      <span class="nav-badge" id="nav-badge" style="display:none">0</span>
+    </span>
+    <span class="nav-tab-label">申込一覧</span>
+  </button>
+</nav>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-const GAS_URL      = "https://script.google.com/macros/s/AKfycbxc7ilkbZ-NVErnNVEvi4aW4tWrw2qIM6b-iSe_UEz9_2CcjXJYhVtCkS6w57EK13_Z/exec";
-const FORM_BASE    = "https://njfregi.github.io/njf-form/form.html";
-const STORAGE_KEY  = "njf_admin_v2";
+/* ══ CONFIG ══════════════════════════════════════════════════ */
+const GAS_URL   = "https://script.google.com/macros/s/AKfycbys7WKipjw7Q1fDvLbWlk3VrSO7bz90nh7VyDA74u3hmmBJV606aV8q4jNLhfyCtRuY/exec";
+const FORM_BASE = "https://njfregi.github.io/njf-form/form.html";
+const STORE_KEY = "njf_admin_v3";
 
 let allSubs = [];
-let deviceIdCounter = 0;
+let devCount = 0;
+let currentTab = "dash";
 
-// ── View switching ────────────────────────────────────────────
-const viewMeta = {
-  dashboard:   { title:"ダッシュボード",   sub:"全体の申込状況をご確認いただけます" },
-  newRecord:   { title:"新規申込作成",     sub:"顧客情報と設備を入力して申込リンクを発行します" },
-  submissions: { title:"申込受信一覧",     sub:"受信した契約申込書PDFを管理します" }
-};
-
-function switchView(name) {
-  document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
-  document.getElementById("view-"+name).classList.add("active");
-  document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
-  document.querySelector(`[data-view="${name}"]`).classList.add("active");
-  document.getElementById("topTitle").textContent = viewMeta[name].title;
-  document.getElementById("topSub").textContent   = viewMeta[name].sub;
-
-  if (name === "submissions") loadSubmissions();
-  if (name === "dashboard")   loadDashboard();
+/* ══ TAB SWITCHING ══════════════════════════════════════════ */
+function goTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("view-" + tab).classList.add("active");
+  document.getElementById("tab-"  + tab).classList.add("active");
+  if (tab === "sub")  loadSubs();
+  if (tab === "dash") loadDash();
 }
 
-// ── Toast ─────────────────────────────────────────────────────
-function showToast(msg, dur=2800) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), dur);
+function refreshCurrent() {
+  if (currentTab === "sub")  { loadSubs(); toast("🔄 更新しました"); }
+  if (currentTab === "dash") { loadDash(); toast("🔄 更新しました"); }
 }
 
-function showStatus(id, msg, type) {
-  const el = document.getElementById(id);
-  el.textContent = msg;
-  el.className = `status-msg show status-${type}`;
+/* ══ GAS FETCH (handles CORS redirect) ══════════════════════ */
+async function gasGet(params) {
+  const qs  = Object.entries(params)
+    .map(([k,v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v))
+    .join("&");
+  const url = GAS_URL + "?" + qs;
+  const res = await fetch(url, { redirect: "follow" });
+  return res.json();
 }
 
-// ── Device management ─────────────────────────────────────────
+async function gasPost(body) {
+  // Build query string manually for max compatibility
+  const qs = Object.entries(body)
+    .map(([k,v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v))
+    .join("&");
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: qs,
+    redirect: "follow"
+  });
+  return res.json();
+}
+
+/* ══ DEVICES ════════════════════════════════════════════════ */
 function addDevice(name="", price="", qty="1") {
-  const id   = ++deviceIdCounter;
-  const list = document.getElementById("device-list");
-  const row  = document.createElement("div");
-  row.className = "device-row";
-  row.id = "dev-"+id;
-  row.innerHTML = `
-    <div class="field" style="margin:0">
-      <input class="dev-name" placeholder="例: NJF POS 本体" value="${esc(name)}" oninput="updatePreview();saveConfig()"/>
+  const id   = ++devCount;
+  const wrap = document.getElementById("device-list");
+  const div  = document.createElement("div");
+  div.className = "device-item has-num";
+  div.id = "dev-" + id;
+  div.innerHTML = `
+    <div class="device-num">${wrap.children.length + 1}</div>
+    <button class="device-remove" onclick="removeDevice(${id})">✕</button>
+    <div class="dev-name-field">
+      <div class="dev-label">設備名称</div>
+      <input class="dev-name" placeholder="例: NJF POS 本体" value="${esc(name)}"
+        oninput="updatePreview();saveLocal()"/>
     </div>
-    <div class="field" style="margin:0">
-      <input class="dev-price" type="number" min="0" placeholder="78000" value="${esc(price)}" oninput="updatePreview();saveConfig()"/>
-    </div>
-    <div class="field" style="margin:0">
-      <input class="dev-qty" type="number" min="1" placeholder="1" value="${esc(qty)}" oninput="updatePreview();saveConfig()"/>
-    </div>
-    <button class="remove-device" onclick="removeDevice(${id})" title="削除">✕</button>
-  `;
-  list.appendChild(row);
+    <div class="dev-row2">
+      <div>
+        <div class="dev-label">単価（¥）</div>
+        <input class="dev-price" type="number" min="0" placeholder="78000" value="${esc(price)}"
+          oninput="updatePreview();saveLocal()"/>
+      </div>
+      <div>
+        <div class="dev-label">数量</div>
+        <input class="dev-qty" type="number" min="1" placeholder="1" value="${esc(qty)}"
+          oninput="updatePreview();saveLocal()"/>
+      </div>
+    </div>`;
+  wrap.appendChild(div);
+  renumberDevices();
   updatePreview();
-  saveConfig();
+  saveLocal();
 }
 
 function removeDevice(id) {
-  const el = document.getElementById("dev-"+id);
-  if (el) { el.remove(); updatePreview(); saveConfig(); }
+  const el = document.getElementById("dev-" + id);
+  if (el) { el.remove(); renumberDevices(); updatePreview(); saveLocal(); }
+}
+
+function renumberDevices() {
+  document.querySelectorAll("#device-list .device-num").forEach((el, i) => {
+    el.textContent = i + 1;
+  });
 }
 
 function getDevices() {
-  return [...document.querySelectorAll(".device-row")].map(row => ({
+  return [...document.querySelectorAll(".device-item")].map(row => ({
     name:  row.querySelector(".dev-name").value.trim(),
     price: Number(row.querySelector(".dev-price").value || 0),
     qty:   Number(row.querySelector(".dev-qty").value   || 1)
@@ -756,13 +706,10 @@ function getDevices() {
 
 function loadSample() {
   document.getElementById("device-list").innerHTML = "";
-  deviceIdCounter = 0;
-  [
-    ["NJF POS 本体",       "78000","1"],
-    ["キャッシュドロワ",   "12000","1"],
-    ["レシートプリンタ",   "28000","1"],
-    ["月額クラウド利用料", "9800", "1"],
-    ["保守サポート",       "5000", "1"]
+  devCount = 0;
+  [["NJF POS 本体","78000","1"],["キャッシュドロワ","12000","1"],
+   ["レシートプリンタ","28000","1"],["月額クラウド利用料","9800","1"],
+   ["保守サポート","5000","1"]
   ].forEach(([n,p,q]) => addDevice(n,p,q));
 }
 
@@ -771,131 +718,142 @@ function resetForm() {
   document.getElementById("f-code").value = "";
   document.getElementById("f-shop").value = "";
   document.getElementById("device-list").innerHTML = "";
-  deviceIdCounter = 0;
+  devCount = 0;
   addDevice();
-  document.getElementById("link-result").classList.remove("show");
-  document.getElementById("gen-status").className = "status-msg";
+  document.getElementById("link-box").classList.remove("show");
+  setMsg("gen-msg","","");
   updatePreview();
-  saveConfig();
+  saveLocal();
 }
 
-// ── Preview ───────────────────────────────────────────────────
+/* ══ PREVIEW ════════════════════════════════════════════════ */
 function updatePreview() {
-  document.getElementById("pv-code").textContent = document.getElementById("f-code").value.trim() || "-";
-  document.getElementById("pv-shop").textContent = document.getElementById("f-shop").value.trim() || "-";
-
+  const code    = document.getElementById("f-code").value.trim();
+  const shop    = document.getElementById("f-shop").value.trim();
   const devices = getDevices();
-  const wrap    = document.getElementById("pv-items-wrap");
-  const totalEl = document.getElementById("device-total");
-  const totalValEl = document.getElementById("device-total-val");
+  const secEl   = document.getElementById("preview-section");
+
+  document.getElementById("pv-code").textContent = code || "-";
+  document.getElementById("pv-shop").textContent = shop || "-";
+
+  const itemsEl = document.getElementById("pv-items");
+  const totalRow = document.getElementById("pv-total-row");
 
   if (!devices.length) {
-    wrap.innerHTML = '<div style="font-size:11px;color:var(--ink2)">設備未設定</div>';
-    totalEl.style.display = "none";
+    itemsEl.innerHTML = "";
+    totalRow.style.display = "none";
+    secEl.style.display = (code || shop) ? "block" : "none";
     return;
   }
 
-  let subtotal = 0;
-  wrap.innerHTML = devices.map(d => {
-    const sub = d.price * d.qty;
-    subtotal += sub;
-    return `<div style="font-size:12px;color:var(--ink2)">・${d.name} / ¥${fmt(d.price)} × ${d.qty} = <strong style="color:var(--ink)">¥${fmt(sub)}</strong></div>`;
+  secEl.style.display = "block";
+  let sub = 0;
+  itemsEl.innerHTML = devices.map(d => {
+    const line = d.price * d.qty;
+    sub += line;
+    return `<div class="preview-row">
+      <span class="preview-key">${esc(d.name)}</span>
+      <span class="preview-val">¥${fmt(d.price)} × ${d.qty}</span>
+    </div>`;
   }).join("");
 
-  totalEl.style.display = "block";
-  totalValEl.textContent = "¥" + fmt(subtotal);
+  totalRow.style.display = "flex";
+  document.getElementById("pv-total").textContent = "¥" + fmt(sub);
 }
 
-// ── Persist config ────────────────────────────────────────────
-function saveConfig() {
-  const data = {
-    code: document.getElementById("f-code").value,
-    shop: document.getElementById("f-shop").value,
-    devices: getDevices()
-  };
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(_) {}
-}
-
-function loadConfig() {
+/* ══ LOCAL STORAGE ══════════════════════════════════════════ */
+function saveLocal() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    document.getElementById("f-code").value = data.code || "";
-    document.getElementById("f-shop").value = data.shop || "";
-    if (Array.isArray(data.devices) && data.devices.length) {
-      data.devices.forEach(d => addDevice(d.name, d.price, d.qty));
-    } else {
-      addDevice();
-    }
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      code: document.getElementById("f-code").value,
+      shop: document.getElementById("f-shop").value,
+      devices: getDevices()
+    }));
+  } catch(_) {}
+}
+
+function loadLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if (!d) return false;
+    document.getElementById("f-code").value = d.code || "";
+    document.getElementById("f-shop").value = d.shop || "";
+    if (Array.isArray(d.devices) && d.devices.length) {
+      d.devices.forEach(dev => addDevice(dev.name, dev.price, dev.qty));
+    } else { addDevice(); }
     return true;
   } catch(_) { return false; }
 }
 
-// ── Generate link ─────────────────────────────────────────────
+/* ══ GENERATE LINK ══════════════════════════════════════════ */
 async function generateLink() {
   const code    = document.getElementById("f-code").value.trim();
   const shop    = document.getElementById("f-shop").value.trim();
   const devices = getDevices();
 
-  if (!code) { showStatus("gen-status","⚠️ 顧客コードを入力してください","err"); return; }
-  if (!shop) { showStatus("gen-status","⚠️ 設置先名称を入力してください","err"); return; }
-  if (!devices.length) { showStatus("gen-status","⚠️ 設備を1件以上追加してください","err"); return; }
+  if (!code) { setMsg("gen-msg","⚠️ 顧客コードを入力してください","err"); return; }
+  if (!shop) { setMsg("gen-msg","⚠️ 設置先名称を入力してください","err"); return; }
+  if (!devices.length) { setMsg("gen-msg","⚠️ 設備を1件以上追加してください","err"); return; }
 
   const btn = document.getElementById("gen-btn");
   btn.disabled = true;
-  btn.textContent = "生成中...";
-  showStatus("gen-status","Google Sheetsに保存しています...","info");
+  btn.textContent = "生成中…";
+  setMsg("gen-msg","Google Sheetsに保存しています…","info");
 
   try {
-    const fd = new URLSearchParams();
-    fd.append("action","createRecord");
-    fd.append("payload", JSON.stringify({ customerCode: code, installName: shop, items: devices }));
+    const result = await gasPost({
+      action:  "createRecord",
+      payload: JSON.stringify({ customerCode: code, installName: shop, items: devices })
+    });
 
-    const res    = await fetch(GAS_URL, { method:"POST", body:fd });
-    const result = await res.json();
     if (!result.success) throw new Error(result.message || "Failed");
 
-    const shortUrl = `${FORM_BASE}?id=${result.id}`;
-    document.getElementById("link-url-text").textContent = shortUrl;
-    document.getElementById("link-result").classList.add("show");
-    showStatus("gen-status","✅ 申込リンクの発行が完了しました！","ok");
-    saveConfig();
-
-    // Update sidebar badge
-    loadDashboard();
+    const url = `${FORM_BASE}?id=${result.id}`;
+    document.getElementById("link-url-text").textContent = url;
+    document.getElementById("link-box").classList.add("show");
+    setMsg("gen-msg","✅ 申込リンクを発行しました！","ok");
+    saveLocal();
+    loadDash();
 
   } catch(err) {
-    showStatus("gen-status","❌ エラー：" + err.message, "err");
+    setMsg("gen-msg","❌ エラー：" + err.message, "err");
   } finally {
     btn.disabled = false;
-    btn.innerHTML = "🔗 申込リンクを発行する";
+    btn.textContent = "🔗 申込リンクを発行する";
   }
 }
 
 function copyLink() {
   const url = document.getElementById("link-url-text").textContent;
-  navigator.clipboard.writeText(url).then(() => showToast("✅ リンクをコピーしました")).catch(() => {
-    prompt("以下のリンクをコピーしてください：", url);
-  });
+  navigator.clipboard.writeText(url)
+    .then(() => toast("✅ リンクをコピーしました"))
+    .catch(() => { prompt("リンクをコピー:", url); });
 }
 
-// ── Submissions ───────────────────────────────────────────────
-async function loadSubmissions() {
+/* ══ SUBMISSIONS ════════════════════════════════════════════ */
+async function loadSubs() {
   document.getElementById("sub-loading").style.display = "block";
-  document.getElementById("sub-table-wrap").style.display = "none";
+  document.getElementById("sub-list").innerHTML   = "";
+  document.getElementById("sub-empty").style.display = "none";
+  document.getElementById("sub-count-label").textContent = "";
 
   try {
-    const res    = await fetch(`${GAS_URL}?action=listSubmissions`);
-    const result = await res.json();
+    const result = await gasGet({ action: "listSubmissions" });
     if (!result.success) throw new Error(result.message);
     allSubs = result.data || [];
-    document.getElementById("sidebarBadge").textContent = allSubs.length;
+
+    const badge = document.getElementById("nav-badge");
+    if (allSubs.length > 0) {
+      badge.textContent = allSubs.length;
+      badge.style.display = "flex";
+    } else {
+      badge.style.display = "none";
+    }
+
     renderSubs(allSubs);
   } catch(err) {
-    document.getElementById("sub-body").innerHTML =
-      `<tr><td colspan="5" style="text-align:center;color:var(--red);padding:24px">${err.message}</td></tr>`;
-    document.getElementById("sub-table-wrap").style.display = "block";
+    document.getElementById("sub-list").innerHTML =
+      `<div class="card"><div class="card-body" style="color:var(--red);font-size:13px">⚠️ ${esc(err.message)}</div></div>`;
   } finally {
     document.getElementById("sub-loading").style.display = "none";
   }
@@ -913,112 +871,113 @@ function filterSubs() {
 }
 
 function renderSubs(data) {
-  const tbody  = document.getElementById("sub-body");
-  const empty  = document.getElementById("sub-empty");
-  const wrap   = document.getElementById("sub-table-wrap");
-  const count  = document.getElementById("sub-count");
+  const list  = document.getElementById("sub-list");
+  const empty = document.getElementById("sub-empty");
+  const label = document.getElementById("sub-count-label");
 
-  wrap.style.display = "block";
-  count.textContent  = data.length + " 件";
+  label.textContent = data.length + " 件";
 
   if (!data.length) {
-    tbody.innerHTML = ""; empty.style.display = "block"; return;
+    list.innerHTML = ""; empty.style.display = "block"; return;
   }
   empty.style.display = "none";
-  tbody.innerHTML = data.map(row => {
+  list.innerHTML = data.map(row => {
     const hasFile = !!row.viewUrl;
     return `
-      <tr>
-        <td><span class="tag tag-blue">${esc(row.customerCode)}</span></td>
-        <td>
-          <div class="td-main">${esc(row.shopName)}</div>
-          <div class="td-sub">${esc(row.companyName)}</div>
-        </td>
-        <td style="font-size:12px;color:var(--ink2)">${esc(row.signedDate)}</td>
-        <td style="font-size:11px;color:var(--ink2)">${esc(row.receivedAt)}</td>
-        <td>
-          <div class="action-group">
-            ${hasFile ? `
-              <a class="a-btn a-view" href="${row.viewUrl}" target="_blank">👁 閲覧</a>
-              <a class="a-btn a-dl"   href="${row.downloadUrl}" target="_blank">⬇ DL</a>
-            ` : '<span style="font-size:11px;color:var(--ink2)">処理中…</span>'}
-          </div>
-        </td>
-      </tr>`;
+    <div class="sub-card">
+      <div class="sub-card-top">
+        <div>
+          <span class="sub-code">${esc(row.customerCode)}</span>
+          <div class="sub-shop">${esc(row.shopName)}</div>
+          <div class="sub-company">${esc(row.companyName)}</div>
+        </div>
+      </div>
+      <div class="sub-meta">
+        <span>📅 申込日：${esc(row.signedDate||"-")}</span>
+        <span>🕐 受信：${esc(row.receivedAt||"-")}</span>
+      </div>
+      <div class="sub-actions">
+        ${hasFile ? `
+          <a class="sa-btn sa-view" href="${row.viewUrl}" target="_blank">👁 オンライン閲覧</a>
+          <a class="sa-btn sa-dl"   href="${row.downloadUrl}" target="_blank">⬇ ダウンロード</a>
+        ` : '<span style="font-size:12px;color:var(--ink3)">処理中…</span>'}
+      </div>
+    </div>`;
   }).join("");
 }
 
-// ── Dashboard ─────────────────────────────────────────────────
-async function loadDashboard() {
+/* ══ DASHBOARD ══════════════════════════════════════════════ */
+async function loadDash() {
+  document.getElementById("dash-loading").style.display = "block";
+  document.getElementById("dash-recent").innerHTML  = "";
+  document.getElementById("dash-empty").style.display  = "none";
+
   try {
-    const res    = await fetch(`${GAS_URL}?action=listSubmissions`);
-    const result = await res.json();
-    if (!result.success) return;
+    const result = await gasGet({ action: "listSubmissions" });
+    if (!result.success) throw new Error(result.message);
     const data = result.data || [];
     allSubs = data;
 
-    document.getElementById("ds-total").textContent = data.length + " 件";
-    document.getElementById("sidebarBadge").textContent = data.length;
-
+    // Stats
+    document.getElementById("st-total").textContent = data.length + " 件";
     const ym = new Date().toISOString().slice(0,7);
-    const mn = data.filter(d => String(d.receivedAt||"").includes(ym) || String(d.signedDate||"").startsWith(ym)).length;
-    const monthNames = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
-    document.getElementById("ds-month").textContent = mn + " 件";
-    document.getElementById("ds-month-label").textContent = monthNames[new Date().getMonth()] + "の申込";
+    const mn = data.filter(d =>
+      String(d.receivedAt||"").slice(0,7) === ym ||
+      String(d.signedDate||"").slice(0,7) === ym
+    ).length;
+    const mNames = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+    document.getElementById("st-month").textContent   = mn + " 件";
+    document.getElementById("st-month-lbl").textContent = mNames[new Date().getMonth()];
 
-    // Links count from Records sheet (we don't have that API, approximate)
-    document.getElementById("ds-links").textContent = "—";
+    const badge = document.getElementById("nav-badge");
+    if (data.length > 0) { badge.textContent = data.length; badge.style.display = "flex"; }
 
-    if (data.length > 0) {
-      document.getElementById("ds-last").textContent = data[0].receivedAt || "-";
-    }
+    // Recent
+    document.getElementById("dash-loading").style.display = "none";
+    if (!data.length) { document.getElementById("dash-empty").style.display = "block"; return; }
 
-    // Recent table
     const recent = data.slice(0,5);
-    const tbody  = document.getElementById("ds-recent-body");
-    const loading = document.getElementById("ds-recent-loading");
-    const table  = document.getElementById("ds-recent-table");
-    const empty  = document.getElementById("ds-recent-empty");
+    document.getElementById("dash-recent").innerHTML = recent.map(row => `
+      <div class="recent-item">
+        <div class="recent-dot"></div>
+        <div class="recent-body">
+          <div class="recent-shop">${esc(row.shopName)}</div>
+          <div class="recent-meta">${esc(row.signedDate||"")} ${esc(row.companyName||"")}</div>
+        </div>
+        <span class="recent-code">${esc(row.customerCode)}</span>
+      </div>`).join("");
 
-    loading.style.display = "none";
-    if (!recent.length) {
-      empty.style.display = "block"; return;
-    }
-    table.style.display = "table";
-    tbody.innerHTML = recent.map(row => `
-      <tr>
-        <td><span class="tag tag-blue">${esc(row.customerCode)}</span></td>
-        <td class="td-main">${esc(row.shopName)}</td>
-        <td style="font-size:12px;color:var(--ink2)">${esc(row.signedDate)}</td>
-        <td style="font-size:11px;color:var(--ink2)">${esc(row.receivedAt)}</td>
-        <td>
-          <div class="action-group">
-            ${row.viewUrl ? `<a class="a-btn a-view" href="${row.viewUrl}" target="_blank">👁 閲覧</a>` : ""}
-            ${row.downloadUrl ? `<a class="a-btn a-dl" href="${row.downloadUrl}" target="_blank">⬇ DL</a>` : ""}
-          </div>
-        </td>
-      </tr>`).join("");
-
-  } catch(_) {}
+  } catch(_) {
+    document.getElementById("dash-loading").style.display = "none";
+  }
 }
 
-function refreshAll() {
-  const active = document.querySelector(".nav-item.active")?.dataset.view;
-  if (active === "submissions") loadSubmissions();
-  else if (active === "dashboard") loadDashboard();
-  showToast("🔄 更新しました");
-}
-
-// ── Utils ─────────────────────────────────────────────────────
+/* ══ UTILS ══════════════════════════════════════════════════ */
 function fmt(n) { return new Intl.NumberFormat("ja-JP").format(n); }
 function esc(s) {
-  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-// ── Init ──────────────────────────────────────────────────────
-if (!loadConfig()) addDevice();
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2500);
+}
+
+function setMsg(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = "msg" + (msg ? " show msg-" + type : "");
+}
+
+/* ══ INIT ════════════════════════════════════════════════════ */
+if (!loadLocal()) addDevice();
 updatePreview();
-loadDashboard();
+loadDash();
 </script>
 </body>
 </html>
