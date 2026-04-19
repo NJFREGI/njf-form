@@ -341,13 +341,13 @@
     }
 
     function getFormUrl() {
-      const current = new URL(window.location.href);
-      current.pathname = current.pathname.replace(/admin\.html$/i, "form.html");
-      current.search = "";
-      current.hash = "";
-      return current.toString();
-    }
+  return "https://njfregi.github.io/njf-form/form";
+}
 
+  current.search = "";
+  current.hash = "";
+  return current.toString();
+}
     async function generateShortLink() {
       const code = customerCodeEl.value.trim();
       const shop = installNameEl.value.trim();
