@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NJF REGI 管理ページ</title>
+  <style>
+    :root{
+      --bg:#f3f3f1;
+      --paper:#ffffff;
+      --ink:#222;
+      --sub:#666;
+      --line:#d2d2cc;
+      --line-dark:#b9b9b2;
+      --brand:#1389d4;
+      --brand-dark:#0c6da8;
+      --soft:#f8f8f5;
+      --ok:#0d7a43;
+      --warn:#b42318;
+      --shadow:0 6px 20px rgba(0,0,0,.06);
+      --radius:16px;
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP","PingFang SC","Microsoft YaHei",sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink)}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px 14px 40px}
+    .hero,.section{
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+    }
+    .hero{padding:22px 20px;margin-bottom:16px}
+    .hero-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+    .brand{display:flex;gap:14px;align-items:center}
+    .logo-box{
+      width:84px;height:84px;border-radius:16px;background:#fff;border:1px solid #e8e8e3;
+      display:grid;place-items:center;overflow:hidden;flex:0 0 auto;
+    }
+    .logo-box img{
+      width:100%;height:100%;object-fit:contain;
+    }
+    .hero h1{margin:0;font-size:26px}
+    .hero p{margin:8px 0 0;color:var(--sub);font-size:14px;line-height:1.8}
+    .badge{
+      padding:10px 14px;border-radius:999px;background:#f5fbff;border:1px solid #cfe8f7;
+      color:#0a6ea8;font-weight:700;font-size:13px;white-space:nowrap
+    }
+    .section{padding:18px;margin-bottom:16px}
+    .section-title{
+      margin:0 0 14px;display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800
+    }
+    .section-title::before{
+      content:"";width:5px;height:20px;border-radius:999px;background:var(--brand)
+    }
+    .grid{display:grid;gap:12px}
+    .grid.two{grid-template-columns:1fr}
+    label{display:block;margin-bottom:6px;font-size:13px;color:#555;font-weight:700}
+    input,textarea,button{
+      width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);
+      font-size:14px;font-family:inherit;background:#fff;color:#222
+    }
+    textarea{min-height:90px;resize:vertical}
+    .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{
+      width:auto;min-width:140px;border:none;background:var(--brand);color:#fff;font-weight:700;
+      cursor:pointer;box-shadow:0 4px 12px rgba(19,137,212,.20)
+    }
+    .btn:hover{background:var(--brand-dark)}
+    .btn.secondary{
+      background:#f0f0ec;color:#333;border:1px solid var(--line);box-shadow:none
+    }
+    .subnote{font-size:13px;color:var(--sub);margin:-4px 0 10px}
+    .table-wrap{
+      overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#fff
+    }
+    table{width:100%;border-collapse:collapse;min-width:700px}
+    th,td{padding:10px 8px;border-bottom:1px solid var(--line);font-size:14px}
+    thead th{background:#f5f5f2;color:#555;font-size:13px}
+    tr:last-child td{border-bottom:none}
+    .money{text-align:right;white-space:nowrap}
+    .small-btn{
+      width:auto;padding:8px 12px;border-radius:8px;border:none;background:#efefea;cursor:pointer
+    }
+    .result-box{
+      border:1px dashed var(--line-dark);background:var(--soft);padding:14px;border-radius:12px
+    }
+    .link-box{
+      word-break:break-all;background:#fff;border:1px solid var(--line);border-radius:10px;
+      padding:12px;font-size:13px;line-height:1.7
+    }
+    .status{font-size:13px;margin-top:10px}
+    .status.ok{color:var(--ok)}
+    .status.warn{color:var(--warn)}
+    .preview{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:14px;
+      background:#fcfcfa;
+      font-size:14px;
+      line-height:1.8
+    }
+    .preview strong{display:inline-block;min-width:110px}
+    .fixed-note{
+      background:#f8fbff;
+      border:1px solid #d7e9f7;
+      color:#0d6ea8;
+      padding:12px 14px;
+      border-radius:12px;
+      font-size:13px;
+      line-height:1.8;
+    }
+    @media (min-width:760px){
+      .grid.two{grid-template-columns:1fr 1fr}
+      .wrap{padding:24px 18px 44px}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-head">
+        <div class="brand">
+          <div class="logo-box">
+            <img src="logo.jpg" alt="NJF REGI Logo">
+          </div>
+          <div>
+            <h1>NJF REGI 管理ページ</h1>
+            <p>
+              顧客ごとの専用申込リンクを作成するための管理ページです。<br>
+              顧客コード、設置先名称、設備内容を設定後、専用リンクを生成して顧客へ送付してください。
+            </p>
+          </div>
+        </div>
+        <div class="badge">専用リンク生成モード</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">1. 固定設定</h2>
+      <div class="fixed-note">
+        顧客へ送信された申込フォームは、同じフォルダ内の <strong>form.html</strong> を自動で参照します。<br>
+        また、PDF送信先メールアドレスは固定運用を想定しているため、毎回入力不要です。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">2. 顧客基本情報</h2>
+      <div class="grid two">
+        <div>
+          <label>顧客コード</label>
+          <input id="customerCode" placeholder="例: 20260418001">
+        </div>
+        <div>
+          <label>設置先名称</label>
+          <input id="installName" placeholder="例: 赤坂麻辣湯">
+        </div>
+      </div>
+      <p class="subnote">
+        顾客代码和安装店铺名称会自动带入顾客填写页面。
+      </p>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">3. 設備・サービス設定</h2>
+      <p class="subnote">
+        这里新增的项目会自动保存到当前浏览器。刷新页面后也会保留。不同顾客生成链接前，请确认设备内容是否正确。
+      </p>
+
+      <div class="table-wrap">
+        <table id="deviceTable">
+          <thead>
+            <tr>
+              <th style="width:42%">設備名称</th>
+              <th class="money" style="width:20%">単価(¥)</th>
+              <th style="width:15%">数量</th>
+              <th style="width:23%">操作</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="btn-row" style="margin-top:12px;">
+        <button type="button" class="btn secondary" id="addRowBtn">＋ 設備を追加</button>
+        <button type="button" class="btn secondary" id="loadSampleBtn">サンプル読込</button>
+        <button type="button" class="btn secondary" id="clearAllBtn">内容を初期化</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">4. 内容预览</h2>
+      <div class="preview" id="previewBox">
+        <div><strong>顧客コード：</strong><span id="previewCode">-</span></div>
+        <div><strong>設置先名称：</strong><span id="previewShop">-</span></div>
+        <div style="margin-top:10px;"><strong>設備内容：</strong></div>
+        <div id="previewItems">未设置</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">5. 専用リンク生成</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" id="generateBtn">専用リンクを生成</button>
+        <button type="button" class="btn secondary" id="copyBtn">リンクをコピー</button>
+      </div>
+
+      <div class="result-box" style="margin-top:14px;">
+        <label>生成结果</label>
+        <div class="link-box" id="generatedLink">まだ生成されていません</div>
+        <p class="status" id="statusText"></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "njf_regi_admin_config_v2";
+
+    const deviceTableBody = document.querySelector("#deviceTable tbody");
+    const customerCodeEl = document.getElementById("customerCode");
+    const installNameEl = document.getElementById("installName");
+    const generatedLinkEl = document.getElementById("generatedLink");
+    const statusTextEl = document.getElementById("statusText");
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function addDeviceRow(name = "", price = "", qty = "1") {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input class="device-name" placeholder="例: レシートプリンタ" value="${escapeHtml(name)}"></td>
+        <td class="money"><input class="device-price" type="number" min="0" placeholder="28000" value="${escapeHtml(price)}"></td>
+        <td><input class="device-qty" type="number" min="0" placeholder="1" value="${escapeHtml(qty)}"></td>
+        <td><button type="button" class="small-btn remove-row">削除</button></td>
+      `;
+      deviceTableBody.appendChild(tr);
+
+      tr.querySelector(".remove-row").addEventListener("click", () => {
+        tr.remove();
+        updatePreview();
+        saveConfig();
+      });
+
+      tr.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", () => {
+          updatePreview();
+          saveConfig();
+        });
+      });
+    }
+
+    function collectDevices() {
+      const rows = [...deviceTableBody.querySelectorAll("tr")];
+      return rows.map(row => {
+        const name = row.querySelector(".device-name").value.trim();
+        const price = Number(row.querySelector(".device-price").value || 0);
+        const qty = Number(row.querySelector(".device-qty").value || 0);
+        return { name, price, qty };
+      }).filter(item => item.name && item.qty > 0);
+    }
+
+    function updatePreview() {
+      document.getElementById("previewCode").textContent = customerCodeEl.value.trim() || "-";
+      document.getElementById("previewShop").textContent = installNameEl.value.trim() || "-";
+
+      const items = collectDevices();
+      const previewItems = document.getElementById("previewItems");
+      if (!items.length) {
+        previewItems.textContent = "未设置";
+        return;
+      }
+
+      previewItems.innerHTML = items.map(item => {
+        return `・${escapeHtml(item.name)} / ¥${Number(item.price).toLocaleString("ja-JP")} / 数量 ${item.qty}`;
+      }).join("<br>");
+    }
+
+    function getFormUrl() {
+      const current = new URL(window.location.href);
+      current.pathname = current.pathname.replace(/admin\.html$/i, "form.html");
+      current.search = "";
+      current.hash = "";
+      return current.toString();
+    }
+
+    function generateLink() {
+      const code = customerCodeEl.value.trim();
+      const shop = installNameEl.value.trim();
+      const items = collectDevices();
+
+      if (!code) {
+        showStatus("请先填写 顧客コード。", false);
+        return;
+      }
+      if (!shop) {
+        showStatus("请先填写 設置先名称。", false);
+        return;
+      }
+      if (!items.length) {
+        showStatus("请至少添加 1 个设备项目。", false);
+        return;
+      }
+
+      const payload = { code, shop, items };
+      const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
+      const url = `${getFormUrl()}?data=${encoded}`;
+
+      generatedLinkEl.textContent = url;
+      showStatus("专用链接已生成。可以复制后发给顾客。", true);
+    }
+
+    function showStatus(text, ok) {
+      statusTextEl.textContent = text;
+      statusTextEl.className = `status ${ok ? "ok" : "warn"}`;
+    }
+
+    async function copyLink() {
+      const text = generatedLinkEl.textContent.trim();
+      if (!text || text === "まだ生成されていません") {
+        showStatus("请先生成链接。", false);
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        showStatus("链接已复制。", true);
+      } catch (e) {
+        showStatus("复制失败，请手动复制。", false);
+      }
+    }
+
+    function saveConfig() {
+      const data = {
+        customerCode: customerCodeEl.value.trim(),
+        installName: installNameEl.value.trim(),
+        devices: collectDevices()
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadConfig() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+
+      try {
+        const data = JSON.parse(raw);
+        customerCodeEl.value = data.customerCode || "";
+        installNameEl.value = data.installName || "";
+        deviceTableBody.innerHTML = "";
+
+        if (Array.isArray(data.devices) && data.devices.length) {
+          data.devices.forEach(item => addDeviceRow(item.name, item.price, item.qty));
+        } else {
+          addDeviceRow("NJF POS 本体", "78000", "1");
+          addDeviceRow("レシートプリンタ", "28000", "1");
+        }
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function loadSample() {
+      deviceTableBody.innerHTML = "";
+      addDeviceRow("NJF POS 本体", "78000", "1");
+      addDeviceRow("キャッシュドロワ", "12000", "1");
+      addDeviceRow("レシートプリンタ", "28000", "1");
+      addDeviceRow("月額クラウド利用料", "9800", "1");
+      addDeviceRow("保守サポート", "5000", "1");
+      updatePreview();
+      saveConfig();
+    }
+
+    function clearAll() {
+      customerCodeEl.value = "";
+      installNameEl.value = "";
+      deviceTableBody.innerHTML = "";
+      addDeviceRow();
+      generatedLinkEl.textContent = "まだ生成されていません";
+      showStatus("内容已初始化。", true);
+      updatePreview();
+      saveConfig();
+    }
+
+    document.getElementById("addRowBtn").addEventListener("click", () => {
+      addDeviceRow();
+      updatePreview();
+      saveConfig();
+    });
+
+    document.getElementById("generateBtn").addEventListener("click", generateLink);
+    document.getElementById("copyBtn").addEventListener("click", copyLink);
+    document.getElementById("loadSampleBtn").addEventListener("click", loadSample);
+    document.getElementById("clearAllBtn").addEventListener("click", clearAll);
+
+    [customerCodeEl, installNameEl].forEach(el => {
+      el.addEventListener("input", () => {
+        updatePreview();
+        saveConfig();
+      });
+    });
+
+    if (!loadConfig()) {
+      addDeviceRow("NJF POS 本体", "78000", "1");
+      addDeviceRow("レシートプリンタ", "28000", "1");
+    }
+    updatePreview();
+  </script>
+</body>
+</html>
