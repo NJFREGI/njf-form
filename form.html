@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>NJF REGI 契約申込フォーム</title>
+  <!-- html2canvas for CJK-safe PDF rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- jsPDF for PDF output -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     :root {
@@ -333,6 +336,11 @@
       box-shadow: none;
     }
 
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .device-fixed-list {
       display: grid;
       gap: 12px;
@@ -429,6 +437,156 @@
       margin-bottom: 12px;
     }
 
+    /* ── PDF Preview Overlay ── */
+    #pdfPreviewOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    #pdfPreviewOverlay.show {
+      display: flex;
+    }
+
+    #pdfPreviewModal {
+      background: #fff;
+      border-radius: 18px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+
+    #pdfPreviewModal h2 {
+      margin: 0 0 16px;
+      font-size: 18px;
+    }
+
+    /* ── PDF Print Template ── */
+    #pdfPrintArea {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 794px; /* A4 at 96dpi */
+      background: #fff;
+      padding: 32px 36px;
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 13px;
+      color: #222;
+      line-height: 1.8;
+    }
+
+    #pdfPrintArea .pdf-title {
+      font-size: 22px;
+      font-weight: 900;
+      text-align: center;
+      border-bottom: 3px solid #1389d4;
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+    }
+
+    #pdfPrintArea .pdf-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 20px;
+      background: #f4f4f1;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    #pdfPrintArea .pdf-meta-item span:first-child {
+      font-weight: 700;
+      color: #555;
+    }
+
+    #pdfPrintArea .pdf-section-h {
+      font-size: 14px;
+      font-weight: 800;
+      border-left: 4px solid #1389d4;
+      padding-left: 8px;
+      margin: 14px 0 8px;
+    }
+
+    #pdfPrintArea .pdf-check-list {
+      background: #f9f9f7;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 2;
+    }
+
+    #pdfPrintArea .pdf-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    #pdfPrintArea .pdf-items-table th {
+      background: #1389d4;
+      color: #fff;
+      padding: 7px 10px;
+      text-align: left;
+      font-weight: 700;
+    }
+
+    #pdfPrintArea .pdf-items-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #e0e0da;
+    }
+
+    #pdfPrintArea .pdf-items-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    #pdfPrintArea .pdf-totals {
+      margin-top: 10px;
+      text-align: right;
+      font-size: 13px;
+      line-height: 2;
+    }
+
+    #pdfPrintArea .pdf-totals .grand {
+      font-size: 18px;
+      font-weight: 900;
+      color: #0b7a43;
+    }
+
+    #pdfPrintArea .pdf-sign-area {
+      margin-top: 16px;
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+    }
+
+    #pdfPrintArea .pdf-sign-label {
+      font-weight: 700;
+      min-width: 60px;
+    }
+
+    #pdfPrintArea .pdf-sign-img {
+      border-bottom: 1px solid #999;
+      min-width: 200px;
+      height: 60px;
+    }
+
+    #pdfPrintArea .pdf-footer {
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px solid #ddd;
+      font-size: 11px;
+      color: #888;
+      text-align: center;
+    }
+
     @media (min-width: 760px) {
       .grid.two {
         grid-template-columns: 1fr 1fr;
@@ -463,7 +621,7 @@
       <div class="hero-inner">
         <div class="customer-hero-top">
           <div class="customer-logo-top">
-            <img src="logo.jpg" alt="NJF REGI Logo">
+            <img src="logo.jpg" alt="NJF REGI Logo" onerror="this.style.display='none'">
           </div>
 
           <div class="brand-text content-switchable customer-title-center">
@@ -541,7 +699,6 @@
             <p>外部接続機器メーカー保証外の故障の場合は、機器の再購入又は修理費用が発生致します。</p>
             <p>お客様のデータ保存期間は最大24ヶ月です。25ヶ月目以降データは消去されますので、お客様ご自身でデータのバックアップをお願い致します。</p>
           </div>
-
           <div data-lang="zh">
             <h3>合同重要事项说明</h3>
             <p>本服务合同期限为 2 年，合同期满后将按每 2 年自动续约。</p>
@@ -551,11 +708,13 @@
             <p>如属于外接设备厂商保修范围外的故障，将产生设备重新购买或维修费用。</p>
             <p>客户数据保存期限最长为 24 个月，超过 25 个月后数据可能被删除，请客户自行做好备份。</p>
           </div>
-
           <div class="confirm-inline">
             <label>
               <input type="checkbox" class="confirm-check" data-check-id="1">
-              <span>契約重要事項説明書の内容を確認し、同意しました。</span>
+              <span class="content-switchable">
+                <span data-lang="ja" class="show">契約重要事項説明書の内容を確認し、同意しました。</span>
+                <span data-lang="zh">已确认并同意合同重要事项说明。</span>
+              </span>
             </label>
           </div>
         </div>
@@ -568,7 +727,6 @@
             <p>（1）業務および注文処理の遂行 （2）売上管理・分析およびサービス改善 （3）顧客からの問い合わせ対応 （4）法令に基づく対応</p>
             <p>事業者は、個人情報を第三者に提供・開示することはありません。ただし、法令に基づく場合等を除きます。</p>
           </div>
-
           <div data-lang="zh">
             <h3>个人信息的处理</h3>
             <p>本服务中取得的客户姓名、住址、电话号码、邮箱地址、订单记录等个人信息，将依据日本个人信息保护法及相关法规进行妥善管理与保护。</p>
@@ -576,11 +734,13 @@
             <p>（1）业务及订单处理 （2）销售管理、分析与服务改善 （3）客户咨询对应 （4）依法应对</p>
             <p>除法律法规要求等情况外，原则上不会向第三方提供或公开个人信息。</p>
           </div>
-
           <div class="confirm-inline">
             <label>
               <input type="checkbox" class="confirm-check" data-check-id="2">
-              <span>個人情報の取り扱いについて確認し、同意しました。</span>
+              <span class="content-switchable">
+                <span data-lang="ja" class="show">個人情報の取り扱いについて確認し、同意しました。</span>
+                <span data-lang="zh">已确认并同意个人信息处理方式。</span>
+              </span>
             </label>
           </div>
         </div>
@@ -593,7 +753,6 @@
             <p>業務データは、サービス提供およびメンテナンス、統計処理に基づく機能改善、法令に基づく対応の範囲内で利用されるものとします。</p>
             <p>業務データのバックアップは原則として利用店舗の責任において行うものとし、サービス終了後は保存期間を経て安全に削除されるものとします。</p>
           </div>
-
           <div data-lang="zh">
             <h3>业务数据的处理与保护</h3>
             <p>通过本服务积累的销售数据、订单记录、客户属性、库存信息、员工出勤数据及其他与店铺运营相关的数据，原则上归使用店铺所有。</p>
@@ -601,11 +760,13 @@
             <p>业务数据仅在服务提供与维护、基于统计处理的功能改善、以及依法应对的范围内使用。</p>
             <p>业务数据的备份原则上由使用店铺自行负责，服务终止后将在保存期限届满后进行安全删除。</p>
           </div>
-
           <div class="confirm-inline">
             <label>
               <input type="checkbox" class="confirm-check" data-check-id="3">
-              <span>業務データの取扱いおよび保護について確認し、同意しました。</span>
+              <span class="content-switchable">
+                <span data-lang="ja" class="show">業務データの取扱いおよび保護について確認し、同意しました。</span>
+                <span data-lang="zh">已确认并同意业务数据处理与保护方式。</span>
+              </span>
             </label>
           </div>
         </div>
@@ -627,7 +788,6 @@
             </label>
             <input name="companyName" required disabled />
           </div>
-
           <div>
             <label class="content-switchable">
               <span data-lang="ja" class="show">法人番号（任意）</span>
@@ -635,7 +795,6 @@
             </label>
             <input name="companyNumber" disabled />
           </div>
-
           <div>
             <label class="content-switchable">
               <span data-lang="ja" class="show">担当者名</span>
@@ -643,7 +802,6 @@
             </label>
             <input name="companyContact" required disabled />
           </div>
-
           <div>
             <label class="content-switchable">
               <span data-lang="ja" class="show">電話番号</span>
@@ -651,7 +809,6 @@
             </label>
             <input name="companyPhone" required disabled />
           </div>
-
           <div>
             <label class="content-switchable">
               <span data-lang="ja" class="show">メールアドレス</span>
@@ -675,7 +832,6 @@
               </button>
             </div>
           </div>
-
           <div>
             <label class="content-switchable">
               <span data-lang="ja" class="show">都道府県・市区町村（自動）</span>
@@ -683,7 +839,6 @@
             </label>
             <input name="companyAddrAuto" disabled />
           </div>
-
           <div style="grid-column: 1 / -1;">
             <label class="content-switchable">
               <span data-lang="ja" class="show">番地・建物名・階数（手入力）</span>
@@ -715,7 +870,6 @@
             </label>
             <input name="shopName" required disabled />
           </div>
-
           <div>
             <label class="content-switchable">
               <span data-lang="ja" class="show">店舗電話番号</span>
@@ -723,7 +877,6 @@
             </label>
             <input name="shopPhone" required disabled />
           </div>
-
           <div>
             <label class="content-switchable">
               <span data-lang="ja" class="show">店舗郵便番号</span>
@@ -737,7 +890,6 @@
               </button>
             </div>
           </div>
-
           <div>
             <label class="content-switchable">
               <span data-lang="ja" class="show">都道府県・市区町村（自動）</span>
@@ -745,7 +897,6 @@
             </label>
             <input name="shopAddrAuto" disabled />
           </div>
-
           <div style="grid-column: 1 / -1;">
             <label class="content-switchable">
               <span data-lang="ja" class="show">番地・建物名・階数（手入力）</span>
@@ -791,10 +942,10 @@
 
         <div class="fixed-mail-box content-switchable">
           <div data-lang="ja" class="show">
-            申込書PDFは、あらかじめ設定された管理者メールアドレス宛に送信されます。
+            申込書PDFは <strong>info@njfregi.jp</strong> へ自動送信されます。
           </div>
           <div data-lang="zh">
-            申请书 PDF 将发送到预先设置好的管理员邮箱。
+            申请书 PDF 将自动发送至 <strong>info@njfregi.jp</strong>。
           </div>
         </div>
 
@@ -837,8 +988,8 @@
 
         <div class="btn-row" style="margin-top:14px;">
           <button class="btn content-switchable" type="submit" id="submitBtn" disabled>
-            <span data-lang="ja" class="show">申込書を作成する（PDF保存）</span>
-            <span data-lang="zh">生成申请书（PDF保存）</span>
+            <span data-lang="ja" class="show">申込書を作成・送信する</span>
+            <span data-lang="zh">生成并发送申请书</span>
           </button>
         </div>
 
@@ -847,9 +998,53 @@
     </form>
   </main>
 
+  <!-- Hidden PDF Print Area (rendered off-screen, captured by html2canvas) -->
+  <div id="pdfPrintArea">
+    <div class="pdf-title">NJF REGI 契約申込書</div>
+
+    <div class="pdf-meta-grid" id="pdfMetaGrid"></div>
+
+    <div class="pdf-section-h">■ 確認事項</div>
+    <div class="pdf-check-list">
+      ☑ 契約重要事項説明書の内容を確認し、同意しました。<br>
+      ☑ 個人情報の取り扱いについて確認し、同意しました。<br>
+      ☑ 業務データの取扱いおよび保護について確認し、同意しました。
+    </div>
+
+    <div class="pdf-section-h">■ 契約会社情報</div>
+    <div class="pdf-meta-grid" id="pdfCompanyGrid"></div>
+
+    <div class="pdf-section-h">■ 契約店舗情報</div>
+    <div class="pdf-meta-grid" id="pdfShopGrid"></div>
+
+    <div class="pdf-section-h">■ 設備・サービス内容</div>
+    <table class="pdf-items-table">
+      <thead>
+        <tr>
+          <th>設備名称</th>
+          <th style="text-align:right">単価</th>
+          <th style="text-align:right">数量</th>
+          <th style="text-align:right">小計</th>
+        </tr>
+      </thead>
+      <tbody id="pdfItemsBody"></tbody>
+    </table>
+    <div class="pdf-totals" id="pdfTotals"></div>
+
+    <div class="pdf-sign-area">
+      <span class="pdf-sign-label">ご署名:</span>
+      <img id="pdfSignImg" class="pdf-sign-img" src="" alt="署名" />
+    </div>
+
+    <div id="pdfNotes" style="margin-top:12px;font-size:12px;"></div>
+
+    <div class="pdf-footer">
+      送信先: info@njfregi.jp ／ NJF REGI 契約申込書
+    </div>
+  </div>
+
   <script>
     const FIXED_TO_EMAIL = "info@njfregi.jp";
-    const SEND_ENDPOINT = "";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxc7ilkbZ-NVErnNVEvi4aW4tWrw2qIM6b-iSe_UEz9_2CcjXJYhVtCkS6w57EK13_Z/exec";
 
     let PRODUCTS = [];
@@ -875,21 +1070,14 @@
 
     function formatDateJP(dateStr) {
       if (!dateStr) return "-";
-      const d = new Date(dateStr);
-      if (Number.isNaN(d.getTime())) return dateStr;
-      return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
-    }
-
-    function formatDateZH(dateStr) {
-      if (!dateStr) return "-";
-      const d = new Date(dateStr);
+      const d = new Date(dateStr + "T00:00:00");
       if (Number.isNaN(d.getTime())) return dateStr;
       return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
     }
 
     function updateTopDate() {
       const v = form.signedDate.value;
-      topApplyDate.textContent = currentLang === "ja" ? formatDateJP(v) : formatDateZH(v);
+      topApplyDate.textContent = formatDateJP(v);
     }
 
     function switchLanguage(lang) {
@@ -912,12 +1100,8 @@
     function updateCheckHint() {
       const allChecked = [...document.querySelectorAll(".confirm-check")].every(el => el.checked);
       checkHint.textContent = allChecked
-        ? (currentLang === "ja"
-            ? "確認が完了しました。下記フォームをご入力ください。"
-            : "已完成确认，可填写下方表格。")
-        : (currentLang === "ja"
-            ? "すべての確認項目にチェックを入れてください。"
-            : "请先勾选全部确认事项。");
+        ? (currentLang === "ja" ? "確認が完了しました。下記フォームをご入力ください。" : "已完成确认，可填写下方表格。")
+        : (currentLang === "ja" ? "すべての確認項目にチェックを入れてください。" : "请先勾选全部确认事项。");
       checkHint.className = `confirm-summary status ${allChecked ? "ok" : "warn"}`;
     }
 
@@ -927,7 +1111,6 @@
           el.disabled = !enabled;
         }
       });
-
       submitBtn.disabled = !enabled;
       updateCheckHint();
 
@@ -944,15 +1127,10 @@
 
     async function lookupAddress(zip) {
       const cleaned = (zip || "").replace(/[^0-9]/g, "");
-      if (cleaned.length !== 7) {
-        throw new Error(currentLang === "ja" ? "郵便番号は7桁で入力してください" : "邮编需输入7位数字");
-      }
-      const url = `https://zipcloud.ibsnet.co.jp/api/search?zipcode=${cleaned}`;
-      const res = await fetch(url);
+      if (cleaned.length !== 7) throw new Error(currentLang === "ja" ? "郵便番号は7桁で入力してください" : "邮编需输入7位数字");
+      const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${cleaned}`);
       const data = await res.json();
-      if (!data.results || !data.results[0]) {
-        throw new Error(currentLang === "ja" ? "該当住所が見つかりませんでした" : "未找到该邮编对应地址");
-      }
+      if (!data.results || !data.results[0]) throw new Error(currentLang === "ja" ? "該当住所が見つかりませんでした" : "未找到该邮编对应地址");
       const r = data.results[0];
       return `${r.address1}${r.address2}${r.address3}`;
     }
@@ -965,8 +1143,7 @@
       async function doLookup() {
         try {
           autoInput.value = currentLang === "ja" ? "検索中..." : "查询中...";
-          const address = await lookupAddress(zipInput.value);
-          autoInput.value = address;
+          autoInput.value = await lookupAddress(zipInput.value);
         } catch (error) {
           autoInput.value = "";
           statusEl.textContent = error.message;
@@ -986,7 +1163,6 @@
       PRODUCTS.forEach((item) => {
         const name = currentLang === "ja" ? item.nameJa : item.nameZh;
         const subtotal = item.price * item.qty;
-
         const card = document.createElement("div");
         card.className = "device-fixed-card";
         card.innerHTML = `
@@ -1007,16 +1183,12 @@
 
     function calcTotals() {
       let subtotal = 0;
-      PRODUCTS.forEach(item => {
-        subtotal += item.price * item.qty;
-      });
+      PRODUCTS.forEach(item => { subtotal += item.price * item.qty; });
       const tax = Math.round(subtotal * 0.1);
       const total = subtotal + tax;
-
       subtotalEl.textContent = `¥${formatJPY(subtotal)}`;
       taxEl.textContent = `¥${formatJPY(tax)}`;
       totalEl.textContent = `¥${formatJPY(total)}`;
-
       return { subtotal, tax, total };
     }
 
@@ -1058,9 +1230,7 @@
         ctx.stroke();
       }
 
-      function end() {
-        drawing = false;
-      }
+      function end() { drawing = false; }
 
       canvas.addEventListener("mousedown", start);
       canvas.addEventListener("mousemove", move);
@@ -1076,7 +1246,6 @@
 
       resizeCanvas();
       window.addEventListener("resize", resizeCanvas);
-
       return { canvas, ctx };
     }
 
@@ -1089,139 +1258,143 @@
       return false;
     }
 
-    function buildPdfData() {
+    // ── Build PDF Print Area content ──────────────────────────────
+    function buildPdfArea(signatureDataUrl) {
       const totals = calcTotals();
-      return {
-        customerCode: customerCodeCell.textContent,
-        installName: installNameCell.textContent,
-        fixedToEmail: FIXED_TO_EMAIL,
-        company: {
-          name: form.companyName.value,
-          number: form.companyNumber.value,
-          contact: form.companyContact.value,
-          phone: form.companyPhone.value,
-          email: form.companyEmail.value,
-          zip: form.companyZip.value,
-          auto: form.companyAddrAuto.value,
-          detail: form.companyAddrDetail.value
-        },
-        shop: {
-          name: form.shopName.value,
-          phone: form.shopPhone.value,
-          zip: form.shopZip.value,
-          auto: form.shopAddrAuto.value,
-          detail: form.shopAddrDetail.value
-        },
-        items: PRODUCTS.map(item => ({
-          nameJa: item.nameJa,
-          nameZh: item.nameZh,
-          unitPrice: item.price,
-          qty: item.qty,
-          line: item.price * item.qty
-        })),
-        totals,
-        signedDate: form.signedDate.value,
-        notes: form.notes.value
-      };
+
+      // Meta
+      const metaGrid = document.getElementById("pdfMetaGrid");
+      metaGrid.innerHTML = `
+        <div class="pdf-meta-item"><span>顧客コード: </span><span>${customerCodeCell.textContent}</span></div>
+        <div class="pdf-meta-item"><span>設置先名称: </span><span>${installNameCell.textContent}</span></div>
+        <div class="pdf-meta-item"><span>申込日: </span><span>${formatDateJP(form.signedDate.value)}</span></div>
+        <div class="pdf-meta-item"><span>送信先: </span><span>${FIXED_TO_EMAIL}</span></div>
+      `;
+
+      // Company
+      const companyGrid = document.getElementById("pdfCompanyGrid");
+      companyGrid.innerHTML = `
+        <div class="pdf-meta-item"><span>会社名: </span><span>${form.companyName.value}</span></div>
+        <div class="pdf-meta-item"><span>法人番号: </span><span>${form.companyNumber.value || "-"}</span></div>
+        <div class="pdf-meta-item"><span>担当者: </span><span>${form.companyContact.value}</span></div>
+        <div class="pdf-meta-item"><span>電話: </span><span>${form.companyPhone.value}</span></div>
+        <div class="pdf-meta-item"><span>メール: </span><span>${form.companyEmail.value}</span></div>
+        <div class="pdf-meta-item"><span>住所: </span><span>${form.companyAddrAuto.value} ${form.companyAddrDetail.value}</span></div>
+      `;
+
+      // Shop
+      const shopGrid = document.getElementById("pdfShopGrid");
+      shopGrid.innerHTML = `
+        <div class="pdf-meta-item"><span>店舗名: </span><span>${form.shopName.value}</span></div>
+        <div class="pdf-meta-item"><span>電話: </span><span>${form.shopPhone.value}</span></div>
+        <div class="pdf-meta-item"><span>住所: </span><span>${form.shopAddrAuto.value} ${form.shopAddrDetail.value}</span></div>
+      `;
+
+      // Items
+      const tbody = document.getElementById("pdfItemsBody");
+      tbody.innerHTML = PRODUCTS.map(item => `
+        <tr>
+          <td>${item.nameJa}</td>
+          <td style="text-align:right">¥${formatJPY(item.price)}</td>
+          <td style="text-align:right">${item.qty}</td>
+          <td style="text-align:right">¥${formatJPY(item.price * item.qty)}</td>
+        </tr>
+      `).join("");
+
+      document.getElementById("pdfTotals").innerHTML = `
+        税抜合計: ¥${formatJPY(totals.subtotal)}&emsp;
+        消費税(10%): ¥${formatJPY(totals.tax)}&emsp;
+        <span class="grand">合計金額: ¥${formatJPY(totals.total)}</span>
+      `;
+
+      // Signature
+      document.getElementById("pdfSignImg").src = signatureDataUrl;
+
+      // Notes
+      const notesEl = document.getElementById("pdfNotes");
+      if (form.notes.value.trim()) {
+        notesEl.innerHTML = `<strong>備考:</strong> ${form.notes.value}`;
+      } else {
+        notesEl.innerHTML = "";
+      }
     }
 
-    function generatePdf(signatureCanvas) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: "mm", format: "a4" });
-      const d = buildPdfData();
-      let y = 14;
+    // ── Generate PDF via html2canvas (supports CJK) ───────────────
+    async function generatePdfBlob(signatureDataUrl) {
+      buildPdfArea(signatureDataUrl);
 
-      doc.setFontSize(15);
-      doc.text("NJF REGI 契約申込書", 10, y);
-      y += 9;
+      const printArea = document.getElementById("pdfPrintArea");
 
-      doc.setFontSize(10);
-      doc.text(`顧客コード: ${d.customerCode}`, 10, y); y += 6;
-      doc.text(`設置先名称: ${d.installName}`, 10, y); y += 6;
-      doc.text(`申込日: ${formatDateJP(d.signedDate)}`, 10, y); y += 7;
+      // Temporarily move on-screen for capture
+      printArea.style.left = "0";
+      printArea.style.top = "0";
+      printArea.style.position = "absolute";
+      printArea.style.zIndex = "-1";
 
-      doc.text(`会社名: ${d.company.name}`, 10, y); y += 6;
-      doc.text(`会社住所: ${d.company.auto} ${d.company.detail}`, 10, y); y += 6;
-      doc.text(`担当者: ${d.company.contact}`, 10, y); y += 6;
-      doc.text(`電話: ${d.company.phone} / Email: ${d.company.email}`, 10, y); y += 7;
-
-      doc.text(`店舗名: ${d.shop.name}`, 10, y); y += 6;
-      doc.text(`店舗住所: ${d.shop.auto} ${d.shop.detail}`, 10, y); y += 8;
-
-      doc.setFontSize(11);
-      doc.text("確認事項", 10, y); y += 6;
-      doc.setFontSize(10);
-      doc.text("・契約重要事項説明書の内容を確認し、同意しました。", 12, y); y += 6;
-      doc.text("・個人情報の取り扱いについて確認し、同意しました。", 12, y); y += 6;
-      doc.text("・業務データの取扱いおよび保護について確認し、同意しました。", 12, y); y += 8;
-
-      doc.setFontSize(11);
-      doc.text("設備・サービス内容", 10, y); y += 6;
-      doc.setFontSize(10);
-
-      d.items.forEach(item => {
-        doc.text(`${item.nameJa} / 単価: ¥${formatJPY(item.unitPrice)} / 数量: ${item.qty} / 小計: ¥${formatJPY(item.line)}`, 10, y, { maxWidth: 190 });
-        y += 6;
+      const canvas = await html2canvas(printArea, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff"
       });
 
-      y += 2;
-      doc.text(`税抜合計: ¥${formatJPY(d.totals.subtotal)}`, 10, y); y += 6;
-      doc.text(`消費税: ¥${formatJPY(d.totals.tax)}`, 10, y); y += 6;
-      doc.text(`合計金額: ¥${formatJPY(d.totals.total)}`, 10, y); y += 6;
-      doc.text(`送信先: ${d.fixedToEmail}`, 10, y); y += 8;
+      printArea.style.left = "-9999px";
+      printArea.style.position = "fixed";
+      printArea.style.zIndex = "";
 
-      if (d.notes) {
-        doc.text(`備考: ${d.notes}`, 10, y, { maxWidth: 190 });
-        y += 12;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
+      if (imgH <= pageH) {
+        doc.addImage(imgData, "JPEG", 0, 0, imgW, imgH);
+      } else {
+        // Split into pages
+        let yOffset = 0;
+        while (yOffset < imgH) {
+          if (yOffset > 0) doc.addPage();
+          doc.addImage(imgData, "JPEG", 0, -yOffset, imgW, imgH);
+          yOffset += pageH;
+        }
       }
 
-      const signImage = signatureCanvas.toDataURL("image/png");
-      y = Math.max(y, 220);
-      doc.text("ご署名:", 10, y);
-      doc.addImage(signImage, "PNG", 28, y - 16, 75, 24);
-
-      return doc;
+      return doc.output("blob");
     }
 
-    async function sendPdf(pdfBlob) {
-      if (!SEND_ENDPOINT) {
-        return {
-          sent: false,
-          reason: currentLang === "ja"
-            ? "送信API未設定のため、PDF保存のみ実行しました。"
-            : "未配置发送接口，当前仅保存 PDF。"
-        };
-      }
-
+    // ── Send PDF to GAS which emails it ──────────────────────────
+    async function sendPdfViaGas(pdfBlob, customerCode, shopName) {
+      // Convert blob to base64
       const arrayBuffer = await pdfBlob.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-
+      const uint8 = new Uint8Array(arrayBuffer);
       let binary = "";
-      for (let i = 0; i < uint8Array.length; i++) {
-        binary += String.fromCharCode(uint8Array[i]);
-      }
+      for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
       const base64 = btoa(binary);
 
-      const formData = new URLSearchParams();
-      formData.append("fileBase64", base64);
-      formData.append("fileName", "njf-contract.pdf");
-      formData.append("toEmail", FIXED_TO_EMAIL);
+      const fileName = `njf-contract-${customerCode}-${shopName}.pdf`.replace(/[^a-zA-Z0-9\-_.]/g, "_");
 
-      const res = await fetch(SEND_ENDPOINT, {
+      const formData = new URLSearchParams();
+      formData.append("action", "sendPdfEmail");
+      formData.append("toEmail", FIXED_TO_EMAIL);
+      formData.append("customerCode", customerCode);
+      formData.append("shopName", shopName);
+      formData.append("fileName", fileName);
+      formData.append("fileBase64", base64);
+
+      const res = await fetch(GAS_URL, {
         method: "POST",
         body: formData
       });
 
-      if (!res.ok) {
-        throw new Error(currentLang === "ja" ? "メール送信APIエラー" : "邮件发送接口返回失败");
-      }
-
       const result = await res.json();
-      if (!result.success) {
-        throw new Error(result.message || "send failed");
-      }
-
-      return { sent: true };
+      if (!result.success) throw new Error(result.message || "Email send failed");
+      return result;
     }
 
     async function loadRecordById() {
@@ -1236,10 +1409,7 @@
       try {
         const res = await fetch(`${GAS_URL}?action=getRecord&id=${encodeURIComponent(id)}`);
         const result = await res.json();
-
-        if (!result.success) {
-          throw new Error(result.message || "record not found");
-        }
+        if (!result.success) throw new Error(result.message || "record not found");
 
         const data = result.data;
         customerCodeCell.textContent = data.customerCode || "-";
@@ -1259,8 +1429,8 @@
       }
     }
 
+    // ── Init ──────────────────────────────────────────────────────
     const signature = initSignature();
-
     setFormEnabled(false);
 
     bindAddressLookup("companyZip", "companyAddrAuto", "lookupCompany");
@@ -1273,14 +1443,11 @@
     });
 
     form.signedDate.addEventListener("input", updateTopDate);
-
     langJaBtn.addEventListener("click", () => switchLanguage("ja"));
     langZhBtn.addEventListener("click", () => switchLanguage("zh"));
 
     document.querySelectorAll(".confirm-check").forEach((el) => {
-      el.addEventListener("change", () => {
-        checkAllConfirmed();
-      });
+      el.addEventListener("change", checkAllConfirmed);
     });
 
     form.addEventListener("submit", async (event) => {
@@ -1292,29 +1459,46 @@
         return;
       }
 
+      submitBtn.disabled = true;
       statusEl.textContent = currentLang === "ja" ? "PDFを生成しています..." : "正在生成 PDF...";
       statusEl.className = "status";
 
-      const doc = generatePdf(signature.canvas);
-      const blob = doc.output("blob");
-      doc.save("njf-contract.pdf");
-
       try {
-        const result = await sendPdf(blob);
-        if (result.sent) {
+        const signatureDataUrl = signature.canvas.toDataURL("image/png");
+        const pdfBlob = await generatePdfBlob(signatureDataUrl);
+
+        // Local download
+        const { jsPDF } = window.jspdf;
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `njf-contract-${customerCodeCell.textContent}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        statusEl.textContent = currentLang === "ja" ? "PDFを保存しました。メール送信中..." : "PDF已保存，正在发送邮件...";
+
+        // Send email via GAS
+        try {
+          await sendPdfViaGas(pdfBlob, customerCodeCell.textContent, installNameCell.textContent);
           statusEl.textContent = currentLang === "ja"
-            ? "申込書PDFを作成し、メール送信が完了しました。"
-            : "申请书 PDF 已生成并发送完成。";
+            ? `✅ 申込書PDFを保存し、${FIXED_TO_EMAIL} への送信が完了しました。`
+            : `✅ 申请书 PDF 已保存，并成功发送至 ${FIXED_TO_EMAIL}。`;
           statusEl.className = "status ok";
-        } else {
-          statusEl.textContent = result.reason;
+        } catch (emailErr) {
+          statusEl.textContent = currentLang === "ja"
+            ? `⚠️ PDFは保存されましたが、メール送信に失敗しました：${emailErr.message}`
+            : `⚠️ PDF 已保存，但邮件发送失败：${emailErr.message}`;
           statusEl.className = "status warn";
         }
-      } catch (error) {
+
+      } catch (err) {
         statusEl.textContent = currentLang === "ja"
-          ? `PDFは保存されましたが、送信に失敗しました：${error.message}`
-          : `PDF 已保存，但发送失败：${error.message}`;
+          ? `❌ PDF生成に失敗しました：${err.message}`
+          : `❌ PDF 生成失败：${err.message}`;
         statusEl.className = "status warn";
+      } finally {
+        submitBtn.disabled = false;
       }
     });
 
