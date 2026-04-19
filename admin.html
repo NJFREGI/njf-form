@@ -253,7 +253,7 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "njf_regi_admin_config_v5";
+    const STORAGE_KEY = "njf_regi_admin_config_v6";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxc7ilkbZ-NVErnNVEvi4aW4tWrw2qIM6b-iSe_UEz9_2CcjXJYhVtCkS6w57EK13_Z/exec";
 
     const deviceListEl = document.getElementById("deviceList");
@@ -261,6 +261,9 @@
     const installNameEl = document.getElementById("installName");
     const generatedLinkEl = document.getElementById("generatedLink");
     const statusTextEl = document.getElementById("statusText");
+    const previewCodeEl = document.getElementById("previewCode");
+    const previewShopEl = document.getElementById("previewShop");
+    const previewItemsEl = document.getElementById("previewItems");
 
     function escapeHtml(str) {
       return String(str ?? "")
@@ -268,6 +271,14 @@
         .replace(/"/g, "&quot;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+    }
+
+    function getFormUrl() {
+      return "https://njfregi.github.io/njf-form/form";
+    }
+
+    function qtyValid(qty) {
+      return Number(qty) > 0;
     }
 
     function addDeviceCard(name = "", price = "", qty = "1") {
@@ -294,9 +305,11 @@
           <button type="button" class="small-btn remove-row">この設備を削除</button>
         </div>
       `;
+
       deviceListEl.appendChild(card);
 
-      card.querySelector(".remove-row").addEventListener("click", () => {
+      const removeBtn = card.querySelector(".remove-row");
+      removeBtn.addEventListener("click", () => {
         card.remove();
         updatePreview();
         saveConfig();
@@ -310,12 +323,8 @@
       });
     }
 
-    function qtyValid(qty) {
-      return Number(qty) > 0;
-    }
-
     function collectDevices() {
-      const cards = [...deviceListEl.querySelectorAll(".device-card")];
+      const cards = Array.from(deviceListEl.querySelectorAll(".device-card"));
       return cards.map(card => {
         const name = card.querySelector(".device-name").value.trim();
         const price = Number(card.querySelector(".device-price").value || 0);
@@ -325,96 +334,18 @@
     }
 
     function updatePreview() {
-      document.getElementById("previewCode").textContent = customerCodeEl.value.trim() || "-";
-      document.getElementById("previewShop").textContent = installNameEl.value.trim() || "-";
+      previewCodeEl.textContent = customerCodeEl.value.trim() || "-";
+      previewShopEl.textContent = installNameEl.value.trim() || "-";
 
       const items = collectDevices();
-      const previewItems = document.getElementById("previewItems");
       if (!items.length) {
-        previewItems.textContent = "未设置";
+        previewItemsEl.textContent = "未设置";
         return;
       }
 
-      previewItems.innerHTML = items.map(item => {
+      previewItemsEl.innerHTML = items.map(item => {
         return `・${escapeHtml(item.name)} / ¥${Number(item.price).toLocaleString("ja-JP")} / 数量 ${item.qty}`;
       }).join("<br>");
-    }
-
-    function getFormUrl() {
-  return "https://njfregi.github.io/njf-form/form";
-}
-
-  current.search = "";
-  current.hash = "";
-  return current.toString();
-}
-    async function generateShortLink() {
-      const code = customerCodeEl.value.trim();
-      const shop = installNameEl.value.trim();
-      const items = collectDevices();
-
-      if (!code) {
-        showStatus("请先填写 顧客コード。", false);
-        return;
-      }
-      if (!shop) {
-        showStatus("请先填写 設置先名称。", false);
-        return;
-      }
-      if (!items.length) {
-        showStatus("请至少添加 1 个设备项目。", false);
-        return;
-      }
-
-      showStatus("正在保存到 Google Sheets 并生成短链接...", true);
-
-      try {
-        const payload = {
-          customerCode: code,
-          installName: shop,
-          items: items
-        };
-
-        const formData = new URLSearchParams();
-        formData.append("action", "createRecord");
-        formData.append("payload", JSON.stringify(payload));
-
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          body: formData
-        });
-
-        const result = await res.json();
-
-        if (!result.success) {
-          throw new Error(result.message || "create failed");
-        }
-
-        const shortUrl = `${getFormUrl()}?id=${result.id}`;
-        generatedLinkEl.textContent = shortUrl;
-        showStatus(`短链接已生成，ID：${result.id}`, true);
-      } catch (err) {
-        showStatus(`生成失败：${err.message}`, false);
-      }
-    }
-
-    function showStatus(text, ok) {
-      statusTextEl.textContent = text;
-      statusTextEl.className = `status ${ok ? "ok" : "warn"}`;
-    }
-
-    async function copyLink() {
-      const text = generatedLinkEl.textContent.trim();
-      if (!text || text === "まだ生成されていません") {
-        showStatus("请先生成链接。", false);
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(text);
-        showStatus("链接已复制。", true);
-      } catch (e) {
-        showStatus("复制失败，请手动复制。", false);
-      }
     }
 
     function saveConfig() {
@@ -470,16 +401,85 @@
       saveConfig();
     }
 
+    function showStatus(text, ok) {
+      statusTextEl.textContent = text;
+      statusTextEl.className = `status ${ok ? "ok" : "warn"}`;
+    }
+
+    async function copyLink() {
+      const text = generatedLinkEl.textContent.trim();
+      if (!text || text === "まだ生成されていません") {
+        showStatus("请先生成链接。", false);
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        showStatus("链接已复制。", true);
+      } catch (e) {
+        showStatus("复制失败，请手动复制。", false);
+      }
+    }
+
+    async function generateShortLink() {
+      const code = customerCodeEl.value.trim();
+      const shop = installNameEl.value.trim();
+      const items = collectDevices();
+
+      if (!code) {
+        showStatus("请先填写 顧客コード。", false);
+        return;
+      }
+      if (!shop) {
+        showStatus("请先填写 設置先名称。", false);
+        return;
+      }
+      if (!items.length) {
+        showStatus("请至少添加 1 个设备项目。", false);
+        return;
+      }
+
+      showStatus("正在保存到 Google Sheets 并生成短链接...", true);
+
+      try {
+        const payload = {
+          customerCode: code,
+          installName: shop,
+          items: items
+        };
+
+        const formData = new URLSearchParams();
+        formData.append("action", "createRecord");
+        formData.append("payload", JSON.stringify(payload));
+
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (!result.success) {
+          throw new Error(result.message || "create failed");
+        }
+
+        const shortUrl = `${getFormUrl()}?id=${result.id}`;
+        generatedLinkEl.textContent = shortUrl;
+        showStatus(`短链接已生成，ID：${result.id}`, true);
+      } catch (err) {
+        showStatus(`生成失败：${err.message}`, false);
+      }
+    }
+
     document.getElementById("addRowBtn").addEventListener("click", () => {
       addDeviceCard();
       updatePreview();
       saveConfig();
     });
 
-    document.getElementById("generateBtn").addEventListener("click", generateShortLink);
-    document.getElementById("copyBtn").addEventListener("click", copyLink);
     document.getElementById("loadSampleBtn").addEventListener("click", loadSample);
     document.getElementById("clearAllBtn").addEventListener("click", clearAll);
+    document.getElementById("copyBtn").addEventListener("click", copyLink);
+    document.getElementById("generateBtn").addEventListener("click", generateShortLink);
 
     [customerCodeEl, installNameEl].forEach(el => {
       el.addEventListener("input", () => {
