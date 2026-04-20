@@ -645,7 +645,7 @@
         <div class="card-title">📱 服務員端 / ハンディ</div>
         <div style="display:flex;align-items:center;gap:8px">
           <label style="font-size:11px;color:var(--ink2)">台数</label>
-          <input id="ac-hw-count" type="number" min="1" max="20" value="3"
+          <input id="ac-hw-count" type="number" min="0" max="20" value="3"
             style="width:60px;padding:6px 8px;border:1.5px solid var(--border2);border-radius:8px;font-size:13px;text-align:center"
             oninput="acPreview()"/>
         </div>
@@ -657,7 +657,7 @@
 
     <!-- Generate button -->
     <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="acGenerate()">
-      🪪 アカウントカードを生成・印刷
+      🪪 アカウントカードを生成
     </button>
 
   </div>
@@ -1101,6 +1101,10 @@ function acAddRegi() {
 
 function acRenderRegi() {
   const list = document.getElementById("ac-regi-list");
+  if (regiCount === 0) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--ink3);padding:8px;text-align:center">収銀端なし（カードに表示しない）</div>';
+    return;
+  }
   let html = "";
   for (let i = 1; i <= regiCount; i++) {
     const num = String(i).padStart(3,"0");
@@ -1110,14 +1114,14 @@ function acRenderRegi() {
         <div style="font-size:14px;font-weight:700;color:var(--ink)">RG${num}</div>
       </div>
       <div style="font-size:12px;color:var(--ink2)">密碼：<strong>888888</strong></div>
-      ${i > 1 ? `<button onclick="acRemoveRegi()" style="background:var(--red-l);border:1px solid rgba(239,68,68,.2);color:var(--red);padding:4px 8px;border-radius:7px;font-size:11px;cursor:pointer">✕</button>` : ""}
+      <button onclick="acRemoveRegi()" style="background:var(--red-l);border:1px solid rgba(239,68,68,.2);color:var(--red);padding:4px 8px;border-radius:7px;font-size:11px;cursor:pointer">✕</button>
     </div>`;
   }
   list.innerHTML = html;
 }
 
 function acRemoveRegi() {
-  if (regiCount > 1) { regiCount--; acRenderRegi(); acPreview(); }
+  if (regiCount > 0) { regiCount--; acRenderRegi(); acPreview(); }
 }
 
 function acPreview() {
@@ -1143,21 +1147,23 @@ function acGenerate() {
   const mgmt2 = ds + "002";
   const hwCount = parseInt(document.getElementById("ac-hw-count").value) || 3;
 
-  // Build regi rows
+  // Build regi rows (skip if 0 台)
   let regiRows = "";
-  for (let i = 1; i <= regiCount; i++) {
-    const num = String(i).padStart(3,"0");
-    regiRows += `<tr>
-      ${i===1 ? `<td rowspan="${regiCount}" style="text-align:center;vertical-align:middle;font-weight:700;border:1px solid #ccc;padding:8px;background:#fff8f0">収銀端<br><small style="font-weight:400;font-size:10px">レジ</small></td>` : ""}
-      <td style="border:1px solid #ccc;padding:8px;text-align:center;font-weight:700">RG${num}</td>
-      <td style="border:1px solid #ccc;padding:8px;text-align:center">888888</td>
-      <td style="border:1px solid #ccc;padding:8px;font-size:11px;line-height:1.6">
-        結账 / 精算 / 配膳 / 価格変更<br>臨時商品追加 / 注文取消
-      </td>
-    </tr>`;
+  if (regiCount > 0) {
+    for (let i = 1; i <= regiCount; i++) {
+      const num = String(i).padStart(3,"0");
+      regiRows += `<tr>
+        ${i===1 ? `<td rowspan="${regiCount}" style="text-align:center;vertical-align:middle;font-weight:700;border:1px solid #ccc;padding:8px;background:#fff8f0">収銀端<br><small style="font-weight:400;font-size:10px">レジ</small></td>` : ""}
+        <td style="border:1px solid #ccc;padding:8px;text-align:center;font-weight:700">RG${num}</td>
+        <td style="border:1px solid #ccc;padding:8px;text-align:center">888888</td>
+        <td style="border:1px solid #ccc;padding:8px;font-size:11px;line-height:1.6">
+          結账 / 精算 / 配膳 / 価格変更<br>臨時商品追加 / 注文取消
+        </td>
+      </tr>`;
+    }
   }
 
-  // Build handy rows
+  // Build handy rows (skip if 0 台)
   let hwAccounts = [];
   for (let i = 1; i <= hwCount; i++) {
     hwAccounts.push("HW" + String(i).padStart(3,"0"));
@@ -1171,12 +1177,13 @@ function acGenerate() {
 <html lang="ja">
 <head>
 <meta charset="UTF-8"/>
+<title>${shop}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Noto Sans JP',sans-serif; background:#fff; color:#111; }
   .page { width:210mm; min-height:148mm; padding:12mm 14mm; margin:0 auto; }
-  @media print { body{margin:0} .page{padding:10mm 12mm} }
+  @media print { body{margin:0} .page{padding:10mm 12mm} .btn-bar{display:none!important} }
   .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .logo-area { display:flex; align-items:center; gap:10px; }
   .logo-text { font-size:18px; font-weight:900; color:#1389d4; letter-spacing:.05em; }
@@ -1237,12 +1244,12 @@ function acGenerate() {
         <td style="text-align:center">888888</td>
         <td style="font-size:11px;line-height:1.6">基本設定 / メニュー設定<br>重要操作 / データ照会</td>
       </tr>
-      <tr>
+      ${hwCount > 0 ? `<tr>
         <td style="text-align:center;vertical-align:middle;font-weight:700;background:#f5fff5">服務員端<br><small style="font-weight:400;font-size:10px">ハンディ</small></td>
         <td style="font-weight:700;text-align:center;line-height:1.8">${hwAccounts.join("<br>")}</td>
         <td style="text-align:center">888888</td>
         <td style="font-size:11px;line-height:1.6">点单 / 转台 / 并台 / 拼台<br>注文 / 席移動 / 席結合 / 席分割<br>商品キャンセル / 商品移動 / 配膳</td>
-      </tr>
+      </tr>` : ""}
     </tbody>
   </table>
 
@@ -1253,7 +1260,22 @@ function acGenerate() {
   </div>
   <div class="date-note">発行日：${dateLabel}</div>
 </div>
-<scr"+"ipt>window.onload=()=>window.print();<\/scr"+"ipt>
+<div class="btn-bar" style="text-align:center;padding:12px;background:#f8f8f8;border-top:1px solid #ddd;display:flex;gap:10px;justify-content:center">
+  <button onclick="window.print()" style="padding:10px 24px;background:#1389d4;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-family:sans-serif">🖨 印刷</button>
+  <button onclick="downloadAsImage()" style="padding:10px 24px;background:#27ae60;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-family:sans-serif">📥 画像保存</button>
+</div>
+<scr"+"ipt src=\"https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js\"><\/scr"+"ipt>
+<scr"+"ipt>
+function downloadAsImage(){
+  const el=document.querySelector('.page');
+  html2canvas(el,{scale:2,backgroundColor:'#fff',useCORS:true}).then(function(canvas){
+    const a=document.createElement('a');
+    a.download='アカウントカード_'+document.title+'.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+  });
+}
+<\/scr"+"ipt>
 </body>
 </html>`;
 
