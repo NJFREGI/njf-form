@@ -364,9 +364,71 @@ main{padding:24px;max-width:1100px;margin:0 auto}
   <div class="section-header">
     <div class="section-title">ロール紙 <small>感熱ロール紙 注文書</small></div>
   </div>
-  <div class="empty-state">
-    <div class="icon">🧾</div>
-    <p>準備中</p>
+  <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:18px 16px 20px;max-width:700px">
+    <div style="text-align:center;color:#6b7280;font-size:13px;line-height:1.7;margin-bottom:18px">
+      必要事項を入力後、「転送メール作成」を押してください。発注日は本日の日付で自動入力されます。
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px">発注日</div>
+      <input id="rp-orderDate" type="text" readonly style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#f9fafb;font-size:14px">
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px">ロール紙情報</div>
+      <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px">
+        <select id="rp-spec1" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit">
+          <option value="">規格を選択してください</option>
+          <option value="2443-88（80mm×80Φ×12mm / 75μ / 20巻）">2443-88（80mm×80Φ×12mm / 75μ / 20巻）</option>
+          <option value="75-88（80mm×80Φ×12mm / 75μ / 48巻）">75-88（80mm×80Φ×12mm / 75μ / 48巻）</option>
+        </select>
+        <input id="rp-qty1" type="number" min="0" placeholder="数量" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px">
+        <select id="rp-spec2" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit">
+          <option value="">規格を選択してください</option>
+          <option value="2443-88（80mm×80Φ×12mm / 75μ / 20巻）">2443-88（80mm×80Φ×12mm / 75μ / 20巻）</option>
+          <option value="75-88（80mm×80Φ×12mm / 75μ / 48巻）">75-88（80mm×80Φ×12mm / 75μ / 48巻）</option>
+        </select>
+        <input id="rp-qty2" type="number" min="0" placeholder="数量" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+      </div>
+      <div style="font-size:12px;color:#6b7280">不要な項目は空欄のままでOKです。数量0または未入力の項目はメールに表示されません。</div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px">お届け先</div>
+      <div style="margin-bottom:8px">
+        <label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">お届け先御会社名</label>
+        <input id="rp-toName" type="text" placeholder="例：〇〇株式会社" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">ご住所</label>
+        <textarea id="rp-address" placeholder="例：東京都〇〇区〇〇 1-2-3" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;min-height:80px;resize:vertical;font-family:inherit"></textarea>
+      </div>
+      <div>
+        <label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">TEL</label>
+        <input id="rp-tel" type="text" placeholder="例：03-1234-5678" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">備考（任意）</label>
+      <textarea id="rp-note" placeholder="例：平日午前中着希望" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;min-height:80px;resize:vertical;font-family:inherit"></textarea>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <a id="rp-mailBtn" href="javascript:void(0)" style="display:block;width:100%;padding:14px;background:#111827;color:white;border-radius:10px;text-align:center;font-size:15px;font-weight:800;text-decoration:none">
+        ✉️ 転送メール作成
+      </a>
+      <button onclick="window.print()" style="width:100%;padding:14px;background:#e5e7eb;color:#111827;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">
+        🖨 印刷
+      </button>
+    </div>
+
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📋 メール内容プレビュー</div>
+      <pre id="rp-preview" style="margin:0;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.8;color:#374151;font-family:inherit"></pre>
+    </div>
   </div>
 </div>
 
@@ -593,6 +655,7 @@ function switchTab(name,btn){
   if(btn)btn.classList.add('active');
   if(name==='stores')renderStores();
   if(name==='mitsumori')renderMitsumori();
+  if(name==='rollpaper')rpInit();
 }
 
 function loadInvoices(){
@@ -903,6 +966,70 @@ function init(){
   loadInvoices();checkAutoGen();
 }
 init();
+
+/* ══ ROLL PAPER ══════════════════════════════════════════════ */
+const RP_ORDER_FROM = {
+  merchantName: "金澤企画国際株式会社【コード　6831】",
+  emailTo: "info@gm-life.co.jp"
+};
+
+function rpTodayText() {
+  const d = new Date();
+  return d.getFullYear() + "年 " + (d.getMonth()+1) + "月 " + d.getDate() + "日";
+}
+
+function rpGetVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function rpBuildItems() {
+  const spec1 = rpGetVal("rp-spec1"), qty1 = Number(rpGetVal("rp-qty1")||0);
+  const spec2 = rpGetVal("rp-spec2"), qty2 = Number(rpGetVal("rp-qty2")||0);
+  const items = [];
+  if (spec1 && qty1 > 0) items.push(spec1 + "　" + qty1 + "箱");
+  if (spec2 && qty2 > 0) items.push(spec2 + "　" + qty2 + "箱");
+  return items;
+}
+
+function rpBuildMail() {
+  const orderDate = rpGetVal("rp-orderDate");
+  const toName    = rpGetVal("rp-toName");
+  const address   = rpGetVal("rp-address");
+  const tel       = rpGetVal("rp-tel");
+  const note      = rpGetVal("rp-note");
+  const items     = rpBuildItems();
+  const lines = ["ロール紙注文依頼","","発注日："+orderDate,"","【注文内容】"];
+  if (items.length > 0) items.forEach(i => lines.push(i));
+  else lines.push("※注文内容未入力");
+  lines.push("","【お届け先】","御会社名："+toName,"ご住所："+address,"TEL："+tel);
+  if (note) lines.push("","【備考】",note);
+  lines.push("","お手数をおかけしますが、何卒よろしくお願い申し上げます。");
+  return lines.join("\n");
+}
+
+function rpUpdate() {
+  const subject = RP_ORDER_FROM.merchantName + "【ロール紙注文】";
+  const body = rpBuildMail();
+  const href = "mailto:" + RP_ORDER_FROM.emailTo +
+    "?subject=" + encodeURIComponent(subject) +
+    "&body=" + encodeURIComponent(body);
+  const btn = document.getElementById("rp-mailBtn");
+  if (btn) btn.href = href;
+  const pre = document.getElementById("rp-preview");
+  if (pre) pre.textContent = body;
+}
+
+function rpInit() {
+  const el = document.getElementById("rp-orderDate");
+  if (el) el.value = rpTodayText();
+  ["rp-spec1","rp-qty1","rp-spec2","rp-qty2","rp-toName","rp-address","rp-tel","rp-note"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener("input", rpUpdate); el.addEventListener("change", rpUpdate); }
+  });
+  rpUpdate();
+}
+
 </script>
 </body>
 </html>
