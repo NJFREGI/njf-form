@@ -463,7 +463,6 @@ main { padding: 24px; max-width: 1100px; margin: 0 auto; }
   <button class="tab-btn" onclick="switchTab('rollpaper',this)">🧾 ロール紙</button>
   <button class="tab-btn" onclick="switchTab('keiyaku',this)">📄 契約書</button>
   <button class="tab-btn" onclick="switchTab('stores',this)">🏪 店铺管理</button>
-  <button class="tab-btn" onclick="switchTab('preview',this)">👁 預覧/下載</button>
 </div>
 
 <main>
@@ -572,21 +571,6 @@ main { padding: 24px; max-width: 1100px; margin: 0 auto; }
     <button class="btn btn-primary" onclick="openNewStore()">＋ 新增店铺</button>
   </div>
   <div class="store-grid" id="storeGrid"></div>
-</div>
-
-<!-- TAB: PREVIEW -->
-<div id="tab-preview" class="tab-content">
-  <div class="preview-toolbar">
-    <label style="font-size:13px;font-weight:500">选择请求书：</label>
-    <select id="previewSelect" onchange="renderPreview()">
-      <option value="">-- 请选择 --</option>
-    </select>
-    <button class="btn btn-pdf" onclick="downloadSinglePDFFromPreview()">📥 下载此PDF</button>
-    <button class="btn btn-secondary" onclick="window.print()">🖨 打印</button>
-  </div>
-  <div class="preview-frame" id="previewArea">
-    <div class="empty-state"><div class="icon">📄</div><p>请从上方选择请求书进行预览</p></div>
-  </div>
 </div>
 
 </main>
