@@ -1,1 +1,1929 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NJF REGI 書類管理システム</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap');
 
+:root {
+  --ink: #1a1a2e;
+  --ink-light: #4a4a6a;
+  --paper: #f8f6f0;
+  --paper-warm: #ede9e0;
+  --accent: #c0392b;
+  --accent-light: #e74c3c;
+  --border: #d4cfc5;
+  --shadow: rgba(26,26,46,0.12);
+  --success: #27ae60;
+  --blue: #2980b9;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans JP', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+header {
+  background: var(--ink); color: white; padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+header h1 { font-family: 'Noto Serif JP', serif; font-size: 17px; font-weight: 700; letter-spacing: 1px; }
+header h1 span { color: #e74c3c; }
+.header-meta { font-size: 11px; opacity: 0.55; }
+
+.tabs { background: var(--ink); display: flex; padding: 0 8px; border-top: 1px solid rgba(255,255,255,0.08); overflow-x: auto; flex-wrap: nowrap; }
+.tab-btn {
+  background: none; border: none; color: rgba(255,255,255,0.5);
+  padding: 7px 10px; cursor: pointer; font-size: 11px;
+  font-family: 'Noto Sans JP', sans-serif;
+  border-bottom: 2px solid transparent; transition: all 0.2s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.tab-btn.active { color: white; border-bottom-color: #e74c3c; }
+.tab-btn:hover { color: white; }
+
+main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.section-title { font-family: 'Noto Serif JP', serif; font-size: 19px; font-weight: 700; }
+.section-title small { font-family: 'Noto Sans JP', sans-serif; font-size: 12px; color: var(--ink-light); margin-left: 8px; font-weight: 400; }
+
+.btn {
+  padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;
+  font-size: 13px; font-family: 'Noto Sans JP', sans-serif; font-weight: 500;
+  transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-light); }
+.btn-secondary { background: var(--ink); color: white; }
+.btn-secondary:hover { background: #2c2c4e; }
+.btn-outline { background: white; color: var(--ink); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--paper-warm); }
+.btn-success { background: var(--success); color: white; }
+.btn-blue { background: var(--blue); color: white; }
+.btn-pdf { background: #8e44ad; color: white; }
+.btn-pdf:hover { background: #9b59b6; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.month-bar {
+  background: white; border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 18px; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.month-bar label { font-size: 13px; font-weight: 500; }
+.month-bar input[type="month"] {
+  padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px;
+  font-family: 'Noto Sans JP', sans-serif; font-size: 14px; background: var(--paper);
+}
+.month-bar .stat { margin-left: auto; font-size: 13px; color: var(--ink-light); }
+.month-bar .stat strong { color: var(--accent); font-size: 17px; }
+
+.inv-table-wrap { background: white; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.inv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.inv-table th { background: var(--ink); color: white; padding: 10px 12px; text-align: left; font-weight: 500; }
+.inv-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.inv-table tr:last-child td { border-bottom: none; }
+.inv-table tr:hover td { background: var(--paper); }
+.inv-table .amount { font-weight: 700; color: var(--accent); }
+.inv-table .actions { display: flex; gap: 5px; flex-wrap: wrap; }
+.status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+.status-pending { background: #fef3cd; color: #856404; }
+.status-paid { background: #d1f2e1; color: #1a7a41; }
+
+.total-row {
+  background: var(--paper-warm); display: flex; justify-content: flex-end;
+  padding: 12px 18px; border-top: 2px solid var(--border); gap: 28px; flex-wrap: wrap;
+}
+.total-item { text-align: right; }
+.total-item label { color: var(--ink-light); display: block; font-size: 11px; }
+.total-item strong { font-size: 16px; }
+.total-item.grand strong { color: var(--accent); font-size: 20px; }
+
+.store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.store-card { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+.store-card:hover { box-shadow: 0 4px 14px var(--shadow); }
+.store-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.store-name { font-weight: 700; font-size: 14px; }
+.store-meta { font-size: 12px; color: var(--ink-light); line-height: 1.8; }
+.store-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: white; border-radius: 10px; padding: 26px; width: 540px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.modal h2 { font-family: 'Noto Serif JP', serif; font-size: 17px; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-light); margin-bottom: 5px; }
+.form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; font-family: 'Noto Sans JP', sans-serif; font-size: 14px; background: var(--paper); }
+.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+
+.line-items { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.line-item-header { display: none; }
+/* 見積明細 6列 */
+.mit-line-item-header { display: none; }
+.mit-line-item-row {
+  padding: 8px; border-top: 1px solid var(--border);
+  background: var(--paper); margin: 6px; border-radius: 6px;
+}
+.mit-line-item-row .mit-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.mit-line-item-row .mit-fields .field label { display: block; font-size: 11px; color: var(--ink-light); margin-bottom: 4px; }
+.mit-line-item-row .mit-fields .field input { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+.mit-line-item-row .mit-name-wrap { margin-bottom: 8px; }
+.mit-line-item-row .mit-name-wrap label { display: block; font-size: 11px; color: var(--ink-light); margin-bottom: 4px; }
+.mit-line-item-row .mit-name-wrap input { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+.mit-line-footer { display: flex; justify-content: space-between; align-items: center; }
+.mit-line-total { font-size: 13px; font-weight: 600; color: var(--accent); }
+.line-item-row { padding: 8px; border-top: 1px solid var(--border); background: var(--paper); margin: 6px; border-radius: 6px; }
+.line-item-name-wrap { margin-bottom: 8px; }
+.line-item-name-wrap label { display: block; font-size: 11px; color: var(--ink-light); margin-bottom: 4px; }
+.line-item-name-wrap input { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+.line-item-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.line-item-nums .field label { display: block; font-size: 11px; color: var(--ink-light); margin-bottom: 4px; }
+.line-item-nums .field input { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+.line-item-footer { display: flex; justify-content: space-between; align-items: center; }
+.line-item-total { font-size: 13px; font-weight: 600; color: var(--accent); }
+.btn-icon { width: 26px; height: 26px; border: none; background: #fee2e2; color: #991b1b; border-radius: 4px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; }
+.add-line-btn { width: 100%; padding: 7px; background: white; border: none; border-top: 1px solid var(--border); cursor: pointer; color: var(--blue); font-size: 13px; font-family: 'Noto Sans JP', sans-serif; margin-top: 4px; }
+
+/* ===== TEMPLATE ITEMS ===== */
+.template-items {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  background: var(--paper); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px;
+}
+.tpl-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: white; border-radius: 6px;
+  border: 1px solid var(--border); cursor: pointer;
+  transition: all 0.15s; user-select: none;
+}
+.tpl-item:hover { border-color: var(--blue); background: #f0f7ff; }
+.tpl-item input[type="checkbox"] {
+  width: 16px; height: 16px; accent-color: var(--blue);
+  cursor: pointer; flex-shrink: 0; margin: 0;
+  position: relative; top: 0; vertical-align: middle;
+}
+.tpl-item input[type="checkbox"]:checked + .tpl-name { color: var(--blue); font-weight: 600; }
+.tpl-item:has(input:checked) { border-color: var(--blue); background: #e8f4fd; }
+.tpl-name { font-size: 12px; flex: 1; line-height: 1.3; vertical-align: middle; }
+.tpl-price { font-size: 11px; color: var(--accent); font-weight: 600; white-space: nowrap; }
+@media (max-width: 700px) {
+  .template-items { grid-template-columns: 1fr; }
+  .tpl-item { padding: 11px 12px; }
+  .tpl-item input[type="checkbox"] { width: 18px; height: 18px; }
+  .tpl-name { font-size: 14px; }
+  .tpl-price { font-size: 13px; }
+}
+
+.auto-notice { background: #e8f4fd; border: 1px solid #b3d4f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: #1a5276; display: flex; align-items: center; gap: 10px; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--ink-light); }
+.empty-state .icon { font-size: 46px; margin-bottom: 14px; }
+
+/* ===== MOBILE CARD LIST ===== */
+.inv-card-list { display: none; }
+.inv-card {
+  background: white; border: 1px solid var(--border); border-radius: 10px;
+  margin-bottom: 12px; overflow: hidden;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+.inv-card-header {
+  background: var(--ink); color: white;
+  padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+}
+.inv-card-name { font-weight: 700; font-size: 15px; flex: 1; }
+.inv-card-badge { font-size: 11px; }
+.inv-card-body { padding: 14px 16px; }
+.inv-card-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px;
+}
+.inv-card-row:last-child { border-bottom: none; }
+.inv-card-row label { color: var(--ink-light); font-size: 12px; }
+.inv-card-row .val { font-weight: 500; }
+.inv-card-total {
+  background: #fdf0ef; padding: 12px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 2px solid var(--accent);
+}
+.inv-card-total label { color: var(--ink-light); font-size: 12px; }
+.inv-card-total .amount { color: var(--accent); font-size: 20px; font-weight: 700; }
+.inv-card-actions {
+  padding: 10px 16px; display: flex; gap: 8px;
+  background: var(--paper); border-top: 1px solid var(--border);
+}
+.inv-card-actions .btn { flex: 1; justify-content: center; font-size: 13px; }
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 700px) {
+  header { padding: 0 14px; height: 52px; }
+  header h1 { font-size: 13px; letter-spacing: 0; }
+  .header-meta { display: none; }
+  .tabs { padding: 0 8px; }
+  .tab-btn { padding: 8px 10px; font-size: 12px; }
+  main { padding: 14px; }
+
+  .auto-notice { font-size: 12px; padding: 10px 12px; }
+
+  .month-bar {
+    padding: 12px; gap: 8px;
+    display: grid; grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+  .month-bar label { grid-column: 1; }
+  .month-bar input[type="month"] { grid-column: 2; width: 100%; }
+  .month-bar .btn-success { grid-column: 1 / -1; width: 100%; justify-content: center; }
+  .month-bar .btn-primary { grid-column: 1; }
+  .month-bar .btn-pdf { grid-column: 2; }
+  .month-bar .stat { grid-column: 1 / -1; text-align: center; margin: 0; }
+
+  /* Hide table, show cards on mobile */
+  .inv-table-wrap table { display: none; }
+  .inv-card-list { display: block; }
+  .inv-table-wrap { background: transparent; border: none; }
+  .total-row {
+    border-radius: 10px; border: 1px solid var(--border);
+    background: white; margin-top: 4px;
+    justify-content: space-around;
+  }
+
+  .section-header { flex-direction: column; align-items: flex-start; }
+  .section-title small { display: block; margin-left: 0; margin-top: 4px; }
+  .store-grid { grid-template-columns: 1fr; }
+
+  .preview-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+  .preview-toolbar select { width: 100%; font-size: 16px; padding: 12px; }
+  .preview-toolbar .btn { justify-content: center; padding: 14px; font-size: 15px; }
+  .preview-toolbar label { font-size: 14px; font-weight: 600; }
+  .preview-frame { border-radius: 0; border-left: none; border-right: none; overflow-x: hidden; }
+
+  /* Modal full screen on mobile */
+  .modal { padding: 18px; border-radius: 0; width: 100%; max-width: 100vw; max-height: 100vh; border-radius: 16px 16px 0 0; }
+  .form-row { grid-template-columns: 1fr; }
+  .modal-footer { flex-direction: column; }
+  .modal-footer .btn { width: 100%; justify-content: center; padding: 12px; font-size: 15px; }
+
+  /* Line items - vertical card style on mobile */
+  .line-item-header { display: none; }
+/* 見積明細 6列 */
+.mit-line-item-header { display: none; }
+.mit-line-item-row {
+  padding: 8px; border-top: 1px solid var(--border);
+  background: var(--paper); margin: 6px; border-radius: 6px;
+}
+.mit-line-item-row .mit-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.mit-line-item-row .mit-fields .field label { display: block; font-size: 11px; color: var(--ink-light); margin-bottom: 4px; }
+.mit-line-item-row .mit-fields .field input { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+.mit-line-item-row .mit-name-wrap { margin-bottom: 8px; }
+.mit-line-item-row .mit-name-wrap label { display: block; font-size: 11px; color: var(--ink-light); margin-bottom: 4px; }
+.mit-line-item-row .mit-name-wrap input { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+.mit-line-footer { display: flex; justify-content: space-between; align-items: center; }
+.mit-line-total { font-size: 13px; font-weight: 600; color: var(--accent); }
+  .line-item-row {
+    display: flex; flex-direction: column;
+    padding: 12px; gap: 10px;
+    background: var(--paper); margin: 8px; border-radius: 8px;
+    border: 1px solid var(--border); border-top: none;
+  }
+  .line-item-row .line-item-name-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .line-item-row .line-item-name-wrap label { font-size: 11px; color: var(--ink-light); font-weight: 500; }
+  .line-item-row input { font-size: 16px; padding: 10px 12px; border-radius: 6px; }
+  .line-item-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .line-item-nums .field { display: flex; flex-direction: column; gap: 4px; }
+  .line-item-nums .field label { font-size: 11px; color: var(--ink-light); font-weight: 500; }
+  .line-item-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .line-item-total { font-size: 16px; }
+  .btn-icon { width: 36px; height: 36px; font-size: 18px; }
+  .add-line-btn { padding: 14px; font-size: 15px; }
+}
+
+/* PDF loading overlay */
+.pdf-loading {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 999; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+}
+.pdf-loading.show { display: flex; }
+.pdf-loading p { color: white; font-size: 15px; }
+.spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== INVOICE RENDER (off-screen for PDF) ===== */
+#pdfRenderArea {
+  position: fixed; left: -9999px; top: 0; width: 794px;
+  background: white; font-family: 'Noto Sans JP', sans-serif;
+}
+
+/* ===== 日式請求書スタイル ===== */
+.inv-page {
+  width: 794px; min-height: 1123px; background: white;
+  padding: 44px 52px 40px; font-size: 13px; line-height: 1.75;
+  font-family: 'Noto Sans JP', sans-serif; color: #111;
+  box-sizing: border-box;
+}
+
+/* タイトル：居中 */
+.inv-page .p-title {
+  text-align: center; font-size: 20px; font-weight: 700;
+  letter-spacing: 4px; border-bottom: 2px solid #111;
+  padding-bottom: 10px; margin-bottom: 24px;
+}
+
+/* 上部2カラム */
+.inv-page .p-top {
+  display: flex; gap: 8px; margin-bottom: 28px; align-items: flex-start;
+}
+.inv-page .p-top-left { flex: 1; }
+.inv-page .p-top-right { width: 300px; flex-shrink: 0; }
+
+/* 請求先 */
+.inv-page .p-to {
+  font-size: 17px; font-weight: 700;
+  border-bottom: 1.5px solid #111; padding-bottom: 4px;
+  margin-bottom: 8px; display: inline-block; min-width: 240px;
+}
+.inv-page .p-ochu { font-size: 13px; font-weight: 400; margin-left: 4px; }
+.inv-page .p-greeting { font-size: 12px; color: #444; margin-bottom: 18px; }
+
+/* 金額ボックス */
+.inv-page .p-amount-box {
+  border: 2px solid #111; padding: 10px 16px;
+  margin-bottom: 14px; display: inline-block; min-width: 260px;
+}
+.inv-page .p-amount-label { font-size: 11px; color: #555; margin-bottom: 3px; }
+.inv-page .p-amount-value { font-size: 26px; font-weight: 700; letter-spacing: 1px; }
+.inv-page .p-kiri { font-size: 18px; font-weight: 400; }
+
+/* 日付行 */
+.inv-page .p-date-row { font-size: 12px; color: #333; }
+.inv-page .p-date-label { color: #666; }
+.inv-page .p-date-inline {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  font-size: 12px; color: #333;
+}
+.inv-page .p-dates-right {
+  margin-top: 10px; padding-top: 8px;
+  border-top: 1px solid #ddd; font-size: 11.5px;
+}
+.inv-page .p-dates-right .p-date-row {
+  color: #333; line-height: 1.9;
+}
+
+/* 発行会社（右） */
+.inv-page .p-issuer-name {
+  font-size: 14px; font-weight: 700; margin-bottom: 8px;
+  padding-bottom: 6px; border-bottom: 1px solid #ccc;
+}
+/* 住所と印章を横並び */
+.inv-page .p-issuer-row {
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.inv-page .p-issuer-info {
+  font-size: 12px; color: #444; line-height: 1.85; flex: 1;
+  white-space: nowrap;
+}
+.inv-page .p-stamp-wrap { flex-shrink: 0; }
+
+/* 明細テーブル */
+.inv-page table.p-items {
+  width: 100%; border-collapse: collapse; margin-bottom: 0;
+  font-size: 12.5px; border: 1px solid #999;
+}
+.inv-page table.p-items th {
+  background: #2c2c3e; color: white;
+  padding: 8px 10px; font-weight: 500; font-size: 12px;
+  border: 1px solid #999;
+}
+.inv-page table.p-items td {
+  padding: 7px 10px; border: 1px solid #ccc;
+}
+.inv-page table.p-items tr.empty td { color: transparent; height: 26px; }
+
+/* 小計ブロック */
+.inv-page .p-subtotal-block {
+  border: 1px solid #999; border-top: none; margin-bottom: 22px;
+}
+.inv-page .p-subtotal-row {
+  display: flex; justify-content: space-between;
+  padding: 7px 16px; font-size: 13px; border-top: 1px solid #ddd;
+}
+.inv-page .p-subtotal-row.grand {
+  background: #2c2c3e; color: white; font-weight: 700;
+  font-size: 15px; border-top: 2px solid #999;
+}
+
+/* 振込先 */
+.inv-page .p-bank {
+  border: 1px solid #bbb; padding: 10px 16px;
+  font-size: 12px; margin-bottom: 16px; background: #fafafa; line-height: 1.8;
+}
+.inv-page .p-bank-title { font-weight: 700; margin-bottom: 4px; }
+
+/* 備考 */
+.inv-page .p-note {
+  border: 1px solid #bbb; min-height: 60px; font-size: 12px; background: #fafafa;
+}
+.inv-page .p-note-title {
+  background: #eee; padding: 4px 12px; font-weight: 700;
+  font-size: 12px; border-bottom: 1px solid #bbb;
+}
+.inv-page .p-note-body { padding: 8px 12px; }
+
+/* PREVIEW TAB */
+.preview-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.preview-toolbar select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; font-family: 'Noto Sans JP', sans-serif; }
+.preview-frame { background: white; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; overflow-x: hidden; min-height: 200px; }
+</style>
+</head>
+<body>
+
+<!-- PDF Loading overlay -->
+<div class="pdf-loading" id="pdfLoading">
+  <div class="spinner"></div>
+  <p id="pdfLoadingMsg">正在生成PDF...</p>
+</div>
+
+<!-- Off-screen render area for PDF -->
+<div id="pdfRenderArea"></div>
+
+<header>
+  <h1>新日本富士アシスト　<span>書類管理</span>システム</h1>
+  <div class="header-meta" id="headerDate"></div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('invoices',this)">📋 請求書</button>
+  <button class="tab-btn" onclick="switchTab('mitsumori',this)">📝 見積書</button>
+  <button class="tab-btn" onclick="switchTab('rollpaper',this)">🧾 ロール紙</button>
+  <button class="tab-btn" onclick="switchTab('keiyaku',this)">📄 契約書</button>
+  <button class="tab-btn" onclick="switchTab('stores',this)">🏪 店铺管理</button>
+  <button class="tab-btn" onclick="switchTab('preview',this)">👁 預覧/下載</button>
+</div>
+
+<main>
+
+<!-- TAB: INVOICES -->
+<div id="tab-invoices" class="tab-content active">
+  <div class="auto-notice">
+    <span style="font-size:20px">🤖</span>
+    <div><strong>自动生成：</strong>每月1日打开工具时自动生成本月所有请求书。也可手动选月份后点击生成。</div>
+  </div>
+
+  <div class="month-bar">
+    <label>月份：</label>
+    <input type="month" id="currentMonth" onchange="loadInvoices()">
+    <button class="btn btn-success" onclick="generateMonth()">⚡ 生成本月请求书</button>
+    <button class="btn btn-primary" onclick="openNewInvoice()">＋ 新增</button>
+    <button class="btn btn-pdf" onclick="openBatchDownload()">📥 批量下载PDF</button>
+    <button class="btn btn-outline" onclick="syncStoreAmounts()" title="将已生成请求书的金额同步为最新店铺设置">🔄 同步金额</button>
+    <div class="stat" id="monthStat"></div>
+  </div>
+
+  <div class="inv-table-wrap">
+    <table class="inv-table">
+      <thead>
+        <tr>
+          <th>请求对象</th>
+          <th>对象期间</th>
+          <th>支援人数</th>
+          <th>小计</th>
+          <th>消费税</th>
+          <th>请求金额(含税)</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="invoiceTableBody"></tbody>
+    </table>
+    <div class="inv-card-list" id="invoiceCardList"></div>
+    <div class="total-row" id="totalRow" style="display:none">
+      <div class="total-item"><label>小计</label><strong id="totalSubtotal">¥0</strong></div>
+      <div class="total-item"><label>消费税</label><strong id="totalTax">¥0</strong></div>
+      <div class="total-item grand"><label>合计(含税)</label><strong id="totalGrand">¥0</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: 見積書 -->
+<div id="tab-mitsumori" class="tab-content">
+  <div class="section-header">
+    <div class="section-title">見積書 <small>新規作成・管理</small></div>
+    <button class="btn btn-primary" onclick="openNewMitsumori()">＋ 新規見積書</button>
+  </div>
+
+  <div class="inv-table-wrap">
+    <table class="inv-table">
+      <thead>
+        <tr>
+          <th>見積番号</th>
+          <th>宛先</th>
+          <th>見積日</th>
+          <th>合計金額(税込)</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="mitsumoriTableBody"></tbody>
+    </table>
+    <div class="inv-card-list" id="mitsumoriCardList"></div>
+  </div>
+</div>
+
+<!-- TAB: 契約書 -->
+<div id="tab-keiyaku" class="tab-content">
+  <div class="section-header">
+    <div class="section-title">契約書 <small>NJF REGI サービス利用契約申込フォーム</small></div>
+  </div>
+  <div class="auto-notice" style="margin-bottom:16px">
+    <span style="font-size:20px">📄</span>
+    <div><strong>契約申込フォーム：</strong>顧客情報と設備内容を入力して申込リンクを発行できます。顧客はリンクから契約申込書PDFを作成・送信します。</div>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    <a href="./njf-admin.html" target="_blank" class="btn btn-primary" style="text-decoration:none">🔗 管理後台を別タブで開く</a>
+  </div>
+  <div class="preview-frame" style="padding:0;overflow:hidden;min-height:820px;border-radius:8px">
+    <iframe src="./njf-admin.html" title="NJF REGI 管理システム" style="width:100%;height:820px;border:none" loading="lazy"></iframe>
+  </div>
+</div>
+  
+<!-- TAB: ROLL PAPER -->
+<div id="tab-rollpaper" class="tab-content">
+  <div class="section-header">
+    <div class="section-title">ロール紙 <small>感熱ロール紙 注文書</small></div>
+  </div>
+  <div class="auto-notice">
+    <span style="font-size:20px">🧾</span>
+    <div><strong>填写方式：</strong>只需填写件数和收货信息，然后点击邮件下单或打印 / 传真。原有其他功能未改动。</div>
+  </div>
+  <div class="preview-frame" style="background:#e5e5e5;padding:0;overflow:hidden;min-height:1200px">
+    <iframe src="./roll-paper-order.html" title="ロール紙注文書" style="width:100%;height:1200px;border:none;background:#e5e5e5"></iframe>
+  </div>
+</div>
+
+<!-- TAB: STORES -->
+<div id="tab-stores" class="tab-content">
+  <div class="section-header">
+    <div class="section-title">店铺管理 <small>设置每家店铺的默认月额和人数</small></div>
+    <button class="btn btn-primary" onclick="openNewStore()">＋ 新增店铺</button>
+  </div>
+  <div class="store-grid" id="storeGrid"></div>
+</div>
+
+<!-- TAB: PREVIEW -->
+<div id="tab-preview" class="tab-content">
+  <div class="preview-toolbar">
+    <label style="font-size:13px;font-weight:500">选择请求书：</label>
+    <select id="previewSelect" onchange="renderPreview()">
+      <option value="">-- 请选择 --</option>
+    </select>
+    <button class="btn btn-pdf" onclick="downloadSinglePDFFromPreview()">📥 下载此PDF</button>
+    <button class="btn btn-secondary" onclick="window.print()">🖨 打印</button>
+  </div>
+  <div class="preview-frame" id="previewArea">
+    <div class="empty-state"><div class="icon">📄</div><p>请从上方选择请求书进行预览</p></div>
+  </div>
+</div>
+
+</main>
+
+<!-- MODAL: 批量下载 -->
+<div class="modal-overlay" id="batchModal">
+  <div class="modal">
+    <h2>批量下载PDF</h2>
+    <div style="margin-bottom:12px;font-size:13px;color:var(--ink-light)">
+      选择要下载的店铺（默认全选）
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-outline btn-sm" onclick="batchSelectAll()">全选</button>
+      <button class="btn btn-outline btn-sm" onclick="batchSelectNone()">取消全选</button>
+      <button class="btn btn-outline btn-sm" onclick="batchSelectMonthly()">月払いのみ</button>
+      <button class="btn btn-outline btn-sm" onclick="batchSelectYearly()">年払いのみ</button>
+    </div>
+    <div id="batchStoreList" style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--paper)"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('batchModal')">取消</button>
+      <button class="btn btn-pdf" onclick="executeBatchDownload()">📥 选中店铺下载PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: INVOICE -->
+<div class="modal-overlay" id="invoiceModal">
+  <div class="modal">
+    <h2 id="invoiceModalTitle">新增请求书</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>选择店铺</label>
+        <select id="inv-store" onchange="onStoreSelect()">
+          <option value="">-- 选择 --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>请求对象名称</label>
+        <input type="text" id="inv-name" placeholder="マルヤス酒場 北千住店">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>期间开始</label>
+        <input type="date" id="inv-period-start">
+      </div>
+      <div class="form-group">
+        <label>期间结束</label>
+        <input type="date" id="inv-period-end">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>支払期日</label>
+        <input type="date" id="inv-due">
+      </div>
+      <div class="form-group">
+        <label>状态</label>
+        <select id="inv-status">
+          <option value="pending">未支払</option>
+          <option value="paid">支払済</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>快速添加项目 <span style="font-weight:400;color:var(--ink-light)">（勾选后点击「添加选中项目」）</span></label>
+      <div class="template-items">
+        <label class="tpl-item"><input type="checkbox" value="レジスター" data-price="80000"><span class="tpl-name">レジスター</span><span class="tpl-price">¥80,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="計量レジスター" data-price="90000"><span class="tpl-name">計量レジスター</span><span class="tpl-price">¥90,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="タブレット" data-price="35000"><span class="tpl-name">タブレット</span><span class="tpl-price">¥35,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="キャッシュドロア" data-price="8000"><span class="tpl-name">キャッシュドロア</span><span class="tpl-price">¥8,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="プリンター" data-price="29000"><span class="tpl-name">プリンター</span><span class="tpl-price">¥29,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="月額料金" data-price="9000"><span class="tpl-name">月額料金</span><span class="tpl-price">¥9,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="特定技能支援費" data-price="10000"><span class="tpl-name">特定技能支援費</span><span class="tpl-price">¥10,000/人</span></label>
+        <label class="tpl-item"><input type="checkbox" value="年額料金" data-price="80000"><span class="tpl-name">年額料金</span><span class="tpl-price">¥80,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="感熱ロール紙80mm（48巻入）" data-price="8000"><span class="tpl-name">感熱ロール紙80mm（48巻入）</span><span class="tpl-price">¥8,000</span></label>
+      </div>
+      <button class="btn btn-blue btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="addTemplateItems()">＋ 添加选中项目</button>
+    </div>
+    <div class="form-group">
+      <label>请求明细</label>
+      <div class="line-items">
+        <div class="line-item-header">
+          <span>项目名</span><span>数量</span><span>单价(税前)</span><span>金额</span><span></span>
+        </div>
+        <div id="lineItemsBody"></div>
+        <button class="add-line-btn" onclick="addLineItem()">＋ 手动添加项目</button>
+      </div>
+    </div>
+    <div style="background:var(--paper);border-radius:6px;padding:10px 14px;font-size:13px;display:flex;justify-content:flex-end;gap:20px">
+      <span>小计: <strong id="modalSubtotal">¥0</strong></span>
+      <span>消费税: <strong id="modalTax">¥0</strong></span>
+      <span>合计: <strong id="modalTotal" style="color:var(--accent);font-size:15px">¥0</strong></span>
+    </div>
+    <div class="form-group" style="margin-top:14px">
+      <label>備考</label>
+      <textarea id="inv-note" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:4px;font-family:'Noto Sans JP',sans-serif;font-size:13px;resize:vertical;background:var(--paper)" placeholder="備考・特記事項など"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('invoiceModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveInvoice()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 見積書 -->
+<div class="modal-overlay" id="mitsumoriModal">
+  <div class="modal">
+    <h2 id="mitsumoriModalTitle">新規見積書</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>宛先（会社名）</label>
+        <input type="text" id="mit-name" placeholder="例：浜の牡蠣小屋">
+      </div>
+      <div class="form-group">
+        <label>見積日</label>
+        <input type="date" id="mit-date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>快速添加项目 <span style="font-weight:400;color:var(--ink-light)">（勾选后点击添加）</span></label>
+      <div class="template-items">
+        <label class="tpl-item"><input type="checkbox" value="レジスター" data-price="80000"><span class="tpl-name">レジスター</span><span class="tpl-price">¥80,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="計量レジスター" data-price="90000"><span class="tpl-name">計量レジスター</span><span class="tpl-price">¥90,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="タブレット" data-price="35000"><span class="tpl-name">タブレット</span><span class="tpl-price">¥35,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="キャッシュドロア" data-price="8000"><span class="tpl-name">キャッシュドロア</span><span class="tpl-price">¥8,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="クラウドプリンター" data-price="29000"><span class="tpl-name">クラウドプリンター</span><span class="tpl-price">¥29,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="設置費" data-price="20000" data-unit="式"><span class="tpl-name">設置費</span><span class="tpl-price">¥20,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="商品リスト導入費" data-price="20000" data-unit="式"><span class="tpl-name">商品リスト導入費</span><span class="tpl-price">¥20,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="サービス年月額料金" data-price="8000"><span class="tpl-name">サービス年月額料金</span><span class="tpl-price">¥8,000</span></label>
+        <label class="tpl-item"><input type="checkbox" value="年額料金" data-price="80000"><span class="tpl-name">年額料金</span><span class="tpl-price">¥80,000</span></label>
+      </div>
+      <button class="btn btn-blue btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="addMitTemplateItems()">＋ 添加选中项目</button>
+    </div>
+    <div class="form-group">
+      <label>見積明細</label>
+      <div class="line-items">
+        <div class="line-item-header"><span>品目</span><span>数量</span><span>単価(税抜)</span><span>割引</span><span>小計</span><span></span></div>
+        <div id="mitLineItemsBody"></div>
+        <button class="add-line-btn" onclick="addMitLineItem()">＋ 手動追加</button>
+      </div>
+    </div>
+    <div style="background:var(--paper);border-radius:6px;padding:10px 14px;font-size:13px;display:flex;justify-content:flex-end;gap:20px">
+      <span>小計: <strong id="mitModalSubtotal">¥0</strong></span>
+      <span>消費税(10%): <strong id="mitModalTax">¥0</strong></span>
+      <span>合計: <strong id="mitModalTotal" style="color:var(--accent);font-size:15px">¥0</strong></span>
+    </div>
+    <div class="form-group" style="margin-top:14px">
+      <label>備考</label>
+      <textarea id="mit-note" rows="3" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:4px;font-family:'Noto Sans JP',sans-serif;font-size:13px;resize:vertical;background:var(--paper)" placeholder="備考・特記事項など"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('mitsumoriModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveMitsumori()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: STORE -->
+<div class="modal-overlay" id="storeModal">
+  <div class="modal">
+    <h2 id="storeModalTitle">新增店铺</h2>
+    <div class="form-group">
+      <label>店铺名称</label>
+      <input type="text" id="st-name" placeholder="マルヤス酒場 北千住店">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label id="st-monthly-label">サービス料金（円）</label>
+        <input type="number" id="st-monthly" value="9000">
+      </div>
+      <div class="form-group">
+        <label>默认技能支援人数</label>
+        <input type="number" id="st-persons" value="1" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>請求サイクル</label>
+      <select id="st-feetype" onchange="onFeeTypeChange()">
+        <option value="monthly">毎月請求</option>
+        <option value="quarterly">3ヶ月ごと請求</option>
+        <option value="yearly">年1回請求</option>
+      </select>
+    </div>
+    <div id="st-cycle-extra" style="display:none">
+      <div class="form-group">
+        <label id="st-next-label">次回請求月（例：2026-05）</label>
+        <input type="month" id="st-next-month" placeholder="2026-05">
+      </div>
+      <div class="form-group" id="st-period-group">
+        <label>請求対象期間メモ（例：2月〜4月分）</label>
+        <input type="text" id="st-period-memo" placeholder="自動計算されます">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>备注</label>
+      <input type="text" id="st-note" placeholder="可选">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('storeModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveStore()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const STORAGE_KEY = 'seikyusho_v3';
+let data = { stores: [], invoices: [], lastAutoGenMonth: '' };
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) data = JSON.parse(raw);
+    if (data.stores.length === 0) seedDefaultData();
+  } catch(e) { seedDefaultData(); }
+}
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function seedDefaultData() {
+  data.stores = [
+    { id:'s1',  name:'マルヤス酒場 北千住店',   monthly:9000, persons:2, feeType:'monthly' },
+    { id:'s2',  name:'マルヤス酒場 船橋店',     monthly:9000, persons:2, feeType:'monthly' },
+    { id:'s3',  name:'マルヤス酒場 柏店',       monthly:9000, persons:4, feeType:'monthly' },
+    { id:'s4',  name:'マルヤス酒場 蒲田店',     monthly:9000, persons:1, feeType:'monthly' },
+    { id:'s5',  name:'マルヤス酒場 新橋店',     monthly:9000, persons:1, feeType:'monthly' },
+    { id:'s6',  name:'マルヤス酒場 西葛西店',   monthly:9000, persons:1, feeType:'monthly' },
+    { id:'s7',  name:'羊炭長',                  monthly:9000, persons:5, feeType:'monthly' },
+    { id:'s8',  name:'マルヤス酒場 浦安店',     monthly:9000, persons:1, feeType:'monthly' },
+    { id:'s9',  name:'マルヤス酒場 神田店',     monthly:9000, persons:1, feeType:'monthly' },
+    { id:'s10', name:'マルヤス酒場 日暮里店',   monthly:9000, persons:1, feeType:'monthly' },
+    { id:'s11', name:'マルヤス酒場 本八幡店',   monthly:9000, persons:2, feeType:'monthly' },
+    { id:'s12', name:'マルヤス酒場 御徒町店',   monthly:9000, persons:2, feeType:'monthly' },
+    { id:'s13', name:'マルヤス酒場プラス 関内店', monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s14', name:'一山',                    monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s15', name:'株式会社AMT',             monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s16', name:'浜の牡蠣小屋',            monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s17', name:'圓満楼',                  monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s18', name:'尚尚酒場',                monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s19', name:'立ち酔い 超人',           monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s20', name:'株式会社 五洲貿易',       monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s21', name:'京小町',                  monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s22', name:'株式会社ビックW・X',      monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s23', name:'王記厨房',                monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s24', name:'とりノ蔵 四谷店',         monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s25', name:'栞 四谷店',               monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s26', name:'あかね屋 南越谷店',       monthly:9000, persons:0, feeType:'monthly' },
+    { id:'s27', name:'株式会社宅民商事',        monthly:9000, persons:0, feeType:'monthly' },
+  ];
+  data.invoices = [];
+  saveData();
+}
+
+// ===== UTILS =====
+function uid() { return 'i' + Date.now() + Math.random().toString(36).slice(2,8); }
+function yen(n) { return '¥' + Number(n).toLocaleString(); }
+function fmtDate(s) {
+  if (!s) return '';
+  const [y,m,d] = s.split('-');
+  return y + '年' + parseInt(m) + '月' + parseInt(d) + '日';
+}
+function getMonthStr(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function calcInv(inv) {
+  let sub = 0;
+  (inv.lines||[]).forEach(l => sub += (l.qty||0)*(l.price||0));
+  const tax = Math.floor(sub * 0.1);
+  return { sub, tax, total: sub+tax };
+}
+function lastDayOf(y, m) { return new Date(y, m, 0).getDate(); }
+
+// ===== TABS =====
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'preview') updatePreviewSelect();
+  if (name === 'stores') renderStores();
+  if (name === 'mitsumori') renderMitsumori();
+}
+
+// ===== INVOICE LIST =====
+function loadInvoices() {
+  const month = document.getElementById('currentMonth').value;
+  const invs = data.invoices.filter(i => i.month === month);
+  const tbody = document.getElementById('invoiceTableBody');
+
+  if (!invs.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--ink-light)">
+      本月暂无请求书，点击「⚡ 生成本月请求书」</td></tr>`;
+    document.getElementById('invoiceCardList').innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>本月暂无请求书<br>点击「⚡ 生成本月请求书」</p></div>`;
+    document.getElementById('totalRow').style.display = 'none';
+    document.getElementById('monthStat').innerHTML = '';
+    return;
+  }
+
+  let tSub=0, tTax=0, tTotal=0;
+  const rows = invs.map(inv => {
+    const {sub,tax,total} = calcInv(inv);
+    tSub+=sub; tTax+=tax; tTotal+=total;
+    const pl = (inv.lines||[]).find(l=>l.name.includes('技能'));
+    const period = inv.periodStart ? fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd) : '-';
+    const statusClass = inv.status==='paid' ? 'status-paid' : 'status-pending';
+    const statusLabel = inv.status==='paid' ? '支払済' : '未支払';
+    return { inv, sub, tax, total, pl, period, statusClass, statusLabel };
+  });
+
+  // Table rows (desktop)
+  tbody.innerHTML = rows.map(({inv,sub,tax,total,pl,period,statusClass,statusLabel}) => `<tr>
+    <td><strong>${inv.name}</strong></td>
+    <td style="font-size:11px;color:var(--ink-light)">${period}</td>
+    <td>${pl && pl.qty > 0 ? pl.qty+'人' : '-'}</td>
+    <td>${yen(sub)}</td>
+    <td>${yen(tax)}</td>
+    <td class="amount">${yen(total)}</td>
+    <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+    <td class="actions">
+      <button class="btn btn-outline btn-sm" onclick="editInvoice('${inv.id}')">編集</button>
+      <button class="btn btn-pdf btn-sm" onclick="downloadOnePDF('${inv.id}')">📥PDF</button>
+      <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b" onclick="deleteInvoice('${inv.id}')">削除</button>
+    </td>
+  </tr>`).join('');
+
+  // Card list (mobile)
+  document.getElementById('invoiceCardList').innerHTML = rows.map(({inv,sub,tax,total,pl,period,statusClass,statusLabel}) => `
+    <div class="inv-card">
+      <div class="inv-card-header">
+        <div class="inv-card-name">${inv.name}</div>
+        <span class="status-badge ${statusClass} inv-card-badge">${statusLabel}</span>
+      </div>
+      <div class="inv-card-body">
+        <div class="inv-card-row"><label>対象期間</label><span class="val" style="font-size:12px">${period}</span></div>
+        ${pl && pl.qty > 0 ? `<div class="inv-card-row"><label>支援人数</label><span class="val">${pl.qty}人</span></div>` : ''}
+        <div class="inv-card-row"><label>小計</label><span class="val">${yen(sub)}</span></div>
+        <div class="inv-card-row"><label>消費税(10%)</label><span class="val">${yen(tax)}</span></div>
+      </div>
+      <div class="inv-card-total">
+        <label>請求金額(税込)</label>
+        <span class="amount">${yen(total)}</span>
+      </div>
+      <div class="inv-card-actions">
+        <button class="btn btn-outline btn-sm" onclick="editInvoice('${inv.id}')">✏️ 編集</button>
+        <button class="btn btn-blue btn-sm" onclick="previewInvoice('inv:${inv.id}')">👁 表示</button>
+        <button class="btn btn-pdf btn-sm" onclick="downloadOnePDF('${inv.id}')">📥 PDF</button>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b" onclick="deleteInvoice('${inv.id}')">🗑 削除</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('totalRow').style.display = 'flex';
+  document.getElementById('totalSubtotal').textContent = yen(tSub);
+  document.getElementById('totalTax').textContent = yen(tTax);
+  document.getElementById('totalGrand').textContent = yen(tTotal);
+  document.getElementById('monthStat').innerHTML = `共 <strong>${invs.length}</strong> 件　合計 <strong>${yen(tTotal)}</strong>`;
+}
+
+// ===== GENERATE =====
+function generateMonth() {
+  const month = document.getElementById('currentMonth').value;
+  if (!month) { alert('请先选择月份'); return; }
+  const existing = data.invoices.filter(i=>i.month===month);
+  if (existing.length && !confirm(`本月已有 ${existing.length} 件，是否覆盖重新生成？`)) return;
+  data.invoices = data.invoices.filter(i=>i.month!==month);
+
+  const [y,m] = month.split('-').map(Number);
+  const ld = lastDayOf(y,m);
+  const ps = `${y}-${String(m).padStart(2,'0')}-01`;
+  const pe = `${y}-${String(m).padStart(2,'0')}-${ld}`;
+  const today = new Date();
+  const issueDate = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const dueLd = lastDayOf(y,m);
+  const due = `${y}-${String(m).padStart(2,'0')}-${dueLd}`;
+
+  let generated = 0;
+  let skipped = 0;
+  data.stores.forEach(s => {
+    const feeType = s.feeType || 'monthly';
+
+    // 判断本月是否需要生成
+    if (feeType !== 'monthly') {
+      const nextM = s.nextMonth; // e.g. "2026-05"
+      if (!nextM) { skipped++; return; } // 没设置下次月份则跳过
+      if (nextM !== month) { skipped++; return; } // 不是请求月份则跳过
+    }
+
+    // 计算对象期间
+    let periodStart = ps, periodEnd = pe, lineName = '';
+
+    // フォーマット: YYYY.MM.DD
+    function fmtD(yy, mm, dd) {
+      return yy + '.' + String(mm).padStart(2,'0') + '.' + String(dd).padStart(2,'0');
+    }
+
+    if (feeType === 'monthly') {
+      // 毎月：当月1日〜末日 サービス料金
+      lineName = fmtD(y,m,1) + '-' + fmtD(y,m,ld) + ' サービス料金';
+    } else if (feeType === 'quarterly') {
+      // 3ヶ月：3ヶ月前の1日〜当月末日
+      let startM = m - 2, startY = y;
+      if (startM <= 0) { startM += 12; startY -= 1; }
+      const startLd = lastDayOf(startY, startM);
+      periodStart = `${startY}-${String(startM).padStart(2,'0')}-01`;
+      lineName = fmtD(startY,startM,1) + '-' + fmtD(y,m,ld) + ' サービス料金';
+    } else if (feeType === 'yearly') {
+      // 年間：1年前の翌月1日〜当月末日
+      let startM = m + 1, startY = y - 1;
+      if (startM > 12) { startM -= 12; startY += 1; }
+      periodStart = `${startY}-${String(startM).padStart(2,'0')}-01`;
+      lineName = fmtD(startY,startM,1) + '-' + fmtD(y,m,ld) + ' サービス料金';
+    }
+
+    const lines = [{ name:lineName, qty:1, price:s.monthly }];
+    if (s.persons>0) lines.push({ name:'特定技能支援費', qty:s.persons, price:10000 });
+    data.invoices.push({ id:uid(), month, name:s.name, storeId:s.id, periodStart, periodEnd:pe, due, issueDate, lines, status:'pending' });
+    generated++;
+
+    // 更新下次请求月份
+    if (feeType === 'quarterly') {
+      const nm = m + 3 > 12 ? m - 9 : m + 3;
+      const ny = m + 3 > 12 ? y + 1 : y;
+      s.nextMonth = `${ny}-${String(nm).padStart(2,'0')}`;
+    } else if (feeType === 'yearly') {
+      s.nextMonth = `${y+1}-${String(m).padStart(2,'0')}`;
+    }
+  });
+
+  saveData(); loadInvoices();
+  let msg = `✅ ${generated}件の請求書を生成しました。`;
+  if (skipped > 0) msg += `\n（${skipped}件は請求サイクル外のためスキップ）`;
+  alert(msg);
+}
+
+// ===== BUILD INVOICE HTML (for PDF render) =====
+function buildInvHTML(inv) {
+  const c = calcInv(inv);
+  const sub = c.sub, tax = c.tax, total = c.total;
+  const parts = inv.month.split('-').map(Number);
+  const y = parts[0], m = parts[1];
+  const ld = lastDayOf(y,m);
+  const emptyRows = Math.max(0, 8-(inv.lines||[]).length);
+
+  let linesHTML = '';
+  (inv.lines||[]).forEach(function(l) {
+    linesHTML += '<tr>' +
+      '<td>' + l.name + '</td>' +
+      '<td style="text-align:center">' + l.qty + '</td>' +
+      '<td style="text-align:right">' + l.price.toLocaleString() + '</td>' +
+      '<td style="text-align:right">' + (l.qty*l.price).toLocaleString() + '</td>' +
+      '</tr>';
+  });
+  for (var i=0; i<emptyRows; i++) {
+    linesHTML += '<tr class="empty"><td>&nbsp;</td><td></td><td></td><td></td></tr>';
+  }
+
+  const noteHTML = inv.note ? inv.note.replace(/\n/g,'<br>') : '&nbsp;';
+  const stampSrc = 'data:image/png;base64,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';
+
+  return '<div class="inv-page">' +
+    '<div class="p-title">請求書（兼領収書）</div>' +
+    '<div class="p-top">' +
+      '<div class="p-top-left">' +
+        '<div class="p-to">' + inv.name + ' <span class="p-ochu">御中</span></div>' +
+        '<div class="p-greeting">下記の通りご請求申し上げます。</div>' +
+        '<div class="p-amount-box">' +
+          '<div class="p-amount-label">ご請求金額（税込）</div>' +
+          '<div class="p-amount-value">¥' + total.toLocaleString() + '<span class="p-kiri">-</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="p-top-right">' +
+        '<div class="p-issuer-name">新日本富士アシスト株式会社</div>' +
+        '<div class="p-issuer-row">' +
+          '<div class="p-issuer-info">' +
+            '〒110-0016　東京都台東区台東4-31-7-203<br>TEL 03-6806-0988　FAX 03-6806-0128<br>登録番号：T3010801026751' +
+          '</div>' +
+          '<div class="p-stamp-wrap">' +
+            '<img src="' + stampSrc + '" style="width:68px;height:68px;" alt="印章">' +
+          '</div>' +
+        '</div>' +
+        '<div class="p-dates-right">' +
+          '<div class="p-date-row"><span class="p-date-label">発行日：</span>' + fmtDate(inv.issueDate||inv.due) + '</div>' +
+          '<div class="p-date-row"><span class="p-date-label">支払期日：</span>' + fmtDate(inv.due) + '</div>' +
+          '<div class="p-date-row"><span class="p-date-label">対象期間：</span>' + fmtDate(inv.periodStart) + '〜' + fmtDate(inv.periodEnd) + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<table class="p-items">' +
+      '<thead><tr>' +
+        '<th style="text-align:left;width:55%">品目・内容</th>' +
+        '<th style="text-align:center;width:10%">数量</th>' +
+        '<th style="text-align:right;width:17%">単価（税抜）</th>' +
+        '<th style="text-align:right;width:18%">金額（税抜）</th>' +
+      '</tr></thead>' +
+      '<tbody>' + linesHTML + '</tbody>' +
+    '</table>' +
+    '<div class="p-subtotal-block">' +
+      '<div class="p-subtotal-row"><span>小計</span><span>¥' + sub.toLocaleString() + '</span></div>' +
+      '<div class="p-subtotal-row"><span>消費税（10%）</span><span>¥' + tax.toLocaleString() + '</span></div>' +
+      '<div class="p-subtotal-row grand"><span>合計（税込）</span><span>¥' + total.toLocaleString() + '</span></div>' +
+    '</div>' +
+    '<div class="p-bank">' +
+      '<div class="p-bank-title">【お振込先】</div>' +
+      '三井住友銀行　上野支店　普通　8690693　シンニホンフジアシスト(カ<br>' +
+      '<span style="font-size:11px">＊振込手数料はご負担にてお願い申し上げます。</span>' +
+    '</div>' +
+    '<div class="p-note">' +
+      '<div class="p-note-title">備考</div>' +
+      '<div class="p-note-body">' + noteHTML + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+
+function showLoading(msg) {
+  const el = document.getElementById('pdfLoadingMsg');
+  if (el) el.textContent = msg || 'PDF生成中...';
+  const ov = document.getElementById('pdfLoading');
+  if (ov) ov.classList.add('show');
+}
+function hideLoading() {
+  const ov = document.getElementById('pdfLoading');
+  if (ov) ov.classList.remove('show');
+}
+
+async function renderToPDF(pagesHTML) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const pdfW = doc.internal.pageSize.getWidth();
+  const pdfH = doc.internal.pageSize.getHeight();
+
+  // CSSを収集
+  let css = '';
+  try {
+    for (let s of document.styleSheets) {
+      try {
+        for (let r of s.cssRules) { css += r.cssText + '\n'; }
+      } catch(e) {}
+    }
+  } catch(e) {}
+
+  // ページを分割
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString('<div>' + pagesHTML + '</div>', 'text/html');
+  const pages = [...parsed.querySelectorAll('.inv-page')];
+
+  // 非表示のdivで1枚ずつレンダリング
+  const container = document.createElement('div');
+  container.style.cssText = [
+    'position:fixed',
+    'left:-9999px',
+    'top:0',
+    'width:794px',
+    'height:1123px',
+    'background:white',
+    'overflow:hidden',
+    'z-index:-1'
+  ].join(';');
+  document.body.appendChild(container);
+
+  for (let i = 0; i < pages.length; i++) {
+    // containerをクリアして1ページ分だけ入れる
+    container.innerHTML = '';
+    const pageEl = pages[i].cloneNode(true);
+    pageEl.style.cssText += ';page-break-after:unset;position:relative;';
+    container.appendChild(pageEl);
+
+    await new Promise(r => setTimeout(r, 350));
+
+    const canvas = await html2canvas(pageEl, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: 794,
+      height: 1123,
+      windowWidth: 794,
+      windowHeight: 1123,
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0,
+      logging: false,
+      foreignObjectRendering: false,
+      onclone: function(clonedDoc) {
+        // cloneされたdocのbody以外を非表示にする
+        const body = clonedDoc.body;
+        body.style.margin = '0';
+        body.style.padding = '0';
+        body.style.background = 'white';
+      }
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    if (i > 0) doc.addPage();
+    doc.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+  }
+
+  document.body.removeChild(container);
+  return doc;
+}
+
+async function downloadOnePDF(id) {
+  const inv = data.invoices.find(i=>i.id===id);
+  if (!inv) return;
+  const [y,m] = inv.month.split('-');
+  const monthLabel = y + '年' + parseInt(m) + '月';
+  showLoading(inv.name + ' を生成中...');
+  try {
+    const doc = await renderToPDF(buildInvHTML(inv));
+    doc.save('請求書_' + inv.name + '_' + monthLabel + '.pdf');
+  } catch(e) {
+    console.error('PDF error:', e);
+    alert('PDF生成に失敗しました。\nブラウザを更新してから再試行してください。\nエラー: ' + e.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function downloadAllPDF() {
+  const month = document.getElementById('currentMonth').value;
+  const invs = data.invoices.filter(i=>i.month===month);
+  if (!invs.length) { alert('本月暂无请求书'); return; }
+  const [y,m] = month.split('-');
+  const monthLabel = y + '年' + parseInt(m) + '月';
+  showLoading('全店舗 PDF生成中 (1/' + invs.length + ')...');
+  try {
+    const allHTML = invs.map(inv=>buildInvHTML(inv)).join('');
+    const doc = await renderToPDF(allHTML);
+    doc.save('請求書_' + monthLabel + '_全店舗.pdf');
+  } catch(e) {
+    alert('PDF生成エラー: ' + e.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function downloadMitsumoriPDF(id) {
+  const m = (data.mitsumori||[]).find(x=>x.id===id);
+  if (!m) return;
+  showLoading('見積書 No.' + m.seq + ' を生成中...');
+  try {
+    const doc = await renderToPDF(buildMitsumoriHTML(m));
+    doc.save('見積書_No' + m.seq + '_' + m.name + '.pdf');
+  } catch(e) {
+    console.error('PDF error:', e);
+    alert('PDF生成に失敗しました。\nブラウザを更新してから再試行してください。\nエラー: ' + e.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function executeBatchDownload() {
+  const checked = [...document.querySelectorAll('.batch-cb:checked')];
+  if (!checked.length) { alert('店铺を選択してください'); return; }
+  const month = document.getElementById('currentMonth').value;
+  const [y,m] = month.split('-');
+  const monthLabel = y + '年' + parseInt(m) + '月';
+  const ids = checked.map(cb=>cb.dataset.id);
+  const invs = data.invoices.filter(i=>ids.includes(i.id));
+  closeModal('batchModal');
+  showLoading('PDF生成中 (0/' + invs.length + ')...');
+  try {
+    const allHTML = invs.map(inv=>buildInvHTML(inv)).join('');
+    const doc = await renderToPDF(allHTML);
+    doc.save('請求書_' + monthLabel + '_' + checked.length + '件.pdf');
+  } catch(e) {
+    alert('PDF生成エラー: ' + e.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function downloadSinglePDFFromPreview() {
+  const val = document.getElementById('previewSelect').value;
+  if (!val) { alert('請求書または見積書を選択してください'); return; }
+  if (val.startsWith('inv:')) {
+    await downloadOnePDF(val.slice(4));
+  } else if (val.startsWith('mit:')) {
+    await downloadMitsumoriPDF(val.slice(4));
+  }
+}
+
+// ===== PREVIEW TAB =====
+function updatePreviewSelect() {
+  const month = document.getElementById('currentMonth').value;
+  const invs = data.invoices.filter(i=>i.month===month);
+  const mits = data.mitsumori || [];
+  const sel = document.getElementById('previewSelect');
+  let opts = '<option value="">-- 请选择 --</option>';
+  if (invs.length) opts += '<optgroup label="📋 請求書">' + invs.map(i=>`<option value="inv:${i.id}">${i.name}</option>`).join('') + '</optgroup>';
+  if (mits.length) opts += '<optgroup label="📝 見積書">' + mits.map(m=>`<option value="mit:${m.id}">No.${m.seq} ${m.name}</option>`).join('') + '</optgroup>';
+  sel.innerHTML = opts;
+}
+
+function renderPreview() {
+  const val = document.getElementById('previewSelect').value;
+  const area = document.getElementById('previewArea');
+  if (!val) { area.innerHTML = '<div class="empty-state"><div class="icon">📄</div><p>請求書または見積書を選択してください</p></div>'; return; }
+
+  let pageHTML = '';
+  if (val.startsWith('inv:')) {
+    const inv = data.invoices.find(i=>i.id===val.slice(4));
+    if (!inv) return;
+    pageHTML = buildInvHTML(inv);
+  } else if (val.startsWith('mit:')) {
+    const m = (data.mitsumori||[]).find(x=>x.id===val.slice(4));
+    if (!m) return;
+    pageHTML = buildMitsumoriHTML(m);
+  }
+
+  const availW = Math.min(window.innerWidth - 28, 850);
+  const scale = Math.min(1, availW / 794);
+  const scaledH = Math.round(1123 * scale);
+
+  area.innerHTML = `<div style="background:#e0e0e0;padding:12px 0;display:flex;justify-content:center;overflow:hidden;min-height:${scaledH + 24}px">
+    <div style="width:794px;transform:scale(${scale});transform-origin:top center;flex-shrink:0;margin-bottom:${Math.round((scale - 1) * 1123)}px">${pageHTML}</div>
+  </div>`;
+}
+
+function previewInvoice(val) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-preview').classList.add('active');
+  document.querySelectorAll('.tab-btn')[3].classList.add('active');
+  updatePreviewSelect();
+  document.getElementById('previewSelect').value = val;
+  renderPreview();
+}
+
+
+
+// ===== INVOICE MODAL =====
+let editingInvoiceId = null;
+
+function openNewInvoice() {
+  editingInvoiceId = null;
+  document.getElementById('invoiceModalTitle').textContent = '新增请求书';
+  const sel = document.getElementById('inv-store');
+  sel.innerHTML = '<option value="">-- 选择 --</option>' + data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  sel.value = '';
+  document.getElementById('inv-name').value = '';
+  document.getElementById('inv-status').value = 'pending';
+  const month = document.getElementById('currentMonth').value;
+  if (month) {
+    const [y,m] = month.split('-').map(Number);
+    const ld = lastDayOf(y,m);
+    document.getElementById('inv-period-start').value = `${y}-${String(m).padStart(2,'0')}-01`;
+    document.getElementById('inv-period-end').value = `${y}-${String(m).padStart(2,'0')}-${ld}`;
+    document.getElementById('inv-due').value = `${y}-${String(m).padStart(2,'0')}-${ld}`;
+  }
+  setLineItems([{name:'月額料金',qty:1,price:9000},{name:'特定技能支援費',qty:1,price:10000}]);
+  document.getElementById('inv-note').value = '';
+  openModal('invoiceModal');
+}
+
+function editInvoice(id) {
+  const inv = data.invoices.find(i=>i.id===id);
+  if (!inv) return;
+  editingInvoiceId = id;
+  document.getElementById('invoiceModalTitle').textContent = '编辑请求书';
+  const sel = document.getElementById('inv-store');
+  sel.innerHTML = '<option value="">-- 选择 --</option>' + data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  sel.value = inv.storeId || '';
+  document.getElementById('inv-name').value = inv.name;
+  document.getElementById('inv-period-start').value = inv.periodStart || '';
+  document.getElementById('inv-period-end').value = inv.periodEnd || '';
+  document.getElementById('inv-due').value = inv.due || '';
+  document.getElementById('inv-status').value = inv.status || 'pending';
+  setLineItems(inv.lines || []);
+  document.getElementById('inv-note').value = inv.note || '';
+  openModal('invoiceModal');
+}
+
+function onStoreSelect() {
+  const sid = document.getElementById('inv-store').value;
+  if (!sid) return;
+  const s = data.stores.find(x=>x.id===sid);
+  if (!s) return;
+  document.getElementById('inv-name').value = s.name;
+  const month = document.getElementById('currentMonth').value;
+  if (month) {
+    const [y,m] = month.split('-').map(Number);
+    const ld = lastDayOf(y,m);
+    const lines = [{name:`${y}.${m}.1-${y}.${m}.${ld} 月額料金`,qty:1,price:s.monthly}];
+    if (s.persons>0) lines.push({name:'特定技能支援費',qty:s.persons,price:10000});
+    setLineItems(lines);
+  }
+}
+
+function setLineItems(lines) {
+  document.getElementById('lineItemsBody').innerHTML = '';
+  lines.forEach(l => addLineItem(l));
+  updateModalCalc();
+}
+
+function addTemplateItems() {
+  const checked = document.querySelectorAll('.template-items input[type="checkbox"]:checked');
+  if (!checked.length) { alert('请先勾选要添加的项目'); return; }
+  checked.forEach(cb => {
+    addLineItem({ name: cb.value, qty: 1, price: parseInt(cb.dataset.price) });
+    cb.checked = false;
+  });
+}
+
+function addLineItem(line) {
+  const body = document.getElementById('lineItemsBody');
+  const row = document.createElement('div');
+  row.className = 'line-item-row';
+  row.innerHTML = `
+    <div class="line-item-name-wrap">
+      <label>項目名</label>
+      <input type="text" placeholder="例：月額料金" value="${(line&&line.name)||''}" oninput="updateModalCalc()">
+    </div>
+    <div class="line-item-nums">
+      <div class="field">
+        <label>数量</label>
+        <input type="number" placeholder="1" value="${(line&&line.qty)||1}" min="0" oninput="updateModalCalc()">
+      </div>
+      <div class="field">
+        <label>単価(税前)</label>
+        <input type="number" placeholder="0" value="${(line&&line.price)||0}" min="0" oninput="updateModalCalc()">
+      </div>
+    </div>
+    <div class="line-item-footer">
+      <span class="line-item-total">¥0</span>
+      <button class="btn-icon" onclick="this.closest('.line-item-row').remove();updateModalCalc()">×</button>
+    </div>`;
+  body.appendChild(row);
+  updateModalCalc();
+}
+
+function updateModalCalc() {
+  let sub = 0;
+  document.querySelectorAll('.line-item-row').forEach(row => {
+    const inp = row.querySelectorAll('input');
+    // inp[0]=name, inp[1]=qty, inp[2]=price
+    const amt = (parseFloat(inp[1].value)||0)*(parseFloat(inp[2].value)||0);
+    sub += amt;
+    row.querySelector('.line-item-total').textContent = yen(amt);
+  });
+  const tax = Math.floor(sub*0.1);
+  document.getElementById('modalSubtotal').textContent = yen(sub);
+  document.getElementById('modalTax').textContent = yen(tax);
+  document.getElementById('modalTotal').textContent = yen(sub+tax);
+}
+
+function saveInvoice() {
+  const name = document.getElementById('inv-name').value.trim();
+  if (!name) { alert('请输入请求对象名称'); return; }
+  const lines = [];
+  document.querySelectorAll('.line-item-row').forEach(row => {
+    const inp = row.querySelectorAll('input');
+    lines.push({ name:inp[0].value, qty:parseFloat(inp[1].value)||0, price:parseFloat(inp[2].value)||0 });
+  });
+  const inv = {
+    id: editingInvoiceId || uid(),
+    month: document.getElementById('currentMonth').value,
+    name, storeId: document.getElementById('inv-store').value,
+    periodStart: document.getElementById('inv-period-start').value,
+    periodEnd: document.getElementById('inv-period-end').value,
+    due: document.getElementById('inv-due').value,
+    lines, status: document.getElementById('inv-status').value,
+    note: document.getElementById('inv-note').value.trim()
+  };
+  if (editingInvoiceId) {
+    const idx = data.invoices.findIndex(i=>i.id===editingInvoiceId);
+    data.invoices[idx] = inv;
+  } else {
+    data.invoices.push(inv);
+  }
+  saveData(); closeModal('invoiceModal'); loadInvoices();
+}
+
+function deleteInvoice(id) {
+  if (!confirm('确认删除？')) return;
+  data.invoices = data.invoices.filter(i=>i.id!==id);
+  saveData(); loadInvoices();
+}
+
+// ===== STORE =====
+let editingStoreId = null;
+
+function renderStores() {
+  const grid = document.getElementById('storeGrid');
+  grid.innerHTML = data.stores.map(s=>`
+    <div class="store-card">
+      <div class="store-card-header">
+        <div class="store-name">${s.name}</div>
+        <span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${s.feeType==='yearly'?'#e8f4fd':s.feeType==='quarterly'?'#fff3e0':'#e8f5e9'};color:${s.feeType==='yearly'?'#1565c0':s.feeType==='quarterly'?'#e65100':'#2e7d32'}">${s.feeType==='yearly'?'年1回':s.feeType==='quarterly'?'3ヶ月':'毎月'}</span>${s.feeType!=='monthly'&&s.nextMonth?'<br><span style="font-size:10px;color:#888">次回: '+s.nextMonth+'</span>':''}
+      </div>
+      <div class="store-meta">月額料金: <strong>¥${s.monthly.toLocaleString()}</strong><br>技能支援: <strong>${s.persons}人</strong>${s.note?'<br>'+s.note:''}</div>
+      <div class="store-actions">
+        <button class="btn btn-outline btn-sm" onclick="editStore('${s.id}')">编辑</button>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b" onclick="deleteStore('${s.id}')">删除</button>
+      </div>
+    </div>`).join('') || '<div class="empty-state"><div class="icon">🏪</div><p>暂无店铺</p></div>';
+}
+
+function openNewStore() {
+  editingStoreId = null;
+  document.getElementById('storeModalTitle').textContent = '新增店铺';
+  ['st-name','st-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('st-monthly').value = 9000;
+  document.getElementById('st-persons').value = 1;
+  document.getElementById('st-feetype').value = 'monthly';
+  onFeeTypeChange();
+  document.getElementById('st-next-month').value = '';
+  openModal('storeModal');
+}
+
+function editStore(id) {
+  const s = data.stores.find(x=>x.id===id);
+  if (!s) return;
+  editingStoreId = id;
+  document.getElementById('storeModalTitle').textContent = '编辑店铺';
+  document.getElementById('st-name').value = s.name;
+  document.getElementById('st-monthly').value = s.monthly;
+  document.getElementById('st-persons').value = s.persons;
+  document.getElementById('st-feetype').value = s.feeType||'monthly';
+  document.getElementById('st-note').value = s.note||'';
+  onFeeTypeChange();
+  if (s.nextMonth) document.getElementById('st-next-month').value = s.nextMonth;
+  openModal('storeModal');
+}
+
+function saveStore() {
+  const name = document.getElementById('st-name').value.trim();
+  if (!name) { alert('请输入店铺名称'); return; }
+  const feeType = document.getElementById('st-feetype').value||'monthly';
+  const nextMonth = feeType!=='monthly' ? document.getElementById('st-next-month').value : '';
+  const store = { id:editingStoreId||uid(), name, monthly:parseFloat(document.getElementById('st-monthly').value)||9000, persons:parseInt(document.getElementById('st-persons').value)||0, feeType, nextMonth, note:document.getElementById('st-note').value.trim() };
+  if (editingStoreId) { const idx=data.stores.findIndex(s=>s.id===editingStoreId); data.stores[idx]=store; }
+  else data.stores.push(store);
+  saveData(); closeModal('storeModal'); renderStores();
+  // 提示同步
+  const currentMonth = document.getElementById('currentMonth').value;
+  const hasInvoices = currentMonth && data.invoices.some(i=>i.month===currentMonth && i.storeId===store.id);
+  if (hasInvoices) {
+    if (confirm('店舗情報を更新しました。\n本月の請求書の金額も同期しますか？')) {
+      document.querySelectorAll('.tab-btn')[0].click();
+      syncStoreAmounts();
+    }
+  }
+}
+
+function deleteStore(id) {
+  if (!confirm('确认删除？')) return;
+  data.stores = data.stores.filter(s=>s.id!==id);
+  saveData(); renderStores();
+}
+
+// ===== MODAL HELPERS =====
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+
+// ===== AUTO GENERATE =====
+function checkAutoGen() {
+  const today = new Date();
+  if (today.getDate()!==1) return;
+  const thisMonth = getMonthStr(today);
+  if (data.lastAutoGenMonth===thisMonth) return;
+  if (data.invoices.filter(i=>i.month===thisMonth).length) { data.lastAutoGenMonth=thisMonth; saveData(); return; }
+  document.getElementById('currentMonth').value = thisMonth;
+  generateMonth();
+  data.lastAutoGenMonth = thisMonth;
+  saveData();
+}
+
+// ===== 見積書 =====
+let editingMitsumoriId = null;
+
+function renderMitsumori() {
+  const list = data.mitsumori || [];
+  const tbody = document.getElementById('mitsumoriTableBody');
+  const cardList = document.getElementById('mitsumoriCardList');
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--ink-light)">見積書がありません。「＋ 新規見積書」から作成してください。</td></tr>`;
+    cardList.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>見積書がありません</p></div>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(m => {
+    const {sub,tax,total} = calcMit(m);
+    return `<tr>
+      <td><strong>No.${m.seq}</strong></td>
+      <td>${m.name}</td>
+      <td>${m.date||''}</td>
+      <td style="color:var(--accent);font-weight:700">${yen(total)}</td>
+      <td class="actions">
+        <button class="btn btn-outline btn-sm" onclick="editMitsumori('${m.id}')">編集</button>
+        <button class="btn btn-pdf btn-sm" onclick="downloadMitsumoriPDF('${m.id}')">📥PDF</button>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b" onclick="deleteMitsumori('${m.id}')">削除</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  cardList.innerHTML = list.map(m => {
+    const {sub,tax,total} = calcMit(m);
+    return `<div class="inv-card">
+      <div class="inv-card-header">
+        <div class="inv-card-name">No.${m.seq}　${m.name}</div>
+      </div>
+      <div class="inv-card-body">
+        <div class="inv-card-row"><label>見積日</label><span class="val">${m.date||'-'}</span></div>
+        <div class="inv-card-row"><label>小計</label><span class="val">${yen(sub)}</span></div>
+        <div class="inv-card-row"><label>消費税</label><span class="val">${yen(tax)}</span></div>
+      </div>
+      <div class="inv-card-total"><label>合計（税込）</label><span class="amount">${yen(total)}</span></div>
+      <div class="inv-card-actions">
+        <button class="btn btn-outline btn-sm" onclick="editMitsumori('${m.id}')">✏️ 編集</button>
+        <button class="btn btn-pdf btn-sm" onclick="downloadMitsumoriPDF('${m.id}')">📥 PDF</button>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b" onclick="deleteMitsumori('${m.id}')">🗑 削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function calcMit(m) {
+  let sub = 0;
+  (m.lines||[]).forEach(l => { sub += Math.max(0, (l.qty||0)*(l.price||0) - (l.discount||0)); });
+  const tax = Math.floor(sub * 0.1);
+  return { sub, tax, total: sub+tax };
+}
+
+function nextMitSeq() {
+  const list = data.mitsumori || [];
+  if (!list.length) return 1;
+  return Math.max(...list.map(m => m.seq||0)) + 1;
+}
+
+function openNewMitsumori() {
+  editingMitsumoriId = null;
+  document.getElementById('mitsumoriModalTitle').textContent = '新規見積書';
+  document.getElementById('mit-name').value = '';
+  document.getElementById('mit-date').value = new Date().toISOString().slice(0,10);
+  setMitLineItems([]);
+  document.getElementById('mit-note').value = '';
+  openModal('mitsumoriModal');
+}
+
+function editMitsumori(id) {
+  const m = (data.mitsumori||[]).find(x=>x.id===id);
+  if (!m) return;
+  editingMitsumoriId = id;
+  document.getElementById('mitsumoriModalTitle').textContent = `見積書 No.${m.seq} 編集`;
+  document.getElementById('mit-name').value = m.name;
+  document.getElementById('mit-date').value = m.date||'';
+  setMitLineItems(m.lines||[]);
+  document.getElementById('mit-note').value = m.note || '';
+  openModal('mitsumoriModal');
+}
+
+function deleteMitsumori(id) {
+  if (!confirm('この見積書を削除しますか？')) return;
+  data.mitsumori = (data.mitsumori||[]).filter(m=>m.id!==id);
+  saveData(); renderMitsumori();
+}
+
+function addMitTemplateItems() {
+  const checked = document.querySelectorAll('#mitsumoriModal .template-items input[type="checkbox"]:checked');
+  if (!checked.length) { alert('項目を選択してください'); return; }
+  checked.forEach(cb => { addMitLineItem({name:cb.value, qty:1, price:parseInt(cb.dataset.price), discount:0}); cb.checked=false; });
+}
+
+function setMitLineItems(lines) {
+  document.getElementById('mitLineItemsBody').innerHTML = '';
+  if (lines.length) lines.forEach(l => addMitLineItem(l));
+  updateMitCalc();
+}
+
+function addMitLineItem(line) {
+  const body = document.getElementById('mitLineItemsBody');
+  const row = document.createElement('div');
+  row.className = 'mit-line-item-row';
+  row.innerHTML = `
+    <div class="mit-name-wrap">
+      <label>品目名</label>
+      <input type="text" placeholder="例：レジスター" value="${(line&&line.name)||''}" oninput="updateMitCalc()">
+    </div>
+    <div class="mit-fields">
+      <div class="field"><label>数量</label><input type="number" value="${(line&&line.qty)||1}" min="0" oninput="updateMitCalc()"></div>
+      <div class="field"><label>単価(税抜)</label><input type="number" value="${(line&&line.price)||0}" min="0" oninput="updateMitCalc()"></div>
+      <div class="field"><label>割引</label><input type="number" value="${(line&&line.discount)||0}" min="0" oninput="updateMitCalc()"></div>
+      <div class="field"><label>単位</label><input type="text" value="${(line&&line.unit)||(line&&(line.name||'').match(/費|料金/)?'式':'台')}" oninput="updateMitCalc()"></div>
+    </div>
+    <div class="mit-line-footer">
+      <span class="mit-line-total">¥0</span>
+      <button class="btn-icon" onclick="this.closest('.mit-line-item-row').remove();updateMitCalc()">×</button>
+    </div>`;
+  body.appendChild(row);
+  updateMitCalc();
+}
+
+function updateMitCalc() {
+  let sub = 0;
+  document.querySelectorAll('.mit-line-item-row').forEach(row => {
+    const inputs = row.querySelectorAll('input[type="number"]');
+    const qty = parseFloat(inputs[0].value)||0;
+    const price = parseFloat(inputs[1].value)||0;
+    const discount = parseFloat(inputs[2].value)||0;
+    const amt = Math.max(0, qty*price - discount);
+    sub += amt;
+    row.querySelector('.mit-line-total').textContent = yen(amt);
+  });
+  const tax = Math.floor(sub*0.1);
+  document.getElementById('mitModalSubtotal').textContent = yen(sub);
+  document.getElementById('mitModalTax').textContent = yen(tax);
+  document.getElementById('mitModalTotal').textContent = yen(sub+tax);
+}
+
+function saveMitsumori() {
+  const name = document.getElementById('mit-name').value.trim();
+  if (!name) { alert('宛先を入力してください'); return; }
+  const lines = [];
+  document.querySelectorAll('.mit-line-item-row').forEach(row => {
+    const textInputs = row.querySelectorAll('input[type="text"]');
+    const numInputs = row.querySelectorAll('input[type="number"]');
+    lines.push({
+      name: textInputs[0].value,
+      qty: parseFloat(numInputs[0].value)||0,
+      price: parseFloat(numInputs[1].value)||0,
+      discount: parseFloat(numInputs[2].value)||0,
+      unit: textInputs[1].value||'台'
+    });
+  });
+  if (!data.mitsumori) data.mitsumori = [];
+  const m = {
+    id: editingMitsumoriId || uid(),
+    seq: editingMitsumoriId ? (data.mitsumori.find(x=>x.id===editingMitsumoriId)||{}).seq : nextMitSeq(),
+    name, date: document.getElementById('mit-date').value, lines,
+    note: document.getElementById('mit-note').value.trim()
+  };
+  if (editingMitsumoriId) {
+    const idx = data.mitsumori.findIndex(x=>x.id===editingMitsumoriId);
+    data.mitsumori[idx] = m;
+  } else {
+    data.mitsumori.push(m);
+  }
+  saveData(); closeModal('mitsumoriModal'); renderMitsumori();
+}
+
+function buildMitsumoriHTML(m) {
+  const {sub,tax,total} = calcMit(m);
+  let dateStr = '';
+  if (m.date) {
+    const parts = m.date.split('-');
+    dateStr = parts[0] + '年' + parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+  }
+  const emptyRows = Math.max(0, 8-(m.lines||[]).length);
+
+  // Build lines HTML without nested template literals
+  let linesHTML = '';
+  (m.lines||[]).forEach(function(l) {
+    const amt = Math.max(0, (l.qty||0)*(l.price||0)-(l.discount||0));
+    linesHTML += '<tr>' +
+      '<td>' + l.name + '</td>' +
+      '<td style="text-align:center">' + l.qty + '</td>' +
+      '<td style="text-align:center">' + (l.unit||'台') + '</td>' +
+      '<td style="text-align:right">' + (l.price||0).toLocaleString() + '</td>' +
+      '<td style="text-align:right">' + (l.discount ? '-'+l.discount.toLocaleString() : '-') + '</td>' +
+      '<td style="text-align:right">' + amt.toLocaleString() + '</td>' +
+      '</tr>';
+  });
+  for (var i=0; i<emptyRows; i++) {
+    linesHTML += '<tr class="empty"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  }
+
+  const noteHTML = m.note ? m.note.replace(/\n/g,'<br>') : '&nbsp;';
+
+  return '<div class="inv-page">' +
+    '<div class="p-title">見　積　書</div>' +
+    '<div class="p-top">' +
+      '<div class="p-top-left">' +
+        '<div class="p-to">' + m.name + ' <span class="p-ochu">御中</span></div>' +
+        '<div class="p-greeting">下記の通り御見積もり申し上げます。</div>' +
+        '<div class="p-amount-box">' +
+          '<div class="p-amount-label">合計金額（税込）</div>' +
+          '<div class="p-amount-value">¥' + total.toLocaleString() + '<span class="p-kiri">-</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="p-top-right">' +
+        '<div class="p-issuer-name">新日本富士アシスト株式会社</div>' +
+        '<div class="p-issuer-row">' +
+          '<div class="p-issuer-info">' +
+            '〒110-0016　東京都台東区台東4-31-7-203<br>TEL 03-6806-0988　FAX 03-6806-0128<br>携帯TEL：090-3319-1688<br>登録番号：T3010801026751' +
+          '</div>' +
+        '</div>' +
+        '<div class="p-dates-right">' +
+          '<div class="p-date-row"><span class="p-date-label">見積日：</span>' + dateStr + '</div>' +
+          '<div class="p-date-row"><span class="p-date-label">見積番号：</span>No.' + m.seq + '</div>' +
+          '<div class="p-date-row" style="font-size:10.5px;color:#888;margin-top:4px">本見積書の有効期限は発行日より30日間です。</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<table class="p-items">' +
+      '<thead><tr>' +
+        '<th style="text-align:left;width:40%">品目・内容</th>' +
+        '<th style="text-align:center;width:8%">数量</th>' +
+        '<th style="text-align:center;width:7%">単位</th>' +
+        '<th style="text-align:right;width:15%">単価（税抜）</th>' +
+        '<th style="text-align:right;width:12%">割引</th>' +
+        '<th style="text-align:right;width:18%">小計（税抜）</th>' +
+      '</tr></thead>' +
+      '<tbody>' + linesHTML + '</tbody>' +
+    '</table>' +
+    '<div class="p-subtotal-block">' +
+      '<div class="p-subtotal-row"><span>小計</span><span>¥' + sub.toLocaleString() + '</span></div>' +
+      '<div class="p-subtotal-row"><span>消費税（10%）</span><span>¥' + tax.toLocaleString() + '</span></div>' +
+      '<div class="p-subtotal-row grand"><span>合計（税込）</span><span>¥' + total.toLocaleString() + '</span></div>' +
+    '</div>' +
+    '<div class="p-note" style="min-height:80px">' +
+      '<div class="p-note-title">備考</div>' +
+      '<div class="p-note-body">' + noteHTML + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+
+function openBatchDownload() {
+  const month = document.getElementById('currentMonth').value;
+  const invs = data.invoices.filter(i=>i.month===month);
+  if (!invs.length) { alert('本月暂无请求书'); return; }
+
+  const list = document.getElementById('batchStoreList');
+  list.innerHTML = invs.map(inv => {
+    const store = (data.stores||[]).find(s=>s.id===inv.storeId);
+    const feeType = store ? store.feeType : 'monthly';
+    const badge = feeType==='yearly'
+      ? '<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:#e8f4fd;color:#1565c0;margin-left:6px">年払い</span>'
+      : '<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:#e8f5e9;color:#2e7d32;margin-left:6px">月払い</span>';
+    const {sub,tax,total} = calcInv(inv);
+    return `<label style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid var(--border);cursor:pointer;">
+      <input type="checkbox" class="batch-cb" data-id="${inv.id}" data-feetype="${feeType}" checked style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0">
+      <span style="flex:1;font-size:13px">${inv.name}${badge}</span>
+      <span style="font-size:12px;color:var(--accent);font-weight:600">${yen(total)}</span>
+    </label>`;
+  }).join('');
+  openModal('batchModal');
+}
+
+function batchSelectAll() { document.querySelectorAll('.batch-cb').forEach(cb=>cb.checked=true); }
+function batchSelectNone() { document.querySelectorAll('.batch-cb').forEach(cb=>cb.checked=false); }
+function batchSelectMonthly() { document.querySelectorAll('.batch-cb').forEach(cb=>{ cb.checked = cb.dataset.feetype==='monthly'; }); }
+function batchSelectYearly() { document.querySelectorAll('.batch-cb').forEach(cb=>{ cb.checked = cb.dataset.feetype==='yearly'; }); }
+
+
+
+// ===== 同步店铺金额 =====
+function syncStoreAmounts() {
+  const month = document.getElementById('currentMonth').value;
+  const invs = data.invoices.filter(i=>i.month===month);
+  if (!invs.length) { alert('本月暂无请求书'); return; }
+
+  let updated = 0;
+  invs.forEach(inv => {
+    const store = data.stores.find(s=>s.id===inv.storeId);
+    if (!store) return;
+
+    let changed = false;
+    inv.lines = inv.lines.map(line => {
+      // 同步月額料金
+      if (line.name.includes('月額料金') && line.price !== store.monthly) {
+        changed = true;
+        return { ...line, price: store.monthly };
+      }
+      return line;
+    });
+
+    // 同步支援人数
+    const techIdx = inv.lines.findIndex(l=>l.name.includes('技能'));
+    if (store.persons > 0) {
+      if (techIdx >= 0) {
+        if (inv.lines[techIdx].qty !== store.persons) {
+          inv.lines[techIdx] = { ...inv.lines[techIdx], qty: store.persons };
+          changed = true;
+        }
+      } else {
+        inv.lines.push({ name:'特定技能支援費', qty:store.persons, price:10000 });
+        changed = true;
+      }
+    } else {
+      if (techIdx >= 0) {
+        inv.lines.splice(techIdx, 1);
+        changed = true;
+      }
+    }
+
+    if (changed) updated++;
+  });
+
+  saveData();
+  loadInvoices();
+  alert('✅ ' + updated + '件の請求書を最新の店舗情報に同期しました。');
+}
+
+// ===== 請求サイクル切替 =====
+function onFeeTypeChange() {
+  const ft = document.getElementById('st-feetype').value;
+  const extra = document.getElementById('st-cycle-extra');
+  const nextLabel = document.getElementById('st-next-label');
+  const monthlyLabel = document.getElementById('st-monthly-label');
+
+  // サービス料金ラベル切替
+  if (monthlyLabel) {
+    if (ft === 'monthly') {
+      monthlyLabel.textContent = 'サービス料金 月額（円）';
+    } else if (ft === 'quarterly') {
+      monthlyLabel.textContent = 'サービス料金 3ヶ月分（円）';
+    } else {
+      monthlyLabel.textContent = 'サービス料金 年間（円）';
+    }
+  }
+
+  // 次回請求月の表示切替
+  if (ft === 'monthly') {
+    extra.style.display = 'none';
+  } else {
+    extra.style.display = 'block';
+    if (ft === 'quarterly') {
+      nextLabel.textContent = '次回請求月（3ヶ月ごと・例：2026-05）';
+    } else {
+      nextLabel.textContent = '次回請求月（年1回・例：2026-12）';
+    }
+  }
+}
+
+// ===== INIT =====
+function init() {
+  loadData();
+  if (!data.mitsumori) { data.mitsumori = []; saveData(); }
+  const now = new Date();
+  document.getElementById('currentMonth').value = getMonthStr(now);
+  document.getElementById('headerDate').textContent = now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
+  loadInvoices();
+  checkAutoGen();
+}
+init();
+</script>
+</body>
+</html>
