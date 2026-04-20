@@ -1125,9 +1125,13 @@ function acRemoveRegi() {
 }
 
 function acPreview() {
-  // Update handy list
-  const hwCount = parseInt(document.getElementById("ac-hw-count").value) || 3;
+  // Update handy list - hide all if count is 0
+  const hwCount = parseInt(document.getElementById("ac-hw-count").value) || 0;
   const hwList = document.getElementById("ac-hw-list");
+  if (hwCount === 0) {
+    hwList.innerHTML = '<div style="font-size:12px;color:var(--ink3);padding:8px;text-align:center">服務員端なし（カードに表示しない）</div>';
+    return;
+  }
   let hwHtml = "";
   for (let i = 1; i <= hwCount; i++) {
     const num = String(i).padStart(3,"0");
@@ -1185,12 +1189,10 @@ function acGenerate() {
   .page { width:210mm; min-height:148mm; padding:12mm 14mm; margin:0 auto; }
   @media print { body{margin:0} .page{padding:10mm 12mm} .btn-bar{display:none!important} }
   .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  .logo-area { display:flex; align-items:center; gap:10px; }
   .logo-text { font-size:18px; font-weight:900; color:#1389d4; letter-spacing:.05em; }
   .logo-sub  { font-size:10px; color:#666; }
-  .doc-title { text-align:right; }
   .doc-title .main { font-size:13px; font-weight:700; color:#333; }
-  .doc-title .sub  { font-size:10px; color:#888; }
+  .doc-title .sub  { font-size:10px; color:#888; text-align:right; }
   .store-name { text-align:center; font-size:22px; font-weight:900; margin:6px 0 10px; color:#111; letter-spacing:.05em; }
   .code-bar { background:#f4f4f1; border:1px solid #ddd; border-radius:6px; text-align:center; padding:7px 0; margin-bottom:12px; font-size:13px; }
   .code-bar strong { font-size:18px; font-weight:900; color:#111; letter-spacing:.1em; }
@@ -1199,29 +1201,24 @@ function acGenerate() {
   table td { padding:7px 10px; border:1px solid #ccc; vertical-align:middle; }
   .footer { background:#eef5ff; border:1px solid #c3d9f7; border-radius:6px; padding:10px 14px; font-size:10px; color:#444; line-height:1.8; text-align:center; }
   .date-note { text-align:right; font-size:10px; color:#999; margin-top:6px; }
+  .btn-bar { text-align:center; padding:12px; background:#f8f8f8; border-top:1px solid #ddd; display:flex; gap:10px; justify-content:center; }
+  .btn-bar button { padding:10px 24px; border:none; border-radius:6px; font-size:14px; cursor:pointer; font-family:sans-serif; font-weight:700; }
 </style>
 </head>
 <body>
-<div class="page">
+<div class="page" id="cardPage">
   <div class="header">
     <div class="logo-area">
-      <div>
-        <div class="logo-text">NJF REGI</div>
-        <div class="logo-sub">新日本富士アシスト株式会社</div>
-      </div>
+      <div class="logo-text">NJF REGI</div>
+      <div class="logo-sub">新日本富士アシスト株式会社</div>
     </div>
     <div class="doc-title">
       <div class="main">店舗アカウントカード</div>
       <div class="sub">店铺账号卡片 / 店舗アカウントカード</div>
     </div>
   </div>
-
   <div class="store-name">${shop}</div>
-
-  <div class="code-bar">
-    統一店舗コード / 共通店舗コード：<strong>${code}</strong>
-  </div>
-
+  <div class="code-bar">統一店舗コード / 共通店舗コード：<strong>${code}</strong></div>
   <table>
     <thead>
       <tr>
@@ -1252,7 +1249,6 @@ function acGenerate() {
       </tr>` : ""}
     </tbody>
   </table>
-
   <div class="footer">
     収銀端・管理端・服務員端支持iOS系统使用 / 収銀端・管理端・ハンディ端末はiOSシステムに対応しています<br>
     请在应用商店搜索并下载 「NJFレジ（仅限iPad使用）」「NJF管理」「NJF注文」<br>
@@ -1260,32 +1256,42 @@ function acGenerate() {
   </div>
   <div class="date-note">発行日：${dateLabel}</div>
 </div>
-<div class="btn-bar" style="text-align:center;padding:12px;background:#f8f8f8;border-top:1px solid #ddd;display:flex;gap:10px;justify-content:center">
-  <button onclick="window.print()" style="padding:10px 24px;background:#1389d4;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-family:sans-serif">🖨 印刷</button>
-  <button onclick="downloadAsImage()" style="padding:10px 24px;background:#27ae60;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-family:sans-serif">📥 画像保存</button>
+<div class="btn-bar">
+  <button onclick="window.print()" style="background:#1389d4;color:white;">🖨 印刷</button>
+  <button onclick="saveImg()" style="background:#27ae60;color:white;">📥 画像保存</button>
 </div>
-<scr"+"ipt src=\"https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js\"><\/scr"+"ipt>
-<scr"+"ipt>
-function downloadAsImage(){
-  const el=document.querySelector('.page');
-  html2canvas(el,{scale:2,backgroundColor:'#fff',useCORS:true}).then(function(canvas){
-    const a=document.createElement('a');
-    a.download='アカウントカード_'+document.title+'.png';
-    a.href=canvas.toDataURL('image/png');
-    a.click();
-  });
-}
-<\/scr"+"ipt>
+<canvas id="cv" style="display:none"></canvas>
 </body>
 </html>`;
 
-  const win = window.open("", "_blank");
-  if (win) {
-    win.document.write(html);
-    win.document.close();
-  } else {
+  // Use blob URL to avoid popup blocker and script injection issues
+  const blob = new Blob([html], {type: "text/html;charset=utf-8"});
+  const blobUrl = URL.createObjectURL(blob);
+  const win = window.open(blobUrl, "_blank");
+  if (!win) {
     toast("⚠️ ポップアップをブロックされています。許可してください。");
+    URL.revokeObjectURL(blobUrl);
+    return;
   }
+  // Inject html2canvas after page loads, then wire up saveImg
+  win.addEventListener("load", function() {
+    const s = win.document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+    s.onload = function() {
+      win.saveImg = function() {
+        win.html2canvas(win.document.getElementById("cardPage"), {
+          scale:2, backgroundColor:"#fff", useCORS:true
+        }).then(function(canvas) {
+          const a = win.document.createElement("a");
+          a.download = "アカウントカード_" + win.document.title + ".png";
+          a.href = canvas.toDataURL("image/png");
+          a.click();
+        });
+      };
+    };
+    win.document.head.appendChild(s);
+    setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 5000);
+  });
 }
 
 // Init card tab when switching
