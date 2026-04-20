@@ -538,15 +538,37 @@ main { padding: 24px; max-width: 1100px; margin: 0 auto; }
   <div class="section-header">
     <div class="section-title">契約書 <small>NJF REGI サービス利用契約申込フォーム</small></div>
   </div>
-  <div class="auto-notice" style="margin-bottom:16px">
+  <div class="auto-notice">
     <span style="font-size:20px">📄</span>
-    <div><strong>契約申込フォーム：</strong>顧客情報と設備内容を入力して申込リンクを発行できます。顧客はリンクから契約申込書PDFを作成・送信します。</div>
+    <div><strong>契約申込フォーム：</strong>顧客情報と設備内容を入力して申込リンクを発行できます。顧客はリンクから契約申込書PDFを作成・送信します。後台管理も同画面で行えます。</div>
   </div>
-  <div style="display:flex;gap:10px;margin-bottom:16px">
-    <a href="./njf-admin.html" target="_blank" class="btn btn-primary" style="text-decoration:none">🔗 管理後台を別タブで開く</a>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">
+    <a href="./njf-admin.html" target="_blank"
+       style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+              gap:8px;padding:24px 12px;background:#fff;border:1px solid #d4cfc5;
+              border-radius:8px;text-decoration:none;color:#1a1a2e;cursor:pointer">
+      <span style="font-size:32px">✚</span>
+      <span style="font-size:14px;font-weight:700">新規作成</span>
+      <span style="font-size:12px;color:#666">申込リンクを発行</span>
+    </a>
+    <a href="./njf-admin.html" target="_blank"
+       style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+              gap:8px;padding:24px 12px;background:#fff;border:1px solid #d4cfc5;
+              border-radius:8px;text-decoration:none;color:#1a1a2e;cursor:pointer">
+      <span style="font-size:32px">📋</span>
+      <span style="font-size:14px;font-weight:700">申込一覧</span>
+      <span style="font-size:12px;color:#666">PDF閲覧・DL</span>
+    </a>
   </div>
-  <div class="preview-frame" style="padding:0;overflow:hidden;min-height:1400px;border-radius:8px">
-    <iframe src="./njf-admin.html" title="NJF REGI 管理システム" style="width:100%;height:820px;border:none" loading="lazy"></iframe>
+
+  <div style="margin-top:14px">
+    <a href="./njf-admin.html" target="_blank"
+       class="btn btn-primary"
+       style="display:flex;align-items:center;justify-content:center;
+              gap:8px;padding:14px;text-decoration:none;font-size:15px">
+      🔗 管理後台を開く（全画面）
+    </a>
   </div>
 </div>
   
