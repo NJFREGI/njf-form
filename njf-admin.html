@@ -576,19 +576,107 @@
     </div>
   </div>
 
+
+  <!-- ─ ACCOUNT CARD ─────────────────────────────────────────── -->
+  <div class="view" id="view-card">
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">🪪 アカウントカード生成</div>
+          <div class="card-sub">顧客情報を入力してカードを生成・印刷</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label class="field-label">店舗名称 ＊</label>
+          <input id="ac-shop" type="text" placeholder="例: 銀河苑" oninput="acPreview()"/>
+        </div>
+        <div class="field">
+          <label class="field-label">共通店舗コード ＊（LM始まり）</label>
+          <input id="ac-code" type="text" placeholder="例: LM071435" oninput="acPreview()"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- 收银端 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🖥 収銀端 / レジ</div>
+        <button class="btn btn-outline btn-xs" onclick="acAddRegi()">＋ 追加</button>
+      </div>
+      <div class="card-body" style="padding-bottom:8px">
+        <div id="ac-regi-list"></div>
+      </div>
+    </div>
+
+    <!-- 后台管理端 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">⚙️ 管理端 / 管理画面</div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label class="field-label">申込日（管理端アカウント生成用）</label>
+          <input id="ac-date" type="date" oninput="acGenMgmt();acPreview()"/>
+        </div>
+        <div style="display:grid;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:10px;border:1.5px solid var(--border2)">
+            <div style="flex:1">
+              <div style="font-size:11px;font-weight:700;color:var(--ink2);margin-bottom:2px">単一店舗</div>
+              <div id="ac-mgmt1" style="font-size:14px;font-weight:700;color:var(--ink)">—</div>
+            </div>
+            <div style="font-size:12px;color:var(--ink2)">密碼：<strong>888888</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:10px;border:1.5px solid var(--border2)">
+            <div style="flex:1">
+              <div style="font-size:11px;font-weight:700;color:var(--ink2);margin-bottom:2px">複数店舗</div>
+              <div id="ac-mgmt2" style="font-size:14px;font-weight:700;color:var(--ink)">—</div>
+            </div>
+            <div style="font-size:12px;color:var(--ink2)">密碼：<strong>888888</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 服务员端 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📱 服務員端 / ハンディ</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <label style="font-size:11px;color:var(--ink2)">台数</label>
+          <input id="ac-hw-count" type="number" min="1" max="20" value="3"
+            style="width:60px;padding:6px 8px;border:1.5px solid var(--border2);border-radius:8px;font-size:13px;text-align:center"
+            oninput="acPreview()"/>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="ac-hw-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+    </div>
+
+    <!-- Generate button -->
+    <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="acGenerate()">
+      🪪 アカウントカードを生成・印刷
+    </button>
+
+  </div>
+
 </div><!-- /.page-wrap -->
 
 <!-- ══ BOTTOM NAV ════════════════════════════════════════════ -->
-<nav class="bottom-nav">
+<nav class="bottom-nav" style="grid-template-columns:repeat(4,1fr)">
   <button class="nav-tab active" id="tab-dash" onclick="goTab('dash')">
-    <span class="nav-tab-icon-wrap">
-      <span class="nav-tab-icon">📊</span>
-    </span>
+    <span class="nav-tab-icon">📊</span>
     <span class="nav-tab-label">ホーム</span>
   </button>
   <button class="nav-tab" id="tab-new" onclick="goTab('new')">
     <span class="nav-tab-icon">✚</span>
     <span class="nav-tab-label">新規作成</span>
+  </button>
+  <button class="nav-tab" id="tab-card" onclick="goTab('card')">
+    <span class="nav-tab-icon">🪪</span>
+    <span class="nav-tab-label">カード</span>
   </button>
   <button class="nav-tab" id="tab-sub" onclick="goTab('sub')">
     <span class="nav-tab-icon-wrap">
@@ -978,6 +1066,212 @@ function setMsg(id, msg, type) {
 if (!loadLocal()) addDevice();
 updatePreview();
 loadDash();
+
+/* ══ ACCOUNT CARD ══════════════════════════════════════════ */
+let regiCount = 1;
+
+function acInit() {
+  // Set today's date
+  const now = new Date();
+  const jst = new Date(now.getTime() + 9*60*60*1000);
+  document.getElementById("ac-date").value = jst.toISOString().slice(0,10);
+  acGenMgmt();
+  acRenderRegi();
+  acPreview();
+}
+
+function acDateStr() {
+  // Get date as YYYYMMDD from input
+  const d = document.getElementById("ac-date").value;
+  return d ? d.replace(/-/g,"") : "";
+}
+
+function acGenMgmt() {
+  const ds = acDateStr();
+  document.getElementById("ac-mgmt1").textContent = ds ? ds + "001" : "—";
+  document.getElementById("ac-mgmt2").textContent = ds ? ds + "002" : "—";
+  acPreview();
+}
+
+function acAddRegi() {
+  regiCount++;
+  acRenderRegi();
+  acPreview();
+}
+
+function acRenderRegi() {
+  const list = document.getElementById("ac-regi-list");
+  let html = "";
+  for (let i = 1; i <= regiCount; i++) {
+    const num = String(i).padStart(3,"0");
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:10px;border:1.5px solid var(--border2);margin-bottom:8px">
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:700;color:var(--ink2);margin-bottom:2px">台数 ${i}</div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink)">RG${num}</div>
+      </div>
+      <div style="font-size:12px;color:var(--ink2)">密碼：<strong>888888</strong></div>
+      ${i > 1 ? `<button onclick="acRemoveRegi()" style="background:var(--red-l);border:1px solid rgba(239,68,68,.2);color:var(--red);padding:4px 8px;border-radius:7px;font-size:11px;cursor:pointer">✕</button>` : ""}
+    </div>`;
+  }
+  list.innerHTML = html;
+}
+
+function acRemoveRegi() {
+  if (regiCount > 1) { regiCount--; acRenderRegi(); acPreview(); }
+}
+
+function acPreview() {
+  // Update handy list
+  const hwCount = parseInt(document.getElementById("ac-hw-count").value) || 3;
+  const hwList = document.getElementById("ac-hw-list");
+  let hwHtml = "";
+  for (let i = 1; i <= hwCount; i++) {
+    const num = String(i).padStart(3,"0");
+    hwHtml += `<div style="background:var(--surface);border:1.5px solid var(--border2);border-radius:9px;padding:8px 12px;font-size:13px;font-weight:700;color:var(--ink)">HW${num}</div>`;
+  }
+  hwList.innerHTML = hwHtml;
+}
+
+function acGenerate() {
+  const shop = document.getElementById("ac-shop").value.trim();
+  const code = document.getElementById("ac-code").value.trim();
+  if (!shop) { toast("⚠️ 店舗名称を入力してください"); return; }
+  if (!code) { toast("⚠️ 共通コードを入力してください"); return; }
+
+  const ds    = acDateStr();
+  const mgmt1 = ds + "001";
+  const mgmt2 = ds + "002";
+  const hwCount = parseInt(document.getElementById("ac-hw-count").value) || 3;
+
+  // Build regi rows
+  let regiRows = "";
+  for (let i = 1; i <= regiCount; i++) {
+    const num = String(i).padStart(3,"0");
+    regiRows += `<tr>
+      ${i===1 ? `<td rowspan="${regiCount}" style="text-align:center;vertical-align:middle;font-weight:700;border:1px solid #ccc;padding:8px;background:#fff8f0">収銀端<br><small style="font-weight:400;font-size:10px">レジ</small></td>` : ""}
+      <td style="border:1px solid #ccc;padding:8px;text-align:center;font-weight:700">RG${num}</td>
+      <td style="border:1px solid #ccc;padding:8px;text-align:center">888888</td>
+      <td style="border:1px solid #ccc;padding:8px;font-size:11px;line-height:1.6">
+        結账 / 精算 / 配膳 / 価格変更<br>臨時商品追加 / 注文取消
+      </td>
+    </tr>`;
+  }
+
+  // Build handy rows
+  let hwAccounts = [];
+  for (let i = 1; i <= hwCount; i++) {
+    hwAccounts.push("HW" + String(i).padStart(3,"0"));
+  }
+
+  const today = new Date();
+  const jst = new Date(today.getTime() + 9*60*60*1000);
+  const dateLabel = jst.getFullYear() + "年" + (jst.getMonth()+1) + "月" + jst.getDate() + "日";
+
+  const html = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Noto Sans JP',sans-serif; background:#fff; color:#111; }
+  .page { width:210mm; min-height:148mm; padding:12mm 14mm; margin:0 auto; }
+  @media print { body{margin:0} .page{padding:10mm 12mm} }
+  .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .logo-area { display:flex; align-items:center; gap:10px; }
+  .logo-text { font-size:18px; font-weight:900; color:#1389d4; letter-spacing:.05em; }
+  .logo-sub  { font-size:10px; color:#666; }
+  .doc-title { text-align:right; }
+  .doc-title .main { font-size:13px; font-weight:700; color:#333; }
+  .doc-title .sub  { font-size:10px; color:#888; }
+  .store-name { text-align:center; font-size:22px; font-weight:900; margin:6px 0 10px; color:#111; letter-spacing:.05em; }
+  .code-bar { background:#f4f4f1; border:1px solid #ddd; border-radius:6px; text-align:center; padding:7px 0; margin-bottom:12px; font-size:13px; }
+  .code-bar strong { font-size:18px; font-weight:900; color:#111; letter-spacing:.1em; }
+  table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:10px; }
+  table th { background:#1a1a2e; color:#fff; padding:7px 10px; font-weight:500; border:1px solid #999; text-align:center; font-size:11px; }
+  table td { padding:7px 10px; border:1px solid #ccc; vertical-align:middle; }
+  .footer { background:#eef5ff; border:1px solid #c3d9f7; border-radius:6px; padding:10px 14px; font-size:10px; color:#444; line-height:1.8; text-align:center; }
+  .date-note { text-align:right; font-size:10px; color:#999; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="logo-area">
+      <div>
+        <div class="logo-text">NJF REGI</div>
+        <div class="logo-sub">新日本富士アシスト株式会社</div>
+      </div>
+    </div>
+    <div class="doc-title">
+      <div class="main">店舗アカウントカード</div>
+      <div class="sub">店铺账号卡片 / 店舗アカウントカード</div>
+    </div>
+  </div>
+
+  <div class="store-name">${shop}</div>
+
+  <div class="code-bar">
+    統一店舗コード / 共通店舗コード：<strong>${code}</strong>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:90px">使用端<br><small>端末</small></th>
+        <th style="width:130px">账号<br><small>アカウント</small></th>
+        <th style="width:80px">密码<br><small>パスワード</small></th>
+        <th>主要功能<br><small>主な機能</small></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${regiRows}
+      <tr>
+        <td rowspan="2" style="text-align:center;vertical-align:middle;font-weight:700;background:#f0f8ff">後台管理端<br><small style="font-weight:400;font-size:10px">管理画面</small></td>
+        <td style="font-weight:700;text-align:center">${mgmt1}<br><small style="color:#888;font-weight:400">単一店舗</small></td>
+        <td style="text-align:center">888888</td>
+        <td style="font-size:11px;line-height:1.6">各种基础设置 / 菜品设置<br>営業状況実時照会 / 各類データ照会</td>
+      </tr>
+      <tr>
+        <td style="font-weight:700;text-align:center">${mgmt2}<br><small style="color:#888;font-weight:400">複数店舗</small></td>
+        <td style="text-align:center">888888</td>
+        <td style="font-size:11px;line-height:1.6">基本設定 / メニュー設定<br>重要操作 / データ照会</td>
+      </tr>
+      <tr>
+        <td style="text-align:center;vertical-align:middle;font-weight:700;background:#f5fff5">服務員端<br><small style="font-weight:400;font-size:10px">ハンディ</small></td>
+        <td style="font-weight:700;text-align:center;line-height:1.8">${hwAccounts.join("<br>")}</td>
+        <td style="text-align:center">888888</td>
+        <td style="font-size:11px;line-height:1.6">点单 / 转台 / 并台 / 拼台<br>注文 / 席移動 / 席結合 / 席分割<br>商品キャンセル / 商品移動 / 配膳</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    収銀端・管理端・服務員端支持iOS系统使用 / 収銀端・管理端・ハンディ端末はiOSシステムに対応しています<br>
+    请在应用商店搜索并下载 「NJFレジ（仅限iPad使用）」「NJF管理」「NJF注文」<br>
+    App Storeにて次のアプリを検索してダウンロードしてください：「NJFレジ」（iPad専用）「NJF管理」「NJF注文」
+  </div>
+  <div class="date-note">発行日：${dateLabel}</div>
+</div>
+<script>window.onload=()=>window.print();</script>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank");
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  } else {
+    toast("⚠️ ポップアップをブロックされています。許可してください。");
+  }
+}
+
+// Init card tab when switching
+const _origGoTab = goTab;
+goTab = function(tab) {
+  _origGoTab(tab);
+  if (tab === "card") acInit();
+};
 </script>
 </body>
 </html>
