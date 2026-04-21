@@ -1097,6 +1097,15 @@ if (!loadLocal()) addDevice();
 updatePreview();
 loadDash();
 
+/* ══ HASH ROUTING — open correct tab from index.html links ══ */
+(function() {
+  const hash = (location.hash || "").replace("#", "").trim();
+  const validTabs = ["dash", "new", "card", "sub"];
+  if (hash && validTabs.includes(hash)) {
+    goTab(hash);
+  }
+})();
+
 /* ══ ACCOUNT CARD ══════════════════════════════════════════ */
 let regiCount = 1;
 
