@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>NJF REGI 管理</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet"/>
   <style>
     :root{
@@ -669,28 +670,91 @@
 
   </div>
 
+
+  <!-- ─ 原価レポート ──────────────────────────────────────── -->
+  <div class="view" id="view-cost">
+
+    <!-- 原価マスタ管理 -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">🗂 原価マスタ</div>
+          <div class="card-sub">設備ごとの原価（見積書から自動反映・手動編集可）</div>
+        </div>
+        <button class="btn btn-outline btn-xs" onclick="costMasterRefresh()">↻ 更新</button>
+      </div>
+      <div class="card-body" style="padding-bottom:8px">
+        <div id="cost-master-list">
+          <div class="loading-wrap"><div class="spinner"></div><div class="loading-text">読込中…</div></div>
+        </div>
+        <button class="btn btn-ghost" style="margin-top:8px" onclick="costMasterAddRow()">＋ 手動で設備を追加</button>
+      </div>
+    </div>
+
+    <!-- レポート生成 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📈 原価レポート生成</div>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label class="field-label">対象期間</label>
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px">
+            <input id="cost-from" type="date" style="background:var(--surface);border:1.5px solid var(--border2);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink)"/>
+            <span style="font-size:13px;color:var(--ink2)">〜</span>
+            <input id="cost-to" type="date" style="background:var(--surface);border:1.5px solid var(--border2);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:var(--ink)"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="costGenReport()" style="margin-bottom:8px">
+          📊 レポートを生成
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="costExportPDF()" id="cost-pdf-btn" style="display:none;width:100%;justify-content:center">
+          📥 PDF出力（中日双語）
+        </button>
+        <div class="msg" id="cost-msg"></div>
+      </div>
+    </div>
+
+    <!-- レポート結果 -->
+    <div id="cost-report-wrap" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="cost-report-title">原価レポート</div>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <div id="cost-report-table"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
 </div><!-- /.page-wrap -->
 
 <!-- ══ BOTTOM NAV ════════════════════════════════════════════ -->
-<nav class="bottom-nav" style="grid-template-columns:repeat(4,1fr)">
+<nav class="bottom-nav" style="grid-template-columns:repeat(5,1fr)">
   <button class="nav-tab active" id="tab-dash" onclick="goTab('dash')">
-    <span class="nav-tab-icon">📊</span>
+    <span class="nav-tab-icon" style="font-size:18px">📊</span>
     <span class="nav-tab-label">ホーム</span>
   </button>
   <button class="nav-tab" id="tab-new" onclick="goTab('new')">
-    <span class="nav-tab-icon">✚</span>
-    <span class="nav-tab-label">新規作成</span>
+    <span class="nav-tab-icon" style="font-size:18px">✚</span>
+    <span class="nav-tab-label">新規</span>
   </button>
   <button class="nav-tab" id="tab-card" onclick="goTab('card')">
-    <span class="nav-tab-icon">🪪</span>
+    <span class="nav-tab-icon" style="font-size:18px">🪪</span>
     <span class="nav-tab-label">カード</span>
   </button>
   <button class="nav-tab" id="tab-sub" onclick="goTab('sub')">
     <span class="nav-tab-icon-wrap">
-      <span class="nav-tab-icon">📋</span>
+      <span class="nav-tab-icon" style="font-size:18px">📋</span>
       <span class="nav-badge" id="nav-badge" style="display:none">0</span>
     </span>
-    <span class="nav-tab-label">申込一覧</span>
+    <span class="nav-tab-label">申込</span>
+  </button>
+  <button class="nav-tab" id="tab-cost" onclick="goTab('cost')">
+    <span class="nav-tab-icon" style="font-size:18px">💹</span>
+    <span class="nav-tab-label">原価</span>
   </button>
 </nav>
 
@@ -1092,6 +1156,239 @@ function setMsg(id, msg, type) {
   el.className = "msg" + (msg ? " show msg-" + type : "");
 }
 
+
+/* ══ 原価マスタ & レポート ══════════════════════════════════ */
+const COST_MASTER_KEY = 'njf_cost_master_v1';
+const SERVICE_RE = /月額|年額|サービス|支援費|料金/;
+
+function getCostMaster(){try{return JSON.parse(localStorage.getItem(COST_MASTER_KEY)||'{}');}catch(_){return {};}}
+function saveCostMaster(m){localStorage.setItem(COST_MASTER_KEY,JSON.stringify(m));}
+
+function getCostAtDate(name, dateStr){
+  const master=getCostMaster();
+  const hist=master[name];
+  if(!hist||!hist.length) return null;
+  let best=hist[0].cost;
+  for(const e of hist){ if(e.from<=dateStr) best=e.cost; else break; }
+  return best;
+}
+
+function costMasterRefresh(){
+  const master=getCostMaster();
+  const list=document.getElementById('cost-master-list');
+  if(!list) return;
+  const keys=Object.keys(master);
+  if(!keys.length){
+    list.innerHTML='<div style="font-size:12px;color:var(--ink3);padding:8px">原価データがありません。見積書で設備の原価を入力すると自動登録されます。</div>';
+    return;
+  }
+  list.innerHTML = keys.map(name => {
+    const hist=master[name];
+    const latest=hist[hist.length-1];
+    const isService=SERVICE_RE.test(name);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border-radius:10px;border:1.5px solid var(--border2);margin-bottom:8px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:var(--ink)">${name}</div>
+        <div style="font-size:11px;color:var(--ink2);margin-top:2px">${isService?'※サービス費（売価×30%）':'原価: ¥'+latest.cost.toLocaleString()}　更新: ${latest.from}</div>
+      </div>
+      <input type="number" value="${latest.cost}" min="0"
+        style="width:90px;padding:7px 8px;border:1.5px solid var(--border2);border-radius:8px;font-size:13px;text-align:right"
+        onchange="costMasterUpdateItem('${name.replace(/'/g,"\'")}',this.value)"/>
+    </div>`;
+  }).join('');
+}
+
+function costMasterUpdateItem(name, val){
+  const master=getCostMaster();
+  const today=new Date().toISOString().slice(0,10);
+  const cost=parseInt(val)||0;
+  if(!master[name]) master[name]=[];
+  const last=master[name][master[name].length-1];
+  if(!last||last.cost!==cost){
+    master[name].push({cost,from:today});
+  }
+  saveCostMaster(master);
+  toast('✅ '+name+' の原価を更新しました');
+}
+
+function costMasterAddRow(){
+  const name=prompt('設備名を入力:');if(!name)return;
+  const price=parseInt(prompt('原価（¥）:'))||0;if(!price)return;
+  const master=getCostMaster();
+  const today=new Date().toISOString().slice(0,10);
+  if(!master[name]) master[name]=[];
+  master[name].push({cost:price,from:today});
+  saveCostMaster(master);
+  costMasterRefresh();
+  toast('✅ 追加しました');
+}
+
+/* ── レポート生成 ── */
+async function costGenReport(){
+  const from=document.getElementById('cost-from').value;
+  const to=document.getElementById('cost-to').value;
+  if(!from||!to){setMsg('cost-msg','⚠️ 期間を指定してください','err');return;}
+  if(from>to){setMsg('cost-msg','⚠️ 開始日は終了日より前にしてください','err');return;}
+
+  setMsg('cost-msg','データを取得中…','info');
+  document.getElementById('cost-report-wrap').style.display='none';
+  document.getElementById('cost-pdf-btn').style.display='none';
+
+  try{
+    const result=await gasGet({action:'listSubmissions'});
+    if(!result.success) throw new Error(result.message||'取得失敗');
+    const subs=result.data||[];
+
+    // Filter by date range
+    const filtered=subs.filter(s=>{
+      const d=s.signedDate||s.receivedAt||'';
+      return d>=from && d<=to;
+    });
+
+    if(!filtered.length){setMsg('cost-msg','⚠️ 該当する申込データがありません','err');return;}
+
+    buildCostReport(filtered, from, to);
+    setMsg('cost-msg','','');
+    document.getElementById('cost-pdf-btn').style.display='block';
+
+  }catch(err){
+    setMsg('cost-msg','❌ '+err.message,'err');
+  }
+}
+
+// Known device categories (hardware only — services excluded from cost)
+const COST_DEVICE_KEYS=['レジスター','計量レジスター','タブレット','キャッシュドロア','プリンター','クラウドプリンター','ハンディ','その他'];
+
+function buildCostReport(subs, from, to){
+  const master=getCostMaster();
+
+  // Collect all unique non-service item names from master + submissions
+  const deviceSet=new Set();
+  const serviceSet=new Set();
+  subs.forEach(s=>{
+    // Parse items from shopName/companyName if available
+    // Since GAS Submissions don't store line items, use cost master keys
+  });
+  Object.keys(master).forEach(name=>{
+    if(SERVICE_RE.test(name)) serviceSet.add(name);
+    else deviceSet.add(name);
+  });
+
+  const devices=[...deviceSet].sort();
+  const services=[...serviceSet].sort();
+
+  // Build per-merchant rows
+  // Group by shopName
+  const byShop={};
+  subs.forEach(s=>{
+    const shop=s.shopName||s.customerCode||'不明';
+    if(!byShop[shop]) byShop[shop]={shop,code:s.customerCode,date:s.signedDate||s.receivedAt,deviceCosts:{},serviceCosts:{},total:0};
+    const date=s.signedDate||s.receivedAt||from;
+    // For each device in master, assign based on contract
+    devices.forEach(name=>{
+      const cost=getCostAtDate(name,date);
+      if(cost) byShop[shop].deviceCosts[name]=(byShop[shop].deviceCosts[name]||0)+cost;
+    });
+  });
+
+  const rows=Object.values(byShop);
+
+  // Calculate totals
+  rows.forEach(r=>{
+    r.total=Object.values(r.deviceCosts).reduce((a,b)=>a+b,0);
+  });
+  const grandTotal=rows.reduce((a,r)=>a+r.total,0);
+
+  // Render table
+  const title=`原価レポート　${from} 〜 ${to}`;
+  document.getElementById('cost-report-title').textContent=title;
+  window._costReportData={rows,devices,services,from,to,grandTotal};
+
+  let html=`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
+    <thead>
+      <tr style="background:#1a1f36;color:white">
+        <th style="padding:8px 10px;text-align:left;border:1px solid #999;white-space:nowrap">商户名<br><small style="font-weight:400">店舗名</small></th>
+        <th style="padding:8px 10px;text-align:left;border:1px solid #999;white-space:nowrap">申込日<br><small style="font-weight:400">契約日</small></th>
+        ${devices.map(d=>`<th style="padding:8px 10px;text-align:right;border:1px solid #999;white-space:nowrap">${d}<br><small style="font-weight:400;color:#aaa">原価</small></th>`).join('')}
+        <th style="padding:8px 10px;text-align:right;border:1px solid #999;white-space:nowrap;background:#0f3460">原価合計<br><small style="font-weight:400">合計</small></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map(r=>`<tr style="border-bottom:1px solid #eee">
+        <td style="padding:8px 10px;border:1px solid #ddd;font-weight:700">${r.shop}</td>
+        <td style="padding:8px 10px;border:1px solid #ddd;font-size:11px;color:#666">${r.date||'-'}</td>
+        ${devices.map(d=>`<td style="padding:8px 10px;border:1px solid #ddd;text-align:right">${r.deviceCosts[d]?'¥'+r.deviceCosts[d].toLocaleString():'-'}</td>`).join('')}
+        <td style="padding:8px 10px;border:1px solid #ddd;text-align:right;font-weight:700;background:#e8f4fd;color:#0c447c">¥${r.total.toLocaleString()}</td>
+      </tr>`).join('')}
+      <tr style="background:#f4f4f4;font-weight:700">
+        <td colspan="2" style="padding:8px 10px;border:1px solid #ddd">合計 / 合计</td>
+        ${devices.map(d=>{const s=rows.reduce((a,r)=>a+(r.deviceCosts[d]||0),0);return`<td style="padding:8px 10px;border:1px solid #ddd;text-align:right">${s?'¥'+s.toLocaleString():'-'}</td>`;}).join('')}
+        <td style="padding:8px 10px;border:1px solid #ddd;text-align:right;background:#dbeafe;color:#1e40af">¥${grandTotal.toLocaleString()}</td>
+      </tr>
+    </tbody>
+  </table>`;
+
+  document.getElementById('cost-report-table').innerHTML=html;
+  document.getElementById('cost-report-wrap').style.display='block';
+}
+
+/* ── PDF出力（中日双語）── */
+async function costExportPDF(){
+  const d=window._costReportData;if(!d){toast('⚠️ 先にレポートを生成してください');return;}
+
+  const {rows,devices,from,to,grandTotal}=d;
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4',orientation:'landscape'});
+  const pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight();
+
+  // Render to hidden div and capture
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:1100px;background:white;padding:24px;font-family:Noto Sans JP,sans-serif';
+
+  wrap.innerHTML=`
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:20px;font-weight:900;letter-spacing:2px">原価レポート / 成本报表</div>
+      <div style="font-size:13px;color:#666;margin-top:4px">対象期間 / 统计期间：${from} 〜 ${to}　　新日本富士アシスト株式会社</div>
+    </div>
+    ${document.getElementById('cost-report-table').innerHTML}
+    <div style="margin-top:12px;font-size:11px;color:#888">
+      ※サービス費（月額・年額・支援費）の原価は売価×30%で計算 / ※服务费原价按售价30%计算<br>
+      生成日時 / 生成时间：${new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})}
+    </div>`;
+
+  document.body.appendChild(wrap);
+  await new Promise(r=>setTimeout(r,300));
+
+  const canvas=await html2canvas(wrap,{scale:2,backgroundColor:'#fff',useCORS:true,width:1100,windowWidth:1100});
+  const imgH=(canvas.height*pw)/canvas.width;
+  doc.addImage(canvas.toDataURL('image/jpeg',.92),'JPEG',0,0,pw,Math.min(imgH,ph));
+  document.body.removeChild(wrap);
+  doc.save('原価レポート_'+from+'_'+to+'.pdf');
+  toast('✅ PDF出力完了');
+}
+
+// Init cost tab
+const _origGoTabCost=goTab;
+goTab=function(tab){
+  _origGoTabCost(tab);
+  if(tab==='cost'){
+    costMasterRefresh();
+    // Set default date range (this month)
+    const now=new Date();
+    const y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0');
+    const ld=new Date(y,now.getMonth()+1,0).getDate();
+    if(!document.getElementById('cost-from').value)
+      document.getElementById('cost-from').value=y+'-'+m+'-01';
+    if(!document.getElementById('cost-to').value)
+      document.getElementById('cost-to').value=y+'-'+m+'-'+String(ld).padStart(2,'0');
+  }
+};
+
+function setMsg(id,msg,type){
+  const el=document.getElementById(id);if(!el)return;
+  el.textContent=msg;el.className='msg'+(msg?' show msg-'+type:'');
+}
+
 /* ══ INIT ════════════════════════════════════════════════════ */
 if (!loadLocal()) addDevice();
 updatePreview();
@@ -1100,7 +1397,7 @@ loadDash();
 /* ══ HASH ROUTING — open correct tab from index.html links ══ */
 (function() {
   const hash = (location.hash || "").replace("#", "").trim();
-  const validTabs = ["dash", "new", "card", "sub"];
+  const validTabs = ["dash", "new", "card", "sub", "cost"];
   if (hash && validTabs.includes(hash)) {
     goTab(hash);
   }
