@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>NJF REGI 管理</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet"/>
   <style>
     :root{
@@ -763,7 +764,7 @@
 
 <script>
 /* ══ CONFIG ══════════════════════════════════════════════════ */
-const GAS_URL   = "https://script.google.com/macros/s/AKfycbxKA-QpmTLNCmF5T9I71H7L6Gg4-oRsmTlZusZlX209CcVknXLhdElHy_jYczGxROGB/exec";
+const GAS_URL   = "https://script.google.com/macros/s/AKfycbxuEoFCbRacTwL8uA8wgRN8mux6h4ktDGVxTqmwf--hDNlowhd0Iu3cPXiw9ffhG7_h/exec";
 const FORM_BASE = "https://form.njfregi.jp/form.html";
 const STORE_KEY = "njf_admin_v3";
 
@@ -1075,7 +1076,7 @@ function renderSubs(data) {
         </div>
       </div>
       <div class="sub-meta">
-        <span>📅 申込日：${esc(row.signedDate||"-")}</span>
+        <span>📅 申込日：${fmtSubDate(row.signedDate)}</span>
         <span>🕐 受信：${esc(row.receivedAt||"-")}</span>
       </div>
       <div class="sub-actions">
@@ -1083,9 +1084,31 @@ function renderSubs(data) {
           <a class="sa-btn sa-view" href="${row.viewUrl}" target="_blank">👁 オンライン閲覧</a>
           <a class="sa-btn sa-dl"   href="${row.downloadUrl}" target="_blank">⬇ ダウンロード</a>
         ` : '<span style="font-size:12px;color:var(--ink3)">処理中…</span>'}
+        <button class="sa-btn" onclick="deleteSub('${row.submissionId}')"
+          style="background:var(--red-l);color:var(--red);border:none;cursor:pointer;font-family:inherit">
+          🗑 削除
+        </button>
       </div>
     </div>`;
   }).join("");
+}
+
+/* ══ DELETE SUBMISSION ══════════════════════════════════════ */
+async function deleteSub(submissionId) {
+  if (!confirm('この申込記録を削除しますか？\n※Google Drive上のPDFファイルは削除されません。')) return;
+  // Optimistic UI — remove locally first
+  allSubs = allSubs.filter(s => s.submissionId !== submissionId);
+  renderSubs(allSubs);
+  const badge = document.getElementById('nav-badge');
+  if (allSubs.length > 0) { badge.textContent = allSubs.length; badge.style.display = 'flex'; }
+  else badge.style.display = 'none';
+  toast('🗑 削除しました');
+  // Also delete from GAS Sheets (best-effort)
+  try {
+    await gasPost({ action: 'deleteSubmission', submissionId });
+  } catch(_) {
+    // Silent fail — UI already updated
+  }
 }
 
 /* ══ DASHBOARD ══════════════════════════════════════════════ */
@@ -1124,7 +1147,7 @@ async function loadDash() {
         <div class="recent-dot"></div>
         <div class="recent-body">
           <div class="recent-shop">${esc(row.shopName)}</div>
-          <div class="recent-meta">${esc(row.signedDate||"")} ${esc(row.companyName||"")}</div>
+          <div class="recent-meta">${fmtSubDate(row.signedDate)} ${esc(row.companyName||"")}</div>
         </div>
         <span class="recent-code">${esc(row.customerCode)}</span>
       </div>`).join("");
@@ -1282,7 +1305,7 @@ function buildCostReport(subs, from, to){
   const byShop={};
   subs.forEach(s=>{
     const shop=s.shopName||s.customerCode||'不明';
-    if(!byShop[shop]) byShop[shop]={shop,code:s.customerCode,date:s.signedDate||s.receivedAt,deviceCosts:{},serviceCosts:{},total:0};
+    if(!byShop[shop]) byShop[shop]={shop,code:s.customerCode,date:fmtSubDate(s.signedDate||s.receivedAt),deviceCosts:{},serviceCosts:{},total:0};
     const date=s.signedDate||s.receivedAt||from;
     // For each device in master, assign based on contract
     devices.forEach(name=>{
@@ -1316,7 +1339,7 @@ function buildCostReport(subs, from, to){
     <tbody>
       ${rows.map(r=>`<tr style="border-bottom:1px solid #eee">
         <td style="padding:8px 10px;border:1px solid #ddd;font-weight:700">${r.shop}</td>
-        <td style="padding:8px 10px;border:1px solid #ddd;font-size:11px;color:#666">${r.date||'-'}</td>
+        <td style="padding:8px 10px;border:1px solid #ddd;font-size:11px;color:#666">${fmtSubDate(r.date)}</td>
         ${devices.map(d=>`<td style="padding:8px 10px;border:1px solid #ddd;text-align:right">${r.deviceCosts[d]?'¥'+r.deviceCosts[d].toLocaleString():'-'}</td>`).join('')}
         <td style="padding:8px 10px;border:1px solid #ddd;text-align:right;font-weight:700;background:#e8f4fd;color:#0c447c">¥${r.total.toLocaleString()}</td>
       </tr>`).join('')}
@@ -1333,6 +1356,16 @@ function buildCostReport(subs, from, to){
 }
 
 /* ── PDF出力（中日双語）── */
+function fmtSubDate(d){
+  if(!d) return '-';
+  // Handle ISO format like 2026-04-19T15:00:00.000Z
+  const s = String(d).slice(0,10);
+  if(!s || s==='undefined') return '-';
+  const parts = s.split('-');
+  if(parts.length===3) return parts[0]+'年'+parseInt(parts[1])+'月'+parseInt(parts[2])+'日';
+  return s;
+}
+
 async function costExportPDF(){
   const d=window._costReportData;if(!d){toast('⚠️ 先にレポートを生成してください');return;}
 
