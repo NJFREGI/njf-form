@@ -219,6 +219,7 @@ main{padding:24px;max-width:1100px;margin:0 auto}
   .month-bar .btn-primary{grid-column:1}
   .month-bar .btn-pdf{grid-column:2}
   .month-bar .stat{grid-column:1/-1;text-align:center;margin:0}
+  .month-bar>div{grid-column:1/-1}
   .inv-table-wrap table{display:none}
   .inv-card-list{display:block}
   .inv-table-wrap{background:transparent;border:none}
@@ -279,9 +280,11 @@ main{padding:24px;max-width:1100px;margin:0 auto}
     <button class="btn btn-success" onclick="generateMonth()">⚡ 生成本月请求书</button>
     <button class="btn btn-primary" onclick="openNewInvoice()">＋ 新增</button>
     <button class="btn btn-pdf" onclick="openBatchDownload()">📥 批量下载PDF</button>
-    <button class="btn btn-outline" onclick="syncStoreAmounts()" title="将已生成请求书的金额同步为最新店铺设置">🔄 同步金额</button>
+    <div style="display:flex;gap:8px;flex-wrap:nowrap">
+      <button class="btn btn-outline" onclick="syncStoreAmounts()" title="将已生成请求书的金额同步为最新店铺设置">🔄 同步金额</button>
+      <button class="btn btn-outline" onclick="switchTab('stores',null);document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));">🏪 店舗設定</button>
+    </div>
     <div class="stat" id="monthStat"></div>
-    <button class="btn btn-outline" onclick="switchTab('stores',null);document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));" style="margin-left:auto">🏪 店舗設定</button>
   </div>
   <div class="inv-table-wrap">
     <table class="inv-table">
@@ -710,8 +713,25 @@ function generateMonth(){
   const month=document.getElementById('currentMonth').value;
   if(!month){alert('请先选择月份');return;}
   const existing=data.invoices.filter(i=>i.month===month);
-  if(existing.length&&!confirm(`本月已有 ${existing.length} 件，是否覆盖重新生成？`))return;
-  data.invoices=data.invoices.filter(i=>i.month!==month);
+  // Get storeIds that already have invoices this month — skip them
+  const existingStoreIds=new Set(existing.map(i=>i.storeId).filter(Boolean));
+  // If there are existing invoices, ask whether to supplement or full overwrite
+  let mode='supplement'; // default: only add missing stores
+  if(existing.length){
+    const choice=confirm(
+      `本月已有 ${existing.length} 件请求书。\n\n` +
+      `点击「确定」→ 只补充生成尚未生成的店铺\n` +
+      `点击「取消」→ 全部重新生成（会覆盖已有记录）`
+    );
+    if(choice===true) mode='supplement';
+    else {
+      // Full regenerate — remove existing auto-generated ones only
+      if(!confirm('确认要覆盖全部重新生成吗？手动新增的记录也会被删除。')) return;
+      mode='overwrite';
+      data.invoices=data.invoices.filter(i=>i.month!==month);
+      existingStoreIds.clear();
+    }
+  }
   const[y,m]=month.split('-').map(Number);
   const ld=lastDayOf(y,m);
   const ps=`${y}-${String(m).padStart(2,'0')}-01`;
@@ -723,6 +743,8 @@ function generateMonth(){
   data.stores.forEach(s=>{
     const feeType=s.feeType||'monthly';
     if(feeType!=='monthly'){const nextM=s.nextMonth;if(!nextM){skipped++;return;}if(nextM!==month){skipped++;return;}}
+    // Skip if already has invoice this month (supplement mode)
+    if(mode==='supplement' && existingStoreIds.has(s.id)){skipped++;return;}
     let periodStart=ps,periodEnd=pe,lineName='';
     function fmtD(yy,mm,dd){return yy+'.'+String(mm).padStart(2,'0')+'.'+String(dd).padStart(2,'0');}
     if(feeType==='monthly'){lineName=fmtD(y,m,1)+'-'+fmtD(y,m,ld)+' サービス料金';}
@@ -911,19 +933,63 @@ function addMitTemplateItems(){const checked=document.querySelectorAll('#mitsumo
 function setMitLineItems(lines){document.getElementById('mitLineItemsBody').innerHTML='';if(lines.length)lines.forEach(l=>addMitLineItem(l));updateMitCalc();}
 function addMitLineItem(line){
   const body=document.getElementById('mitLineItemsBody');const row=document.createElement('div');row.className='mit-line-item-row';
-  row.innerHTML=`<div class="mit-name-wrap"><label>品目名</label><input type="text" placeholder="例：レジスター" value="${(line&&line.name)||''}" oninput="updateMitCalc()"></div><div class="mit-fields"><div class="field"><label>数量</label><input type="number" value="${(line&&line.qty)||1}" min="0" oninput="updateMitCalc()"></div><div class="field"><label>単価(税抜)</label><input type="number" value="${(line&&line.price)||0}" min="0" oninput="updateMitCalc()"></div><div class="field"><label>割引</label><input type="number" value="${(line&&line.discount)||0}" min="0" oninput="updateMitCalc()"></div><div class="field"><label>単位</label><input type="text" value="${(line&&line.unit)||(line&&(line.name||'').match(/費|料金/)?'式':'台')}" oninput="updateMitCalc()"></div></div><div class="mit-line-footer"><span class="mit-line-total">¥0</span><button class="btn-icon" onclick="this.closest('.mit-line-item-row').remove();updateMitCalc()">×</button></div>`;
+  const isService = line && (line.name||'').match(/月額|年額|サービス|支援費|料金/);
+  const costVal = line&&line.cost!=null ? line.cost : (line&&line.price ? Math.round(line.price*0.3) : 0);
+  row.innerHTML=`<div class="mit-name-wrap"><label>品目名</label><input type="text" placeholder="例：レジスター" value="${(line&&line.name)||''}" oninput="updateMitCalc();mitAutoFillCost(this)"></div><div class="mit-fields"><div class="field"><label>数量</label><input type="number" value="${(line&&line.qty)||1}" min="0" oninput="updateMitCalc()"></div><div class="field"><label>単価(税抜)</label><input type="number" value="${(line&&line.price)||0}" min="0" oninput="updateMitCalc();mitCalcServiceCost(this)"></div><div class="field"><label style="color:#e67e22">原価(¥)</label><input type="number" value="${costVal}" min="0" placeholder="0" oninput="updateMitCalc()" style="border-color:#f0a500;background:#fffdf5"></div><div class="field"><label>割引</label><input type="number" value="${(line&&line.discount)||0}" min="0" oninput="updateMitCalc()"></div><div class="field"><label>単位</label><input type="text" value="${(line&&line.unit)||(line&&(line.name||'').match(/費|料金/)?'式':'台')}" oninput="updateMitCalc()"></div></div><div class="mit-line-footer"><span class="mit-line-total">¥0</span><button class="btn-icon" onclick="this.closest('.mit-line-item-row').remove();updateMitCalc()">×</button></div>`;
   body.appendChild(row);updateMitCalc();
 }
+
+function mitAutoFillCost(nameInput) {
+  // Auto-fill cost from master when name matches
+  const name = nameInput.value.trim();
+  const row = nameInput.closest('.mit-line-item-row');
+  const costInput = row.querySelectorAll('input[type="number"]')[2]; // 3rd number = cost
+  if (!name || costInput.value > 0) return;
+  const master = getCostMaster();
+  if (master[name] && master[name].length > 0) {
+    costInput.value = master[name][master[name].length-1].cost;
+  }
+}
+
+function mitCalcServiceCost(priceInput) {
+  // For service fees, auto-set cost = price * 30%
+  const row = priceInput.closest('.mit-line-item-row');
+  const nameInput = row.querySelector('input[type="text"]');
+  const costInput = row.querySelectorAll('input[type="number"]')[2];
+  const name = nameInput ? nameInput.value : '';
+  if (name.match(/月額|年額|サービス|支援費|料金/)) {
+    costInput.value = Math.round((parseFloat(priceInput.value)||0) * 0.3);
+  }
+}
 function updateMitCalc(){
-  let sub=0;document.querySelectorAll('.mit-line-item-row').forEach(row=>{const inputs=row.querySelectorAll('input[type="number"]');const qty=parseFloat(inputs[0].value)||0,price=parseFloat(inputs[1].value)||0,discount=parseFloat(inputs[2].value)||0;const amt=Math.max(0,qty*price-discount);sub+=amt;row.querySelector('.mit-line-total').textContent=yen(amt);});
+  let sub=0;document.querySelectorAll('.mit-line-item-row').forEach(row=>{
+    const inputs=row.querySelectorAll('input[type="number"]');
+    // inputs: [0]=qty [1]=price [2]=cost [3]=discount
+    const qty=parseFloat(inputs[0].value)||0,price=parseFloat(inputs[1].value)||0,discount=parseFloat(inputs[3]?inputs[3].value:0)||0;
+    const amt=Math.max(0,qty*price-discount);sub+=amt;row.querySelector('.mit-line-total').textContent=yen(amt);
+  });
   const tax=Math.floor(sub*.1);document.getElementById('mitModalSubtotal').textContent=yen(sub);document.getElementById('mitModalTax').textContent=yen(tax);document.getElementById('mitModalTotal').textContent=yen(sub+tax);
 }
 function saveMitsumori(){
   const name=document.getElementById('mit-name').value.trim();if(!name){alert('宛先を入力してください');return;}
-  const lines=[];document.querySelectorAll('.mit-line-item-row').forEach(row=>{const textInputs=row.querySelectorAll('input[type="text"]');const numInputs=row.querySelectorAll('input[type="number"]');lines.push({name:textInputs[0].value,qty:parseFloat(numInputs[0].value)||0,price:parseFloat(numInputs[1].value)||0,discount:parseFloat(numInputs[2].value)||0,unit:textInputs[1].value||'台'});});
+  const lines=[];document.querySelectorAll('.mit-line-item-row').forEach(row=>{
+    const textInputs=row.querySelectorAll('input[type="text"]');
+    const numInputs=row.querySelectorAll('input[type="number"]');
+    // numInputs: [0]=qty [1]=price [2]=cost [3]=discount
+    lines.push({
+      name:textInputs[0].value,
+      qty:parseFloat(numInputs[0].value)||0,
+      price:parseFloat(numInputs[1].value)||0,
+      cost:parseFloat(numInputs[2]?numInputs[2].value:0)||0,
+      discount:parseFloat(numInputs[3]?numInputs[3].value:0)||0,
+      unit:textInputs[1]?textInputs[1].value||'台':'台'
+    });
+  });
   if(!data.mitsumori)data.mitsumori=[];
   const m={id:editingMitsumoriId||uid(),seq:editingMitsumoriId?(data.mitsumori.find(x=>x.id===editingMitsumoriId)||{}).seq:nextMitSeq(),name,date:document.getElementById('mit-date').value,lines,note:document.getElementById('mit-note').value.trim()};
   if(editingMitsumoriId){const idx=data.mitsumori.findIndex(x=>x.id===editingMitsumoriId);data.mitsumori[idx]=m;}else data.mitsumori.push(m);
+  // Update cost master from saved lines
+  updateCostMasterFromLines(lines);
   saveData();closeModal('mitsumoriModal');renderMitsumori();
 }
 
@@ -966,6 +1032,52 @@ function init(){
   loadInvoices();checkAutoGen();
 }
 init();
+
+/* ══ 原価マスタ ══════════════════════════════════════════════ */
+const COST_MASTER_KEY = 'njf_cost_master_v1';
+// Service fee keywords — cost = price * 30%
+const SERVICE_KEYWORDS = /月額|年額|サービス|支援費|料金|fee/i;
+
+function getCostMaster() {
+  try { return JSON.parse(localStorage.getItem(COST_MASTER_KEY)||'{}'); } catch(_){ return {}; }
+}
+
+function saveCostMaster(master) {
+  localStorage.setItem(COST_MASTER_KEY, JSON.stringify(master));
+}
+
+function updateCostMasterFromLines(lines) {
+  const master = getCostMaster();
+  const today = new Date().toISOString().slice(0,10);
+  lines.forEach(l => {
+    if (!l.name || !l.cost) return;
+    if (!master[l.name]) master[l.name] = [];
+    const last = master[l.name][master[l.name].length-1];
+    // Only add new entry if cost changed
+    if (!last || last.cost !== l.cost) {
+      master[l.name].push({ cost: l.cost, from: today });
+    }
+  });
+  saveCostMaster(master);
+}
+
+function getCostAtDate(itemName, dateStr) {
+  // Get cost for an item on a specific date (using timestamped history)
+  const master = getCostMaster();
+  const history = master[itemName];
+  if (!history || history.length === 0) return null;
+  // Find the most recent entry that is <= dateStr
+  let bestCost = history[0].cost;
+  for (const entry of history) {
+    if (entry.from <= dateStr) bestCost = entry.cost;
+    else break;
+  }
+  return bestCost;
+}
+
+function isServiceItem(name) {
+  return SERVICE_KEYWORDS.test(name||'');
+}
 
 /* ══ ROLL PAPER ══════════════════════════════════════════════ */
 const RP_ORDER_FROM = {
