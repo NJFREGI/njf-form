@@ -1525,17 +1525,17 @@ function acGenerate() {
   if (regiCount > 0) {
     for (let i = 1; i <= regiCount; i++) {
       const num = String(i).padStart(3,"0");
+
       const labelCell = i===1
-        ? `<td class="td-label" rowspan="${regiCount}" style="background:#fef9f5">收银端/レジ</td>`
+        ? `<td class="td-label" rowspan="${regiCount}" style="background:#fef9f5"><span class="zh">收银端</span><span class="jp">レジ</span></td>`
         : "";
       regiRows += `<tr>
         ${labelCell}
         <td class="td-account">RG${num}</td>
         <td class="td-pw">888888</td>
         <td class="td-func">
-          结账 / 精算 / 配膳 / 修改价格<br>
-          添加临时菜品 / 取消订单 / 反结账
-          <div class="func-jp">会計 ｜ 精算 ｜ 配膳 ｜ 価格変更 ｜ 臨時商品追加 ｜ 注文取消 ｜ 会計編集</div>
+          <div class="func-zh">结账 / 精算 / 配膳 / 修改价格<br>添加临时菜品 / 取消订单 / 反结账</div>
+          <div class="func-jp">会計 ｜ 精算 ｜ 配膳 ｜ 価格変更<br>臨時商品追加 ｜ 注文取消 ｜ 会計編集</div>
         </td>
       </tr>`;
     }
@@ -1563,33 +1563,38 @@ function acGenerate() {
   .page{width:210mm;min-height:auto;padding:10mm 12mm;margin:0 auto}
   @media print{body{margin:0}.btn-bar{display:none!important}}
 
-  /* ヘッダー */
-  .hdr{display:flex;align-items:center;border:1px solid #bbb;border-bottom:none}
-  .hdr-logo{width:90px;padding:8px 10px;border-right:1px solid #bbb;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-  .hdr-logo img{width:52px;height:52px;object-fit:contain}
-  .hdr-right{flex:1;text-align:center;padding:8px}
-  .hdr-title{font-size:13px;font-weight:700;color:#333}
-  .hdr-shop{font-size:18px;font-weight:900;color:#111;margin-top:4px}
+  .hdr{display:flex;align-items:stretch;border:1px solid #bbb;border-bottom:none}
+  .hdr-logo{width:88px;padding:8px 10px;border-right:1px solid #bbb;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .hdr-logo img{width:48px;height:48px;object-fit:contain}
+  .hdr-logo span{font-size:9px;font-weight:700;color:#1389d4;letter-spacing:.02em}
+  .hdr-right{flex:1;text-align:center;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .hdr-title{font-size:13px;font-weight:600;color:#333}
+  .hdr-shop{font-size:20px;font-weight:900;color:#111}
 
-  /* コードバー */
   .code-row{border:1px solid #bbb;border-bottom:none;text-align:center;padding:9px;font-size:13px}
   .code-row strong{font-size:15px;font-weight:900;letter-spacing:.06em}
 
-  /* テーブル */
   table{width:100%;border-collapse:collapse;font-size:11.5px}
-  table th{background:#f0f0f0;color:#222;padding:7px 8px;font-weight:700;border:1px solid #bbb;text-align:center;font-size:11px}
+  table th{background:#efefef;color:#222;padding:7px 8px;font-weight:700;border:1px solid #bbb;text-align:center;font-size:11px}
   table td{padding:8px 10px;border:1px solid #bbb;vertical-align:middle}
-  .td-label{text-align:center;vertical-align:middle;font-size:11.5px;background:#fef9f5}
-  .td-account{font-weight:700;text-align:center;font-size:12px}
+
+  /* ラベル列：中日二行 */
+  .td-label{text-align:center;vertical-align:middle;font-size:11px;background:#fef9f5;line-height:1.6}
+  .td-label .zh{font-size:12px;font-weight:700;display:block}
+  .td-label .jp{font-size:10px;color:#666;display:block}
+
+  /* アカウント列 */
+  .td-account{font-weight:700;text-align:center;font-size:12px;line-height:1.8}
+  .td-account .acct-sub{font-size:10px;font-weight:400;color:#555;display:block}
   .td-pw{text-align:center;font-size:12px}
-  .td-func{font-size:11px;line-height:1.75;color:#222}
-  .func-jp{font-size:10px;color:#555;margin-top:3px}
 
-  /* フッター */
-  .footer{background:#eef3fb;border:1px solid #bbb;padding:10px 14px;font-size:10.5px;color:#333;line-height:1.9;text-align:center;margin-top:0}
+  /* 機能列：中文ブロック＋日本語ブロックを明確に分離 */
+  .td-func{font-size:11px;line-height:1.0;padding:8px 10px}
+  .func-zh{color:#111;line-height:1.8;margin-bottom:5px;padding-bottom:5px;border-bottom:1px dashed #ccc}
+  .func-jp{color:#555;font-size:10.5px;line-height:1.8}
+
+  .footer{background:#eef3fb;border:1px solid #bbb;padding:10px 14px;font-size:10.5px;color:#333;line-height:1.9;text-align:center}
   .date-note{text-align:right;font-size:10px;color:#999;margin-top:6px}
-
-  /* ボタン */
   .btn-bar{text-align:center;padding:12px;background:#f8f8f8;border-top:1px solid #ddd;display:flex;gap:10px;justify-content:center}
   .btn-bar button{padding:10px 24px;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-family:sans-serif;font-weight:700}
 </style>
@@ -1597,11 +1602,10 @@ function acGenerate() {
 <body>
 <div class="page" id="cardPage">
 
-  <!-- ヘッダー -->
   <div class="hdr">
     <div class="hdr-logo">
       <img src="https://form.njfregi.jp/logo.jpg" alt="NJF" onerror="this.style.display='none'"/>
-      <span style="font-size:9px;font-weight:700;color:#1389d4;letter-spacing:.02em">NJF REGI</span>
+      <span>NJF REGI</span>
     </div>
     <div class="hdr-right">
       <div class="hdr-title">店铺账号卡片/店舗アカウントカード</div>
@@ -1609,16 +1613,14 @@ function acGenerate() {
     </div>
   </div>
 
-  <!-- コード -->
   <div class="code-row">统一店铺码/共通店舗コード：<strong>${code}</strong></div>
 
-  <!-- メインテーブル -->
   <table>
     <thead>
       <tr>
         <th style="width:16%">使用端/端末</th>
-        <th style="width:22%">账号/アカウント</th>
-        <th style="width:14%">密码/パスワード</th>
+        <th style="width:23%">账号/アカウント</th>
+        <th style="width:13%">密码/パスワード</th>
         <th>主要功能/主な機能</th>
       </tr>
     </thead>
@@ -1626,43 +1628,49 @@ function acGenerate() {
 
       ${regiRows}
 
-      <!-- 後台管理端 -->
       <tr>
-        <td class="td-label" rowspan="2">后台管理端/管理画面</td>
-        <td class="td-account">${mgmt1}(単一店舗)</td>
+        <td class="td-label" rowspan="2" style="background:#f0f6ff">
+          <span class="zh">后台管理端</span>
+          <span class="jp">管理画面</span>
+        </td>
+        <td class="td-account">
+          ${mgmt1}
+          <span class="acct-sub">(単一店舗)</span>
+        </td>
         <td class="td-pw">888888</td>
         <td class="td-func">
-          各种基础设置 / 菜品设置<br>
-          营业状况实时查询 / 敏感操作 / 各类数据查询
+          <div class="func-zh">各种基础设置 / 菜品设置<br>营业状况实时查询 / 敏感操作 / 各类数据查询</div>
           <div class="func-jp">基本設定 ｜ メニュー設定 ｜ 営業状況照会 ｜ 重要操作 ｜ データ照会</div>
         </td>
       </tr>
       <tr>
-        <td class="td-account">${mgmt2}(複数店舗)</td>
+        <td class="td-account">
+          ${mgmt2}
+          <span class="acct-sub">(複数店舗)</span>
+        </td>
         <td class="td-pw">888888</td>
         <td class="td-func">
-          基本設定 / メニュー設定<br>
-          营业状况实时查询 / 各类数据查询
+          <div class="func-zh">基本設定 / メニュー設定<br>营业状况实时查询 / 各类数据查询</div>
           <div class="func-jp">営業状況照会 ｜ 重要操作 ｜ データ照会</div>
         </td>
       </tr>
 
-      <!-- 服務員端 -->
       ${hwCount > 0 ? `<tr>
-        <td class="td-label">服务员点餐/ハンディ</td>
-        <td class="td-account" style="line-height:2">${hwAccounts.join('<br>')}</td>
+        <td class="td-label" style="background:#f5fff5">
+          <span class="zh">服务员点餐</span>
+          <span class="jp">ハンディ</span>
+        </td>
+        <td class="td-account" style="line-height:2.1">${hwAccounts.join('<br>')}</td>
         <td class="td-pw">888888</td>
         <td class="td-func">
-          点单 / 转台 / 并台 / 拼台<br>
-          删菜 / 转菜 / 传菜 / 删单
-          <div class="func-jp">注文 ｜ 席移動 ｜ 席結合 ｜ 席分割 ｜ 商品キャンセル ｜ 商品移動 ｜ 配膳</div>
+          <div class="func-zh">点单 / 转台 / 并台 / 拼台<br>删菜 / 转菜 / 传菜 / 删单</div>
+          <div class="func-jp">注文 ｜ 席移動 ｜ 席結合 ｜ 席分割<br>商品キャンセル ｜ 商品移動 ｜ 配膳 ｜ 削単</div>
         </td>
       </tr>` : ""}
 
     </tbody>
   </table>
 
-  <!-- フッター -->
   <div class="footer">
     收银端 管理端 服务员端支持ios系统使用<br>
     请在应用商店搜索并下载 "NJFレジ（仅限ipad使用）" "NJF管理" "NJF注文"<br>
