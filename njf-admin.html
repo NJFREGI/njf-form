@@ -1525,12 +1525,17 @@ function acGenerate() {
   if (regiCount > 0) {
     for (let i = 1; i <= regiCount; i++) {
       const num = String(i).padStart(3,"0");
+      const labelCell = i===1
+        ? `<td class="td-label" rowspan="${regiCount}" style="background:#fef9f5">收银端/レジ</td>`
+        : "";
       regiRows += `<tr>
-        ${i===1 ? `<td rowspan="${regiCount}" style="text-align:center;vertical-align:middle;font-weight:700;border:1px solid #ccc;padding:8px;background:#fff8f0">収銀端<br><small style="font-weight:400;font-size:10px">レジ</small></td>` : ""}
-        <td style="border:1px solid #ccc;padding:8px;text-align:center;font-weight:700">RG${num}</td>
-        <td style="border:1px solid #ccc;padding:8px;text-align:center">888888</td>
-        <td style="border:1px solid #ccc;padding:8px;font-size:11px;line-height:1.6">
-          結账 / 精算 / 配膳 / 価格変更<br>臨時商品追加 / 注文取消
+        ${labelCell}
+        <td class="td-account">RG${num}</td>
+        <td class="td-pw">888888</td>
+        <td class="td-func">
+          结账 / 精算 / 配膳 / 修改价格<br>
+          添加临时菜品 / 取消订单 / 反结账
+          <div class="func-jp">会計 ｜ 精算 ｜ 配膳 ｜ 価格変更 ｜ 臨時商品追加 ｜ 注文取消 ｜ 会計編集</div>
         </td>
       </tr>`;
     }
@@ -1547,84 +1552,127 @@ function acGenerate() {
   const dateLabel = jst.getFullYear() + "年" + (jst.getMonth()+1) + "月" + jst.getDate() + "日";
 
   const html = `<!DOCTYPE html>
-<html lang="ja">
+<html lang="zh">
 <head>
 <meta charset="UTF-8"/>
 <title>${shop}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Noto Sans JP',sans-serif; background:#fff; color:#111; }
-  .page { width:210mm; min-height:148mm; padding:12mm 14mm; margin:0 auto; }
-  @media print { body{margin:0} .page{padding:10mm 12mm} .btn-bar{display:none!important} }
-  .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  .logo-text { font-size:18px; font-weight:900; color:#1389d4; letter-spacing:.05em; }
-  .logo-sub  { font-size:10px; color:#666; }
-  .doc-title .main { font-size:13px; font-weight:700; color:#333; }
-  .doc-title .sub  { font-size:10px; color:#888; text-align:right; }
-  .store-name { text-align:center; font-size:22px; font-weight:900; margin:6px 0 10px; color:#111; letter-spacing:.05em; }
-  .code-bar { background:#f4f4f1; border:1px solid #ddd; border-radius:6px; text-align:center; padding:7px 0; margin-bottom:12px; font-size:13px; }
-  .code-bar strong { font-size:18px; font-weight:900; color:#111; letter-spacing:.1em; }
-  table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:10px; }
-  table th { background:#1a1a2e; color:#fff; padding:7px 10px; font-weight:500; border:1px solid #999; text-align:center; font-size:11px; }
-  table td { padding:7px 10px; border:1px solid #ccc; vertical-align:middle; }
-  .footer { background:#eef5ff; border:1px solid #c3d9f7; border-radius:6px; padding:10px 14px; font-size:10px; color:#444; line-height:1.8; text-align:center; }
-  .date-note { text-align:right; font-size:10px; color:#999; margin-top:6px; }
-  .btn-bar { text-align:center; padding:12px; background:#f8f8f8; border-top:1px solid #ddd; display:flex; gap:10px; justify-content:center; }
-  .btn-bar button { padding:10px 24px; border:none; border-radius:6px; font-size:14px; cursor:pointer; font-family:sans-serif; font-weight:700; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP',sans-serif;background:#fff;color:#111}
+  .page{width:210mm;min-height:auto;padding:10mm 12mm;margin:0 auto}
+  @media print{body{margin:0}.btn-bar{display:none!important}}
+
+  /* ヘッダー */
+  .hdr{display:flex;align-items:center;border:1px solid #bbb;border-bottom:none}
+  .hdr-logo{width:90px;padding:8px 10px;border-right:1px solid #bbb;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .hdr-logo img{width:52px;height:52px;object-fit:contain}
+  .hdr-right{flex:1;text-align:center;padding:8px}
+  .hdr-title{font-size:13px;font-weight:700;color:#333}
+  .hdr-shop{font-size:18px;font-weight:900;color:#111;margin-top:4px}
+
+  /* コードバー */
+  .code-row{border:1px solid #bbb;border-bottom:none;text-align:center;padding:9px;font-size:13px}
+  .code-row strong{font-size:15px;font-weight:900;letter-spacing:.06em}
+
+  /* テーブル */
+  table{width:100%;border-collapse:collapse;font-size:11.5px}
+  table th{background:#f0f0f0;color:#222;padding:7px 8px;font-weight:700;border:1px solid #bbb;text-align:center;font-size:11px}
+  table td{padding:8px 10px;border:1px solid #bbb;vertical-align:middle}
+  .td-label{text-align:center;vertical-align:middle;font-size:11.5px;background:#fef9f5}
+  .td-account{font-weight:700;text-align:center;font-size:12px}
+  .td-pw{text-align:center;font-size:12px}
+  .td-func{font-size:11px;line-height:1.75;color:#222}
+  .func-jp{font-size:10px;color:#555;margin-top:3px}
+
+  /* フッター */
+  .footer{background:#eef3fb;border:1px solid #bbb;padding:10px 14px;font-size:10.5px;color:#333;line-height:1.9;text-align:center;margin-top:0}
+  .date-note{text-align:right;font-size:10px;color:#999;margin-top:6px}
+
+  /* ボタン */
+  .btn-bar{text-align:center;padding:12px;background:#f8f8f8;border-top:1px solid #ddd;display:flex;gap:10px;justify-content:center}
+  .btn-bar button{padding:10px 24px;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-family:sans-serif;font-weight:700}
 </style>
 </head>
 <body>
 <div class="page" id="cardPage">
-  <div class="header">
-    <div class="logo-area">
-      <div class="logo-text">NJF REGI</div>
-      <div class="logo-sub">新日本富士アシスト株式会社</div>
+
+  <!-- ヘッダー -->
+  <div class="hdr">
+    <div class="hdr-logo">
+      <img src="https://form.njfregi.jp/logo.jpg" alt="NJF" onerror="this.style.display='none'"/>
+      <span style="font-size:9px;font-weight:700;color:#1389d4;letter-spacing:.02em">NJF REGI</span>
     </div>
-    <div class="doc-title">
-      <div class="main">店舗アカウントカード</div>
-      <div class="sub">店铺账号卡片 / 店舗アカウントカード</div>
+    <div class="hdr-right">
+      <div class="hdr-title">店铺账号卡片/店舗アカウントカード</div>
+      <div class="hdr-shop">${shop}</div>
     </div>
   </div>
-  <div class="store-name">${shop}</div>
-  <div class="code-bar">統一店舗コード / 共通店舗コード：<strong>${code}</strong></div>
+
+  <!-- コード -->
+  <div class="code-row">统一店铺码/共通店舗コード：<strong>${code}</strong></div>
+
+  <!-- メインテーブル -->
   <table>
     <thead>
       <tr>
-        <th style="width:90px">使用端<br><small>端末</small></th>
-        <th style="width:130px">账号<br><small>アカウント</small></th>
-        <th style="width:80px">密码<br><small>パスワード</small></th>
-        <th>主要功能<br><small>主な機能</small></th>
+        <th style="width:16%">使用端/端末</th>
+        <th style="width:22%">账号/アカウント</th>
+        <th style="width:14%">密码/パスワード</th>
+        <th>主要功能/主な機能</th>
       </tr>
     </thead>
     <tbody>
+
       ${regiRows}
+
+      <!-- 後台管理端 -->
       <tr>
-        <td rowspan="2" style="text-align:center;vertical-align:middle;font-weight:700;background:#f0f8ff">後台管理端<br><small style="font-weight:400;font-size:10px">管理画面</small></td>
-        <td style="font-weight:700;text-align:center">${mgmt1}<br><small style="color:#888;font-weight:400">単一店舗</small></td>
-        <td style="text-align:center">888888</td>
-        <td style="font-size:11px;line-height:1.6">各种基础设置 / 菜品设置<br>営業状況実時照会 / 各類データ照会</td>
+        <td class="td-label" rowspan="2">后台管理端/管理画面</td>
+        <td class="td-account">${mgmt1}(単一店舗)</td>
+        <td class="td-pw">888888</td>
+        <td class="td-func">
+          各种基础设置 / 菜品设置<br>
+          营业状况实时查询 / 敏感操作 / 各类数据查询
+          <div class="func-jp">基本設定 ｜ メニュー設定 ｜ 営業状況照会 ｜ 重要操作 ｜ データ照会</div>
+        </td>
       </tr>
       <tr>
-        <td style="font-weight:700;text-align:center">${mgmt2}<br><small style="color:#888;font-weight:400">複数店舗</small></td>
-        <td style="text-align:center">888888</td>
-        <td style="font-size:11px;line-height:1.6">基本設定 / メニュー設定<br>重要操作 / データ照会</td>
+        <td class="td-account">${mgmt2}(複数店舗)</td>
+        <td class="td-pw">888888</td>
+        <td class="td-func">
+          基本設定 / メニュー設定<br>
+          营业状况实时查询 / 各类数据查询
+          <div class="func-jp">営業状況照会 ｜ 重要操作 ｜ データ照会</div>
+        </td>
       </tr>
+
+      <!-- 服務員端 -->
       ${hwCount > 0 ? `<tr>
-        <td style="text-align:center;vertical-align:middle;font-weight:700;background:#f5fff5">服務員端<br><small style="font-weight:400;font-size:10px">ハンディ</small></td>
-        <td style="font-weight:700;text-align:center;line-height:1.8">${hwAccounts.join("<br>")}</td>
-        <td style="text-align:center">888888</td>
-        <td style="font-size:11px;line-height:1.6">点单 / 转台 / 并台 / 拼台<br>注文 / 席移動 / 席結合 / 席分割<br>商品キャンセル / 商品移動 / 配膳</td>
+        <td class="td-label">服务员点餐/ハンディ</td>
+        <td class="td-account" style="line-height:2">${hwAccounts.join('<br>')}</td>
+        <td class="td-pw">888888</td>
+        <td class="td-func">
+          点单 / 转台 / 并台 / 拼台<br>
+          删菜 / 转菜 / 传菜 / 删单
+          <div class="func-jp">注文 ｜ 席移動 ｜ 席結合 ｜ 席分割 ｜ 商品キャンセル ｜ 商品移動 ｜ 配膳</div>
+        </td>
       </tr>` : ""}
+
     </tbody>
   </table>
+
+  <!-- フッター -->
   <div class="footer">
-    収銀端・管理端・服務員端支持iOS系统使用 / 収銀端・管理端・ハンディ端末はiOSシステムに対応しています<br>
-    请在应用商店搜索并下载 「NJFレジ（仅限iPad使用）」「NJF管理」「NJF注文」<br>
+    收银端 管理端 服务员端支持ios系统使用<br>
+    请在应用商店搜索并下载 "NJFレジ（仅限ipad使用）" "NJF管理" "NJF注文"<br>
+    レジAPP・管理APP・ハンディAPPは iOS システムに対応しています。<br>
     App Storeにて次のアプリを検索してダウンロードしてください：「NJFレジ」（iPad専用）「NJF管理」「NJF注文」
   </div>
+
   <div class="date-note">発行日：${dateLabel}</div>
 </div>
+
 <div class="btn-bar">
   <button onclick="window.print()" style="background:#1389d4;color:white;">🖨 印刷</button>
   <button onclick="saveImg()" style="background:#27ae60;color:white;">📥 画像保存</button>
@@ -1632,6 +1680,8 @@ function acGenerate() {
 <canvas id="cv" style="display:none"></canvas>
 </body>
 </html>`;
+
+  // Use blob URL to avoid popup blocker and script injection issues
 
   // Use blob URL to avoid popup blocker and script injection issues
   const blob = new Blob([html], {type: "text/html;charset=utf-8"});
