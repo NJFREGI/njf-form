@@ -379,51 +379,54 @@ main{padding:24px;max-width:1100px;margin:0 auto}
 
     <div style="margin-bottom:14px">
       <div style="font-size:14px;font-weight:700;margin-bottom:8px">ロール紙情報</div>
-      <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px">
-        <select id="rp-spec1" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit">
-          <option value="">規格を選択してください</option>
-          <option value="2443-88（80mm×80Φ×12mm / 75μ / 20巻）">2443-88（80mm×80Φ×12mm / 75μ / 20巻）</option>
-          <option value="75-88（80mm×80Φ×12mm / 75μ / 48巻）">75-88（80mm×80Φ×12mm / 75μ / 48巻）</option>
-        </select>
-        <input id="rp-qty1" type="number" min="0" placeholder="数量" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+      <!-- 固定規格：75-88（48巻）のみ、数量だけ入力 -->
+      <div style="background:#f8f8f8;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:4px">📦 75-88（80mm×80Φ×12mm / 75μ / 48巻）</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+          <label style="font-size:13px;color:#374151;font-weight:600;white-space:nowrap">数量（箱）</label>
+          <input id="rp-qty1" type="number" min="0" placeholder="0" oninput="rpUpdate()"
+            style="flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;text-align:center;max-width:120px">
+        </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px">
-        <select id="rp-spec2" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit">
-          <option value="">規格を選択してください</option>
-          <option value="2443-88（80mm×80Φ×12mm / 75μ / 20巻）">2443-88（80mm×80Φ×12mm / 75μ / 20巻）</option>
-          <option value="75-88（80mm×80Φ×12mm / 75μ / 48巻）">75-88（80mm×80Φ×12mm / 75μ / 48巻）</option>
-        </select>
-        <input id="rp-qty2" type="number" min="0" placeholder="数量" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
-      </div>
-      <div style="font-size:12px;color:#6b7280">不要な項目は空欄のままでOKです。数量0または未入力の項目はメールに表示されません。</div>
+      <div style="font-size:12px;color:#6b7280">数量0または未入力の場合はメールに表示されません。</div>
     </div>
 
     <div style="margin-bottom:14px">
       <div style="font-size:14px;font-weight:700;margin-bottom:8px">お届け先</div>
       <div style="margin-bottom:8px">
         <label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">お届け先御会社名</label>
-        <input id="rp-toName" type="text" placeholder="例：〇〇株式会社" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+        <input id="rp-toName" type="text" placeholder="例：〇〇株式会社"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px"
+          oninput="rpUpdate()">
       </div>
       <div style="margin-bottom:8px">
         <label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">ご住所</label>
-        <textarea id="rp-address" placeholder="例：東京都〇〇区〇〇 1-2-3" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;min-height:80px;resize:vertical;font-family:inherit"></textarea>
+        <textarea id="rp-address" placeholder="例：東京都〇〇区〇〇 1-2-3"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;min-height:72px;resize:vertical;font-family:inherit"
+          oninput="rpUpdate()"></textarea>
       </div>
       <div>
         <label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">TEL</label>
-        <input id="rp-tel" type="text" placeholder="例：03-1234-5678" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+        <input id="rp-tel" type="text" placeholder="例：03-1234-5678"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px"
+          oninput="rpUpdate()">
       </div>
     </div>
 
     <div style="margin-bottom:18px">
       <label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">備考（任意）</label>
-      <textarea id="rp-note" placeholder="例：平日午前中着希望" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;min-height:80px;resize:vertical;font-family:inherit"></textarea>
+      <textarea id="rp-note" placeholder="例：平日午前中着希望"
+        style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;min-height:72px;resize:vertical;font-family:inherit"
+        oninput="rpUpdate()"></textarea>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
-      <a id="rp-mailBtn" href="javascript:void(0)" style="display:block;width:100%;padding:14px;background:#111827;color:white;border-radius:10px;text-align:center;font-size:15px;font-weight:800;text-decoration:none">
+      <a id="rp-mailBtn" href="javascript:void(0)"
+        style="display:block;width:100%;padding:14px;background:#111827;color:white;border-radius:10px;text-align:center;font-size:15px;font-weight:800;text-decoration:none">
         ✉️ 転送メール作成
       </a>
-      <button onclick="window.print()" style="width:100%;padding:14px;background:#e5e7eb;color:#111827;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">
+      <button onclick="window.print()"
+        style="width:100%;padding:14px;background:#e5e7eb;color:#111827;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">
         🖨 印刷
       </button>
     </div>
@@ -783,18 +786,40 @@ async function renderToPDF(pagesHTML){
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const pdfW=doc.internal.pageSize.getWidth(),pdfH=doc.internal.pageSize.getHeight();
-  const parser=new DOMParser();
-  const parsed=parser.parseFromString('<div>'+pagesHTML+'</div>','text/html');
-  const pages=[...parsed.querySelectorAll('.inv-page')];
+
+  // Use a container attached to document.body so base64 images render correctly
   const container=document.createElement('div');
-  container.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;background:white;overflow:hidden;z-index:-1';
+  container.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:white;z-index:-1;visibility:hidden';
+  container.innerHTML=pagesHTML;
   document.body.appendChild(container);
+
+  // Wait for fonts and images to load
+  await new Promise(r=>setTimeout(r,500));
+
+  const pages=container.querySelectorAll('.inv-page');
   for(let i=0;i<pages.length;i++){
-    container.innerHTML='';
-    const pageEl=pages[i].cloneNode(true);
-    container.appendChild(pageEl);
-    await new Promise(r=>setTimeout(r,350));
-    const canvas=await html2canvas(pageEl,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',width:794,height:1123,windowWidth:794,windowHeight:1123,x:0,y:0,scrollX:0,scrollY:0,logging:false});
+    const pageEl=pages[i];
+    pageEl.style.position='relative';
+    const canvas=await html2canvas(pageEl,{
+      scale:2,
+      useCORS:true,
+      allowTaint:true,
+      backgroundColor:'#ffffff',
+      width:794,
+      height:1123,
+      windowWidth:794,
+      windowHeight:1123,
+      logging:false,
+      imageTimeout:0,
+      onclone:function(clonedDoc){
+        // Ensure all images in cloned doc have proper src
+        clonedDoc.querySelectorAll('img').forEach(function(img){
+          if(img.src && img.src.startsWith('data:')) {
+            img.style.display='block';
+          }
+        });
+      }
+    });
     const imgData=canvas.toDataURL('image/jpeg',0.92);
     if(i>0)doc.addPage();
     doc.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
@@ -1096,11 +1121,9 @@ function rpGetVal(id) {
 }
 
 function rpBuildItems() {
-  const spec1 = rpGetVal("rp-spec1"), qty1 = Number(rpGetVal("rp-qty1")||0);
-  const spec2 = rpGetVal("rp-spec2"), qty2 = Number(rpGetVal("rp-qty2")||0);
+  const qty1 = Number(rpGetVal("rp-qty1")||0);
   const items = [];
-  if (spec1 && qty1 > 0) items.push(spec1 + "　" + qty1 + "箱");
-  if (spec2 && qty2 > 0) items.push(spec2 + "　" + qty2 + "箱");
+  if (qty1 > 0) items.push("75-88（80mm×80Φ×12mm / 75μ / 48巻）　" + qty1 + "箱");
   return items;
 }
 
@@ -1135,7 +1158,7 @@ function rpUpdate() {
 function rpInit() {
   const el = document.getElementById("rp-orderDate");
   if (el) el.value = rpTodayText();
-  ["rp-spec1","rp-qty1","rp-spec2","rp-qty2","rp-toName","rp-address","rp-tel","rp-note"].forEach(id => {
+  ["rp-qty1","rp-toName","rp-address","rp-tel","rp-note"].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener("input", rpUpdate); el.addEventListener("change", rpUpdate); }
   });
