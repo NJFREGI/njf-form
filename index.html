@@ -783,58 +783,220 @@ function buildInvHTML(inv){
 function showLoading(msg){const el=document.getElementById('pdfLoadingMsg');if(el)el.textContent=msg||'PDF生成中...';const ov=document.getElementById('pdfLoading');if(ov)ov.classList.add('show');}
 function hideLoading(){const ov=document.getElementById('pdfLoading');if(ov)ov.classList.remove('show');}
 
-async function renderToPDF(pagesHTML){
+async function renderToPDF(invDataList){
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const pdfW=doc.internal.pageSize.getWidth(),pdfH=doc.internal.pageSize.getHeight();
 
-  // Render each page via html2canvas with a fresh isolated container
-  const wrapper=document.createElement('div');
-  wrapper.style.cssText='position:absolute;left:-9999px;top:0;width:794px;z-index:9999;background:white;';
-  document.body.appendChild(wrapper);
-
-  // Parse pages from HTML string
-  const tmp=document.createElement('div');
-  tmp.innerHTML=pagesHTML;
-  const pageEls=[...tmp.querySelectorAll('.inv-page')];
-
-  for(let i=0;i<pageEls.length;i++){
-    wrapper.innerHTML='';
-    const pg=pageEls[i].cloneNode(true);
-    // Restore background-image stamps inline
-    pg.querySelectorAll('[style*="background-image"]').forEach(el=>{
-      el.style.display='block';
-    });
-    wrapper.appendChild(pg);
-
-    // Allow browser to render
-    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-    await new Promise(r=>setTimeout(r,600));
-
-    const canvas=await html2canvas(wrapper,{
-      scale:2,
-      useCORS:true,
-      allowTaint:true,
-      backgroundColor:'#ffffff',
-      width:794,
-      height:1123,
-      windowWidth:794,
-      scrollX:0,
-      scrollY:0,
-      logging:false
-    });
-    if(i>0)doc.addPage();
-    doc.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,pdfW,pdfH);
+  for(let pi=0;pi<invDataList.length;pi++){
+    if(pi>0) doc.addPage();
+    const inv=invDataList[pi];
+    drawInvPage(doc, inv);
   }
-  document.body.removeChild(wrapper);
   return doc;
 }
+
+function drawInvPage(doc, inv){
+  const c=calcInv(inv);
+  const sub=c.sub, tax=c.tax, total=c.total;
+  const today=new Date().toISOString().slice(0,10);
+  const W=210, H=297;
+  const L=14, R=196; // left/right margins
+
+  // ── Title ──────────────────────────────────────────────────
+  doc.setFontSize(18);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(17,17,17);
+  doc.text('請 求 書', W/2, 22, {align:'center'});
+  doc.setDrawColor(17,17,17);
+  doc.setLineWidth(0.6);
+  doc.line(L, 24, R, 24);
+
+  // ── Left: recipient ───────────────────────────────────────
+  doc.setFontSize(13);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(17,17,17);
+  // Wrap long shop name
+  const shopLines=doc.splitTextToSize(inv.name+' 御中', 88);
+  doc.text(shopLines, L, 33);
+  const afterShop=33+shopLines.length*6;
+  doc.setLineWidth(0.4);
+  doc.line(L, afterShop+1, L+88, afterShop+1);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(68,68,68);
+  doc.text('下記の通りご請求申し上げます。', L, afterShop+7);
+
+  // Amount box
+  const boxY=afterShop+10;
+  doc.setDrawColor(17,17,17);
+  doc.setLineWidth(0.7);
+  doc.rect(L, boxY, 72, 16);
+  doc.setFontSize(9);
+  doc.setTextColor(85,85,85);
+  doc.text('ご請求金額（税込）', L+3, boxY+5);
+  doc.setFontSize(18);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(17,17,17);
+  doc.text('¥'+total.toLocaleString()+'-', L+3, boxY+13);
+
+  // ── Right: issuer ─────────────────────────────────────────
+  const rx=108;
+  doc.setFontSize(11);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(17,17,17);
+  doc.text('新日本富士アシスト株式会社', rx, 31);
+  doc.setLineWidth(0.3);
+  doc.line(rx, 32.5, R, 32.5);
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(68,68,68);
+  doc.text('〒110-0016　東京都台東区台東4-31-7-203', rx, 37);
+  doc.text('TEL 03-6806-0988　FAX 03-6806-0128', rx, 42);
+  doc.text('登録番号：T3010801026751', rx, 47);
+
+  // Stamp image
+  try{
+    doc.addImage(STAMP_SRC,'JPEG', R-22, 28, 22, 22);
+  }catch(e){}
+
+  // Dates
+  doc.setFontSize(9);
+  doc.setLineWidth(0.2);
+  doc.line(rx, 53, R, 53);
+  doc.setTextColor(51,51,51);
+  doc.text('発行日：'+fmtDate(today), rx, 58);
+  doc.text('支払期日：'+fmtDate(inv.due), rx, 63);
+  const periodText='対象期間：'+fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd);
+  doc.text(periodText, rx, 68);
+
+  // ── Table ─────────────────────────────────────────────────
+  const tableStartY=78;
+  const colW=[82,16,38,38]; // name,qty,unit,amount
+  const cols=['品目・内容','数量','単価（税抜）','金額（税抜）'];
+  const rowH=8;
+
+  // Header
+  doc.setFillColor(44,44,62);
+  doc.rect(L, tableStartY, R-L, rowH, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','bold');
+  let cx=L;
+  [cols[0],cols[1],cols[2],cols[3]].forEach((col,i)=>{
+    const align=i===0?'left':'right';
+    const tx=i===0?cx+2:cx+colW[i]-2;
+    doc.text(col, tx, tableStartY+5.5, {align});
+    cx+=colW[i];
+  });
+
+  // Rows
+  const lines=inv.lines||[];
+  const totalRows=Math.max(lines.length,8);
+  doc.setTextColor(17,17,17);
+  doc.setFont('helvetica','normal');
+  for(let i=0;i<totalRows;i++){
+    const y=tableStartY+rowH*(i+1);
+    const l=lines[i];
+    // Alternating bg
+    if(i%2===1){doc.setFillColor(248,248,248);doc.rect(L,y,R-L,rowH,'F');}
+    doc.setDrawColor(200,200,200);
+    doc.setLineWidth(0.2);
+    doc.line(L,y,R,y);
+    if(l){
+      doc.setFontSize(8.5);
+      const nameLines=doc.splitTextToSize(l.name,colW[0]-4);
+      doc.text(nameLines[0], L+2, y+5.5);
+      doc.text(String(l.qty), L+colW[0]+colW[1]-2, y+5.5, {align:'right'});
+      doc.text(l.price.toLocaleString(), L+colW[0]+colW[1]+colW[2]-2, y+5.5, {align:'right'});
+      doc.text((l.qty*l.price).toLocaleString(), R-2, y+5.5, {align:'right'});
+    }
+    // Column dividers
+    cx=L;
+    colW.forEach((w,i)=>{
+      cx+=w;
+      if(i<colW.length-1){doc.setDrawColor(180,180,180);doc.line(cx,tableStartY,cx,y+rowH);}
+    });
+  }
+  const tableEndY=tableStartY+rowH*(totalRows+1);
+  // Outer border
+  doc.setDrawColor(150,150,150);
+  doc.setLineWidth(0.4);
+  doc.rect(L, tableStartY, R-L, rowH*(totalRows+1));
+
+  // ── Subtotals ─────────────────────────────────────────────
+  const stY=tableEndY+1;
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(51,51,51);
+  doc.setDrawColor(200,200,200);
+  doc.setLineWidth(0.2);
+  [[`小計`,sub],[`消費税（10%）`,tax]].forEach(([label,val],i)=>{
+    const y=stY+7*(i+1);
+    doc.text(label, R-45, y);
+    doc.text('¥'+val.toLocaleString(), R-2, y, {align:'right'});
+    doc.line(L, y+2, R, y+2);
+  });
+  // Grand total bar
+  const gtY=stY+7*3;
+  doc.setFillColor(44,44,62);
+  doc.rect(L, gtY-6, R-L, 10, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(11);
+  doc.setFont('helvetica','bold');
+  doc.text('合計（税込）', L+4, gtY+0.5);
+  doc.text('¥'+total.toLocaleString(), R-2, gtY+0.5, {align:'right'});
+
+  // ── Bank ──────────────────────────────────────────────────
+  const bankY=gtY+14;
+  doc.setDrawColor(180,180,180);
+  doc.setLineWidth(0.3);
+  doc.rect(L, bankY, R-L, 16);
+  doc.setFillColor(240,240,240);
+  doc.rect(L, bankY, R-L, 5, 'F');
+  doc.setTextColor(17,17,17);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica','bold');
+  doc.text('【お振込先】', L+2, bankY+3.5);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8.5);
+  doc.text('三井住友銀行　上野支店　普通　8690693　シンニホンフジアシスト（カ', L+2, bankY+9);
+  doc.setTextColor(100,100,100);
+  doc.setFontSize(7.5);
+  doc.text('＊振込手数料はご負担にてお願い申し上げます。', L+2, bankY+14);
+
+  // ── Note ──────────────────────────────────────────────────
+  const noteY=bankY+19;
+  doc.setDrawColor(180,180,180);
+  doc.setLineWidth(0.3);
+  doc.rect(L, noteY, R-L, 22);
+  doc.setFillColor(238,238,238);
+  doc.rect(L, noteY, R-L, 5, 'F');
+  doc.setTextColor(17,17,17);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica','bold');
+  doc.text('備考', L+2, noteY+3.5);
+  if(inv.note){
+    doc.setFont('helvetica','normal');
+    const noteLines=doc.splitTextToSize(inv.note, R-L-4);
+    doc.text(noteLines, L+2, noteY+10);
+  }
+
+  // Footer
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(120,120,120);
+  doc.text('NJF REGI サービス利用契約', L, H-8);
+  doc.text('新日本富士アシスト株式会社　info@njfregi.jp', W/2, H-8, {align:'center'});
+}
+
 
 async function downloadOnePDF(id){
   const inv=data.invoices.find(i=>i.id===id);if(!inv)return;
   const[y,m]=inv.month.split('-');const monthLabel=y+'年'+parseInt(m)+'月';
   showLoading(inv.name+' を生成中...');
-  try{const doc=await renderToPDF(buildInvHTML(inv));doc.save('請求書_'+inv.name+'_'+monthLabel+'.pdf');}
+  try{const doc=await renderToPDF([inv]);doc.save('請求書_'+inv.name+'_'+monthLabel+'.pdf');}
   catch(e){alert('PDF生成エラー: '+e.message);}
   finally{hideLoading();}
 }
@@ -848,7 +1010,7 @@ async function executeBatchDownload(){
   const invs=data.invoices.filter(i=>ids.includes(i.id));
   closeModal('batchModal');
   showLoading('PDF生成中...');
-  try{const allHTML=invs.map(inv=>buildInvHTML(inv)).join('');const doc=await renderToPDF(allHTML);doc.save('請求書_'+monthLabel+'_'+checked.length+'件.pdf');}
+  try{const doc=await renderToPDF(invs);doc.save('請求書_'+monthLabel+'_'+checked.length+'件.pdf');}
   catch(e){alert('PDF生成エラー: '+e.message);}
   finally{hideLoading();}
 }
