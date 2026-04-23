@@ -901,8 +901,19 @@ async function renderToPDF(invList){
       t.style.tableLayout='fixed';
     });
 
-    // レンダリング待ち
-    await new Promise(r=>setTimeout(r,600));
+    // 画像の読み込みを待つ
+    await new Promise(r=>setTimeout(r,300));
+    // すべての img タグが完全に読み込まれるまで待つ
+    const imgs = [...container.querySelectorAll('img')];
+    await Promise.all(imgs.map(img => {
+      if(img.complete) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = resolve;
+        img.onerror = resolve;
+        setTimeout(resolve, 3000); // 3秒タイムアウト
+      });
+    }));
+    await new Promise(r=>setTimeout(r,300));
 
     const canvas=await html2canvas(container,{
       scale:2,
