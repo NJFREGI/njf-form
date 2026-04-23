@@ -789,21 +789,29 @@ async function renderToPDF(invList){
   const pdfW=doc.internal.pageSize.getWidth();
   const pdfH=doc.internal.pageSize.getHeight();
 
-  // コンテナを body に追加（left:0 で確実にレンダリング）
+  // スタイル付き非表示コンテナ（clip で画面外、opacityなし）
   const container=document.createElement('div');
-  container.style.cssText='position:fixed;left:0;top:0;width:794px;height:1123px;background:white;z-index:99999;overflow:hidden;opacity:0.01;pointer-events:none;';
+  container.style.position='fixed';
+  container.style.left='0px';
+  container.style.top='0px';
+  container.style.width='794px';
+  container.style.height='1123px';
+  container.style.overflow='hidden';
+  container.style.zIndex='999999';
+  container.style.background='white';
+  // clip で視覚的に隠す（opacityではない）
+  container.style.clip='rect(0,0,0,0)';
   document.body.appendChild(container);
 
   for(let pi=0;pi<invList.length;pi++){
     if(pi>0) doc.addPage();
 
-    // HTMLを生成してコンテナに挿入
+    container.style.clip='auto'; // キャプチャ前に clip を解除
     container.innerHTML = buildInvHTML(invList[pi]);
     const pg = container.querySelector('.inv-page');
     if(!pg) continue;
 
-    // レンダリング待ち
-    await new Promise(r=>setTimeout(r,500));
+    await new Promise(r=>setTimeout(r,600));
 
     const canvas=await html2canvas(pg,{
       scale:2,
@@ -820,6 +828,7 @@ async function renderToPDF(invList){
       imageTimeout:10000
     });
 
+    container.style.clip='rect(0,0,0,0)'; // キャプチャ後に再び隠す
     doc.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,pdfW,pdfH);
   }
 
