@@ -789,7 +789,7 @@ async function renderToPDF(pagesHTML){
 
   // Use a container attached to document.body so base64 images render correctly
   const container=document.createElement('div');
-  container.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:white;z-index:-1;visibility:hidden';
+  container.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:white;z-index:-1;pointer-events:none';
   container.innerHTML=pagesHTML;
   document.body.appendChild(container);
 
