@@ -774,10 +774,74 @@ function buildInvHTML(inv){
   const parts=inv.month.split('-').map(Number);const y=parts[0],m=parts[1];const ld=lastDayOf(y,m);
   const emptyRows=Math.max(0,8-(inv.lines||[]).length);
   let linesHTML='';
-  (inv.lines||[]).forEach(function(l){linesHTML+='<tr><td>'+l.name+'</td><td style="text-align:center">'+l.qty+'</td><td style="text-align:right">'+l.price.toLocaleString()+'</td><td style="text-align:right">'+(l.qty*l.price).toLocaleString()+'</td></tr>';});
+  (inv.lines||[]).forEach(function(l){linesHTML+='<tr><td style="word-break:break-all">'+l.name+'</td><td style="text-align:center">'+l.qty+'</td><td style="text-align:right">'+l.price.toLocaleString()+'</td><td style="text-align:right">'+(l.qty*l.price).toLocaleString()+'</td></tr>';});
   for(var i=0;i<emptyRows;i++){linesHTML+='<tr class="empty"><td>&nbsp;</td><td></td><td></td><td></td></tr>';}
   const noteHTML=inv.note?inv.note.replace(/\n/g,'<br>'):'&nbsp;';
-  return '<div class="inv-page"><div class="p-title">請求書</div><div class="p-top"><div class="p-top-left"><div class="p-to">'+inv.name+' <span class="p-ochu">御中</span></div><div class="p-greeting">下記の通りご請求申し上げます。</div><div class="p-amount-box"><div class="p-amount-label">ご請求金額（税込）</div><div class="p-amount-value">¥'+total.toLocaleString()+'<span class="p-kiri">-</span></div></div></div><div class="p-top-right"><div class="p-issuer-name">新日本富士アシスト株式会社</div><div class="p-issuer-row"><div class="p-issuer-info">〒110-0016　東京都台東区台東4-31-7-203<br>TEL 03-6806-0988　FAX 03-6806-0128<br>登録番号：T3010801026751</div><div class="p-stamp-wrap"><img src="'+STAMP_SRC+'" width="56" height="56" style="display:block;width:56px;height:56px;object-fit:contain;" crossorigin="anonymous"></div></div><div class="p-dates-right"><div class="p-date-row"><span class="p-date-label">発行日：</span>'+fmtDate(new Date().toISOString().slice(0,10))+'</div><div class="p-date-row"><span class="p-date-label">支払期日：</span>'+fmtDate(inv.due)+'</div><div class="p-date-row"><span class="p-date-label">対象期間：</span>'+fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd)+'</div></div></div><table class="p-items"><thead><tr><th style="text-align:left;width:55%">品目・内容</th><th style="text-align:center;width:10%">数量</th><th style="text-align:right;width:17%">単価（税抜）</th><th style="text-align:right;width:18%">金額（税抜）</th></tr></thead><tbody>'+linesHTML+'</tbody></table><div class="p-subtotal-block"><div class="p-subtotal-row"><span>小計</span><span>¥'+sub.toLocaleString()+'</span></div><div class="p-subtotal-row"><span>消費税（10%）</span><span>¥'+tax.toLocaleString()+'</span></div><div class="p-subtotal-row grand"><span>合計（税込）</span><span>¥'+total.toLocaleString()+'</span></div></div><div class="p-bank"><div class="p-bank-title">【お振込先】</div>三井住友銀行　上野支店　普通　8690693　シンニホンフジアシスト(カ<br><span style="font-size:11px">＊振込手数料はご負担にてお願い申し上げます。</span></div><div class="p-note"><div class="p-note-title">備考</div><div class="p-note-body">'+noteHTML+'</div></div></div>';
+  const today=new Date().toISOString().slice(0,10);
+  return `
+<div style="width:690px;margin:0 auto;font-family:'Noto Sans JP',sans-serif;font-size:13px;line-height:1.75;color:#111;background:white;padding:44px 0 40px;box-sizing:border-box;">
+
+  <div style="text-align:center;font-size:20px;font-weight:700;letter-spacing:4px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:20px;">請求書</div>
+
+  <table style="width:690px;border-collapse:collapse;margin-bottom:20px;table-layout:fixed;">
+    <tr>
+      <td style="width:310px;vertical-align:top;padding-right:16px;">
+        <div style="font-size:17px;font-weight:700;border-bottom:1.5px solid #111;padding-bottom:4px;margin-bottom:8px;">${inv.name} <span style="font-size:13px;font-weight:400;">御中</span></div>
+        <div style="font-size:12px;color:#444;margin-bottom:16px;">下記の通りご請求申し上げます。</div>
+        <div style="border:2px solid #111;padding:10px 14px;display:inline-block;min-width:220px;">
+          <div style="font-size:11px;color:#555;margin-bottom:3px;">ご請求金額（税込）</div>
+          <div style="font-size:24px;font-weight:700;">¥${total.toLocaleString()}<span style="font-size:16px;font-weight:400;">-</span></div>
+        </div>
+      </td>
+      <td style="width:380px;vertical-align:top;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #ccc;">新日本富士アシスト株式会社</div>
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
+          <div style="font-size:11px;color:#444;line-height:1.8;flex:1;">
+            〒110-0016　東京都台東区台東4-31-7-203<br>
+            TEL 03-6806-0988　FAX 03-6806-0128<br>
+            登録番号：T3010801026751
+          </div>
+          <img src="${STAMP_SRC}" width="56" height="56" style="width:56px;height:56px;object-fit:contain;display:block;flex-shrink:0;" crossorigin="anonymous">
+        </div>
+        <div style="padding-top:6px;border-top:1px solid #ddd;font-size:11.5px;">
+          <div style="color:#333;line-height:1.9;"><span style="color:#666;">発行日：</span>${fmtDate(today)}</div>
+          <div style="color:#333;line-height:1.9;"><span style="color:#666;">支払期日：</span>${fmtDate(inv.due)}</div>
+          <div style="color:#333;line-height:1.9;"><span style="color:#666;">対象期間：</span>${fmtDate(inv.periodStart)}〜${fmtDate(inv.periodEnd)}</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <table style="width:690px;border-collapse:collapse;font-size:12.5px;border:1px solid #999;table-layout:fixed;">
+    <thead>
+      <tr>
+        <th style="background:#2c2c3e;color:white;padding:8px 10px;font-weight:500;font-size:12px;border:1px solid #999;text-align:left;width:55%">品目・内容</th>
+        <th style="background:#2c2c3e;color:white;padding:8px 10px;font-weight:500;font-size:12px;border:1px solid #999;text-align:center;width:10%">数量</th>
+        <th style="background:#2c2c3e;color:white;padding:8px 10px;font-weight:500;font-size:12px;border:1px solid #999;text-align:right;width:17%">単価（税抜）</th>
+        <th style="background:#2c2c3e;color:white;padding:8px 10px;font-weight:500;font-size:12px;border:1px solid #999;text-align:right;width:18%">金額（税抜）</th>
+      </tr>
+    </thead>
+    <tbody>${linesHTML}</tbody>
+  </table>
+
+  <div style="border:1px solid #999;border-top:none;margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:13px;border-top:1px solid #ddd;"><span>小計</span><span>¥${sub.toLocaleString()}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:13px;border-top:1px solid #ddd;"><span>消費税（10%）</span><span>¥${tax.toLocaleString()}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 16px;font-size:15px;font-weight:700;background:#2c2c3e;color:white;border-top:2px solid #999;"><span>合計（税込）</span><span>¥${total.toLocaleString()}</span></div>
+  </div>
+
+  <div style="border:1px solid #bbb;padding:10px 16px;font-size:12px;margin-bottom:16px;background:#fafafa;line-height:1.8;">
+    <div style="font-weight:700;margin-bottom:4px;">【お振込先】</div>
+    三井住友銀行　上野支店　普通　8690693　シンニホンフジアシスト(カ<br>
+    <span style="font-size:11px;">＊振込手数料はご負担にてお願い申し上げます。</span>
+  </div>
+
+  <div style="border:1px solid #bbb;min-height:60px;font-size:12px;background:#fafafa;">
+    <div style="background:#eee;padding:4px 12px;font-weight:700;font-size:12px;border-bottom:1px solid #bbb;">備考</div>
+    <div style="padding:8px 12px;">${noteHTML}</div>
+  </div>
+
+</div>`;
 }
 
 function showLoading(msg){const el=document.getElementById('pdfLoadingMsg');if(el)el.textContent=msg||'PDF生成中...';const ov=document.getElementById('pdfLoading');if(ov)ov.classList.add('show');}
@@ -810,7 +874,7 @@ async function renderToPDF(invList){
 
     // HTML挿入 + スタイル強制上書き
     container.innerHTML = buildInvHTML(invList[pi]);
-    const pg = container.querySelector('.inv-page');
+    const pg = container.firstElementChild;
     if(!pg){ document.body.removeChild(container); continue; }
 
     // .inv-page のスタイルを完全に固定
@@ -856,8 +920,7 @@ async function renderToPDF(invList){
       logging:false,
       imageTimeout:10000,
       onclone:function(doc){
-        const p=doc.querySelector('.inv-page');
-        if(p) p.style.cssText='width:794px;max-width:794px;padding:44px 52px 40px;font-size:13px;line-height:1.75;color:#111;background:#fff;box-sizing:border-box;overflow:visible;margin:0;position:relative;';
+        // No additional style needed - inline styles are authoritative
       }
     });
 
