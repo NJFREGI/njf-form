@@ -789,39 +789,53 @@ async function renderToPDF(invList){
   const pdfW=doc.internal.pageSize.getWidth();
   const pdfH=doc.internal.pageSize.getHeight();
 
-  // 専用レンダリングエリア（DOM上に存在、left:0で確実描画）
+  // 完全独立したコンテナ — ページ最上部に固定、スクロール影響ゼロ
   const area=document.createElement('div');
-  area.style.cssText='position:absolute;left:0;top:0;width:794px;z-index:-9999;background:white;pointer-events:none;';
+  area.style.cssText=[
+    'position:fixed',
+    'left:0',
+    'top:0',
+    'width:794px',
+    'height:1123px',
+    'overflow:hidden',
+    'background:white',
+    'z-index:99999',
+    'opacity:0.001',   // 見えないが描画はされる
+    'pointer-events:none',
+    'transform:none'
+  ].join(';');
   document.body.appendChild(area);
 
   for(let pi=0;pi<invList.length;pi++){
     if(pi>0) doc.addPage();
     const inv=invList[pi];
 
-    // ページHTMLをエリアに挿入
     area.innerHTML=buildInvHTML(inv);
     const pg=area.querySelector('.inv-page');
-    if(!pg){continue;}
+    if(!pg) continue;
+    pg.style.cssText='width:794px;min-height:1123px;background:white;padding:44px 52px 40px;font-size:13px;line-height:1.75;color:#111;box-sizing:border-box;';
 
-    // ブラウザの描画を待つ
-    await new Promise(r=>setTimeout(r,400));
+    // 描画完了を待つ
+    await new Promise(r=>setTimeout(r,500));
 
-    const canvas=await html2canvas(pg,{
+    const canvas=await html2canvas(area,{
       scale:2,
       useCORS:true,
       allowTaint:true,
-      logging:false,
       backgroundColor:'#ffffff',
       width:794,
-      windowWidth:794,
       height:1123,
+      windowWidth:794,
       windowHeight:1123,
+      x:0,
+      y:0,
       scrollX:0,
-      scrollY:-window.scrollY
+      scrollY:0,
+      logging:false,
+      imageTimeout:10000
     });
 
-    const imgData=canvas.toDataURL('image/jpeg',0.93);
-    doc.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
+    doc.addImage(canvas.toDataURL('image/jpeg',0.93),'JPEG',0,0,pdfW,pdfH);
   }
 
   document.body.removeChild(area);
