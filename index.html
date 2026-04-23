@@ -6,6 +6,7 @@
 <title>NJF REGI 書類管理システム</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap');
 :root {
@@ -787,20 +788,30 @@ async function renderToPDF(pagesHTML){
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const pdfW=doc.internal.pageSize.getWidth(),pdfH=doc.internal.pageSize.getHeight();
 
-  // Use a container attached to document.body so base64 images render correctly
-  const container=document.createElement('div');
-  container.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:white;z-index:-1;pointer-events:none';
-  container.innerHTML=pagesHTML;
-  document.body.appendChild(container);
+  // Render each page via html2canvas with a fresh isolated container
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='position:absolute;left:-9999px;top:0;width:794px;z-index:9999;background:white;';
+  document.body.appendChild(wrapper);
 
-  // Wait for fonts and images to load
-  await new Promise(r=>setTimeout(r,500));
+  // Parse pages from HTML string
+  const tmp=document.createElement('div');
+  tmp.innerHTML=pagesHTML;
+  const pageEls=[...tmp.querySelectorAll('.inv-page')];
 
-  const pages=container.querySelectorAll('.inv-page');
-  for(let i=0;i<pages.length;i++){
-    const pageEl=pages[i];
-    pageEl.style.position='relative';
-    const canvas=await html2canvas(pageEl,{
+  for(let i=0;i<pageEls.length;i++){
+    wrapper.innerHTML='';
+    const pg=pageEls[i].cloneNode(true);
+    // Restore background-image stamps inline
+    pg.querySelectorAll('[style*="background-image"]').forEach(el=>{
+      el.style.display='block';
+    });
+    wrapper.appendChild(pg);
+
+    // Allow browser to render
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    await new Promise(r=>setTimeout(r,600));
+
+    const canvas=await html2canvas(wrapper,{
       scale:2,
       useCORS:true,
       allowTaint:true,
@@ -808,23 +819,14 @@ async function renderToPDF(pagesHTML){
       width:794,
       height:1123,
       windowWidth:794,
-      windowHeight:1123,
-      logging:false,
-      imageTimeout:0,
-      onclone:function(clonedDoc){
-        // Ensure all images in cloned doc have proper src
-        clonedDoc.querySelectorAll('img').forEach(function(img){
-          if(img.src && img.src.startsWith('data:')) {
-            img.style.display='block';
-          }
-        });
-      }
+      scrollX:0,
+      scrollY:0,
+      logging:false
     });
-    const imgData=canvas.toDataURL('image/jpeg',0.92);
     if(i>0)doc.addPage();
-    doc.addImage(imgData,'JPEG',0,0,pdfW,pdfH);
+    doc.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,pdfW,pdfH);
   }
-  document.body.removeChild(container);
+  document.body.removeChild(wrapper);
   return doc;
 }
 
