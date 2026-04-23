@@ -777,218 +777,61 @@ function buildInvHTML(inv){
   (inv.lines||[]).forEach(function(l){linesHTML+='<tr><td>'+l.name+'</td><td style="text-align:center">'+l.qty+'</td><td style="text-align:right">'+l.price.toLocaleString()+'</td><td style="text-align:right">'+(l.qty*l.price).toLocaleString()+'</td></tr>';});
   for(var i=0;i<emptyRows;i++){linesHTML+='<tr class="empty"><td>&nbsp;</td><td></td><td></td><td></td></tr>';}
   const noteHTML=inv.note?inv.note.replace(/\n/g,'<br>'):'&nbsp;';
-  return '<div class="inv-page"><div class="p-title">請求書</div><div class="p-top"><div class="p-top-left"><div class="p-to">'+inv.name+' <span class="p-ochu">御中</span></div><div class="p-greeting">下記の通りご請求申し上げます。</div><div class="p-amount-box"><div class="p-amount-label">ご請求金額（税込）</div><div class="p-amount-value">¥'+total.toLocaleString()+'<span class="p-kiri">-</span></div></div></div><div class="p-top-right"><div class="p-issuer-name">新日本富士アシスト株式会社</div><div class="p-issuer-row"><div class="p-issuer-info">〒110-0016　東京都台東区台東4-31-7-203<br>TEL 03-6806-0988　FAX 03-6806-0128<br>登録番号：T3010801026751</div><div class="p-stamp-wrap"><div style="width:68px;height:68px;background-image:url('+STAMP_SRC+');background-size:cover;background-repeat:no-repeat;"></div></div><div class="p-dates-right"><div class="p-date-row"><span class="p-date-label">発行日：</span>'+fmtDate(new Date().toISOString().slice(0,10))+'</div><div class="p-date-row"><span class="p-date-label">支払期日：</span>'+fmtDate(inv.due)+'</div><div class="p-date-row"><span class="p-date-label">対象期間：</span>'+fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd)+'</div></div></div></div><table class="p-items"><thead><tr><th style="text-align:left;width:55%">品目・内容</th><th style="text-align:center;width:10%">数量</th><th style="text-align:right;width:17%">単価（税抜）</th><th style="text-align:right;width:18%">金額（税抜）</th></tr></thead><tbody>'+linesHTML+'</tbody></table><div class="p-subtotal-block"><div class="p-subtotal-row"><span>小計</span><span>¥'+sub.toLocaleString()+'</span></div><div class="p-subtotal-row"><span>消費税（10%）</span><span>¥'+tax.toLocaleString()+'</span></div><div class="p-subtotal-row grand"><span>合計（税込）</span><span>¥'+total.toLocaleString()+'</span></div></div><div class="p-bank"><div class="p-bank-title">【お振込先】</div>三井住友銀行　上野支店　普通　8690693　シンニホンフジアシスト(カ<br><span style="font-size:11px">＊振込手数料はご負担にてお願い申し上げます。</span></div><div class="p-note"><div class="p-note-title">備考</div><div class="p-note-body">'+noteHTML+'</div></div></div>';
+  return '<div class="inv-page"><div class="p-title">請求書</div><div class="p-top"><div class="p-top-left"><div class="p-to">'+inv.name+' <span class="p-ochu">御中</span></div><div class="p-greeting">下記の通りご請求申し上げます。</div><div class="p-amount-box"><div class="p-amount-label">ご請求金額（税込）</div><div class="p-amount-value">¥'+total.toLocaleString()+'<span class="p-kiri">-</span></div></div></div><div class="p-top-right"><div class="p-issuer-name">新日本富士アシスト株式会社</div><div class="p-issuer-row"><div class="p-issuer-info">〒110-0016　東京都台東区台東4-31-7-203<br>TEL 03-6806-0988　FAX 03-6806-0128<br>登録番号：T3010801026751</div><div class="p-stamp-wrap"><img src="'+STAMP_SRC+'" width="68" height="68" style="display:block;width:68px;height:68px;object-fit:contain;" crossorigin="anonymous"></div><div class="p-dates-right"><div class="p-date-row"><span class="p-date-label">発行日：</span>'+fmtDate(new Date().toISOString().slice(0,10))+'</div><div class="p-date-row"><span class="p-date-label">支払期日：</span>'+fmtDate(inv.due)+'</div><div class="p-date-row"><span class="p-date-label">対象期間：</span>'+fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd)+'</div></div></div></div><table class="p-items"><thead><tr><th style="text-align:left;width:55%">品目・内容</th><th style="text-align:center;width:10%">数量</th><th style="text-align:right;width:17%">単価（税抜）</th><th style="text-align:right;width:18%">金額（税抜）</th></tr></thead><tbody>'+linesHTML+'</tbody></table><div class="p-subtotal-block"><div class="p-subtotal-row"><span>小計</span><span>¥'+sub.toLocaleString()+'</span></div><div class="p-subtotal-row"><span>消費税（10%）</span><span>¥'+tax.toLocaleString()+'</span></div><div class="p-subtotal-row grand"><span>合計（税込）</span><span>¥'+total.toLocaleString()+'</span></div></div><div class="p-bank"><div class="p-bank-title">【お振込先】</div>三井住友銀行　上野支店　普通　8690693　シンニホンフジアシスト(カ<br><span style="font-size:11px">＊振込手数料はご負担にてお願い申し上げます。</span></div><div class="p-note"><div class="p-note-title">備考</div><div class="p-note-body">'+noteHTML+'</div></div></div>';
 }
 
 function showLoading(msg){const el=document.getElementById('pdfLoadingMsg');if(el)el.textContent=msg||'PDF生成中...';const ov=document.getElementById('pdfLoading');if(ov)ov.classList.add('show');}
 function hideLoading(){const ov=document.getElementById('pdfLoading');if(ov)ov.classList.remove('show');}
 
-async function renderToPDF(invDataList){
+async function renderToPDF(invList){
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pdfW=doc.internal.pageSize.getWidth();
+  const pdfH=doc.internal.pageSize.getHeight();
 
-  for(let pi=0;pi<invDataList.length;pi++){
+  for(let pi=0;pi<invList.length;pi++){
     if(pi>0) doc.addPage();
-    const inv=invDataList[pi];
-    drawInvPage(doc, inv);
+    const inv=invList[pi];
+    const html=buildInvHTML(inv);
+
+    // Create a visible-but-offscreen iframe for reliable rendering
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='position:fixed;top:0;left:0;width:794px;height:1123px;opacity:0;pointer-events:none;z-index:-1;border:none;';
+    document.body.appendChild(iframe);
+
+    // Write HTML into iframe
+    const idoc=iframe.contentDocument||iframe.contentWindow.document;
+    idoc.open();
+    idoc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>'+
+      'body{margin:0;padding:0;width:794px;background:white;}'+
+      '.inv-page{width:794px;min-height:1123px;background:white;padding:44px 52px 40px;font-size:13px;line-height:1.75;color:#111;box-sizing:border-box;font-family:Arial,sans-serif}'+
+      document.querySelector('style').textContent+
+      '</style></head><body>'+html+'</body></html>');
+    idoc.close();
+
+    // Wait for iframe content + fonts
+    await new Promise(r=>setTimeout(r,800));
+
+    // Capture iframe body
+    const canvas=await html2canvas(idoc.body,{
+      scale:2,
+      useCORS:true,
+      allowTaint:true,
+      backgroundColor:'#ffffff',
+      width:794,
+      height:1123,
+      windowWidth:794,
+      windowHeight:1123,
+      scrollX:0,
+      scrollY:0,
+      logging:false,
+      imageTimeout:15000
+    });
+    document.body.removeChild(iframe);
+
+    doc.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,pdfW,pdfH);
   }
   return doc;
-}
-
-function drawInvPage(doc, inv){
-  const c=calcInv(inv);
-  const sub=c.sub, tax=c.tax, total=c.total;
-  const today=new Date().toISOString().slice(0,10);
-  const W=210, H=297;
-  const L=14, R=196; // left/right margins
-
-  // ── Title ──────────────────────────────────────────────────
-  doc.setFontSize(18);
-  doc.setFont('helvetica','bold');
-  doc.setTextColor(17,17,17);
-  doc.text('請 求 書', W/2, 22, {align:'center'});
-  doc.setDrawColor(17,17,17);
-  doc.setLineWidth(0.6);
-  doc.line(L, 24, R, 24);
-
-  // ── Left: recipient ───────────────────────────────────────
-  doc.setFontSize(13);
-  doc.setFont('helvetica','bold');
-  doc.setTextColor(17,17,17);
-  // Wrap long shop name
-  const shopLines=doc.splitTextToSize(inv.name+' 御中', 88);
-  doc.text(shopLines, L, 33);
-  const afterShop=33+shopLines.length*6;
-  doc.setLineWidth(0.4);
-  doc.line(L, afterShop+1, L+88, afterShop+1);
-
-  doc.setFontSize(9);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(68,68,68);
-  doc.text('下記の通りご請求申し上げます。', L, afterShop+7);
-
-  // Amount box
-  const boxY=afterShop+10;
-  doc.setDrawColor(17,17,17);
-  doc.setLineWidth(0.7);
-  doc.rect(L, boxY, 72, 16);
-  doc.setFontSize(9);
-  doc.setTextColor(85,85,85);
-  doc.text('ご請求金額（税込）', L+3, boxY+5);
-  doc.setFontSize(18);
-  doc.setFont('helvetica','bold');
-  doc.setTextColor(17,17,17);
-  doc.text('¥'+total.toLocaleString()+'-', L+3, boxY+13);
-
-  // ── Right: issuer ─────────────────────────────────────────
-  const rx=108;
-  doc.setFontSize(11);
-  doc.setFont('helvetica','bold');
-  doc.setTextColor(17,17,17);
-  doc.text('新日本富士アシスト株式会社', rx, 31);
-  doc.setLineWidth(0.3);
-  doc.line(rx, 32.5, R, 32.5);
-
-  doc.setFontSize(8.5);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(68,68,68);
-  doc.text('〒110-0016　東京都台東区台東4-31-7-203', rx, 37);
-  doc.text('TEL 03-6806-0988　FAX 03-6806-0128', rx, 42);
-  doc.text('登録番号：T3010801026751', rx, 47);
-
-  // Stamp image
-  try{
-    doc.addImage(STAMP_SRC,'JPEG', R-22, 28, 22, 22);
-  }catch(e){}
-
-  // Dates
-  doc.setFontSize(9);
-  doc.setLineWidth(0.2);
-  doc.line(rx, 53, R, 53);
-  doc.setTextColor(51,51,51);
-  doc.text('発行日：'+fmtDate(today), rx, 58);
-  doc.text('支払期日：'+fmtDate(inv.due), rx, 63);
-  const periodText='対象期間：'+fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd);
-  doc.text(periodText, rx, 68);
-
-  // ── Table ─────────────────────────────────────────────────
-  const tableStartY=78;
-  const colW=[82,16,38,38]; // name,qty,unit,amount
-  const cols=['品目・内容','数量','単価（税抜）','金額（税抜）'];
-  const rowH=8;
-
-  // Header
-  doc.setFillColor(44,44,62);
-  doc.rect(L, tableStartY, R-L, rowH, 'F');
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(9);
-  doc.setFont('helvetica','bold');
-  let cx=L;
-  [cols[0],cols[1],cols[2],cols[3]].forEach((col,i)=>{
-    const align=i===0?'left':'right';
-    const tx=i===0?cx+2:cx+colW[i]-2;
-    doc.text(col, tx, tableStartY+5.5, {align});
-    cx+=colW[i];
-  });
-
-  // Rows
-  const lines=inv.lines||[];
-  const totalRows=Math.max(lines.length,8);
-  doc.setTextColor(17,17,17);
-  doc.setFont('helvetica','normal');
-  for(let i=0;i<totalRows;i++){
-    const y=tableStartY+rowH*(i+1);
-    const l=lines[i];
-    // Alternating bg
-    if(i%2===1){doc.setFillColor(248,248,248);doc.rect(L,y,R-L,rowH,'F');}
-    doc.setDrawColor(200,200,200);
-    doc.setLineWidth(0.2);
-    doc.line(L,y,R,y);
-    if(l){
-      doc.setFontSize(8.5);
-      const nameLines=doc.splitTextToSize(l.name,colW[0]-4);
-      doc.text(nameLines[0], L+2, y+5.5);
-      doc.text(String(l.qty), L+colW[0]+colW[1]-2, y+5.5, {align:'right'});
-      doc.text(l.price.toLocaleString(), L+colW[0]+colW[1]+colW[2]-2, y+5.5, {align:'right'});
-      doc.text((l.qty*l.price).toLocaleString(), R-2, y+5.5, {align:'right'});
-    }
-    // Column dividers
-    cx=L;
-    colW.forEach((w,i)=>{
-      cx+=w;
-      if(i<colW.length-1){doc.setDrawColor(180,180,180);doc.line(cx,tableStartY,cx,y+rowH);}
-    });
-  }
-  const tableEndY=tableStartY+rowH*(totalRows+1);
-  // Outer border
-  doc.setDrawColor(150,150,150);
-  doc.setLineWidth(0.4);
-  doc.rect(L, tableStartY, R-L, rowH*(totalRows+1));
-
-  // ── Subtotals ─────────────────────────────────────────────
-  const stY=tableEndY+1;
-  doc.setFontSize(9.5);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(51,51,51);
-  doc.setDrawColor(200,200,200);
-  doc.setLineWidth(0.2);
-  [[`小計`,sub],[`消費税（10%）`,tax]].forEach(([label,val],i)=>{
-    const y=stY+7*(i+1);
-    doc.text(label, R-45, y);
-    doc.text('¥'+val.toLocaleString(), R-2, y, {align:'right'});
-    doc.line(L, y+2, R, y+2);
-  });
-  // Grand total bar
-  const gtY=stY+7*3;
-  doc.setFillColor(44,44,62);
-  doc.rect(L, gtY-6, R-L, 10, 'F');
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(11);
-  doc.setFont('helvetica','bold');
-  doc.text('合計（税込）', L+4, gtY+0.5);
-  doc.text('¥'+total.toLocaleString(), R-2, gtY+0.5, {align:'right'});
-
-  // ── Bank ──────────────────────────────────────────────────
-  const bankY=gtY+14;
-  doc.setDrawColor(180,180,180);
-  doc.setLineWidth(0.3);
-  doc.rect(L, bankY, R-L, 16);
-  doc.setFillColor(240,240,240);
-  doc.rect(L, bankY, R-L, 5, 'F');
-  doc.setTextColor(17,17,17);
-  doc.setFontSize(8.5);
-  doc.setFont('helvetica','bold');
-  doc.text('【お振込先】', L+2, bankY+3.5);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(8.5);
-  doc.text('三井住友銀行　上野支店　普通　8690693　シンニホンフジアシスト（カ', L+2, bankY+9);
-  doc.setTextColor(100,100,100);
-  doc.setFontSize(7.5);
-  doc.text('＊振込手数料はご負担にてお願い申し上げます。', L+2, bankY+14);
-
-  // ── Note ──────────────────────────────────────────────────
-  const noteY=bankY+19;
-  doc.setDrawColor(180,180,180);
-  doc.setLineWidth(0.3);
-  doc.rect(L, noteY, R-L, 22);
-  doc.setFillColor(238,238,238);
-  doc.rect(L, noteY, R-L, 5, 'F');
-  doc.setTextColor(17,17,17);
-  doc.setFontSize(8.5);
-  doc.setFont('helvetica','bold');
-  doc.text('備考', L+2, noteY+3.5);
-  if(inv.note){
-    doc.setFont('helvetica','normal');
-    const noteLines=doc.splitTextToSize(inv.note, R-L-4);
-    doc.text(noteLines, L+2, noteY+10);
-  }
-
-  // Footer
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(120,120,120);
-  doc.text('NJF REGI サービス利用契約', L, H-8);
-  doc.text('新日本富士アシスト株式会社　info@njfregi.jp', W/2, H-8, {align:'center'});
 }
 
 
