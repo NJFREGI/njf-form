@@ -186,10 +186,10 @@ main{padding:24px;max-width:1100px;margin:0 auto}
 .inv-page .p-amount-value{font-size:26px;font-weight:700;letter-spacing:1px}
 .inv-page .p-kiri{font-size:18px;font-weight:400}
 .inv-page .p-issuer-name{font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #ccc}
-.inv-page .p-issuer-row{display:flex;align-items:flex-start;gap:10px}
+.inv-page .p-issuer-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
 .inv-page .p-issuer-info{font-size:12px;color:#444;line-height:1.85;flex:1;white-space:nowrap}
 .inv-page .p-stamp-wrap{flex-shrink:0}
-.inv-page .p-dates-right{margin-top:10px;padding-top:8px;border-top:1px solid #ddd;font-size:11.5px}
+.inv-page .p-dates-right{margin-top:6px;padding-top:6px;border-top:1px solid #ddd;font-size:11.5px;display:block;width:100%;clear:both}
 .inv-page .p-dates-right .p-date-row{color:#333;line-height:1.9}
 .inv-page .p-date-label{color:#666}
 .inv-page table.p-items{width:100%;border-collapse:collapse;margin-bottom:0;font-size:12.5px;border:1px solid #999}
@@ -777,7 +777,7 @@ function buildInvHTML(inv){
   (inv.lines||[]).forEach(function(l){linesHTML+='<tr><td>'+l.name+'</td><td style="text-align:center">'+l.qty+'</td><td style="text-align:right">'+l.price.toLocaleString()+'</td><td style="text-align:right">'+(l.qty*l.price).toLocaleString()+'</td></tr>';});
   for(var i=0;i<emptyRows;i++){linesHTML+='<tr class="empty"><td>&nbsp;</td><td></td><td></td><td></td></tr>';}
   const noteHTML=inv.note?inv.note.replace(/\n/g,'<br>'):'&nbsp;';
-  return '<div class="inv-page"><div class="p-title">請求書</div><div class="p-top"><div class="p-top-left"><div class="p-to">'+inv.name+' <span class="p-ochu">御中</span></div><div class="p-greeting">下記の通りご請求申し上げます。</div><div class="p-amount-box"><div class="p-amount-label">ご請求金額（税込）</div><div class="p-amount-value">¥'+total.toLocaleString()+'<span class="p-kiri">-</span></div></div></div><div class="p-top-right"><div class="p-issuer-name">新日本富士アシスト株式会社</div><div class="p-issuer-row"><div class="p-issuer-info">〒110-0016　東京都台東区台東4-31-7-203<br>TEL 03-6806-0988　FAX 03-6806-0128<br>登録番号：T3010801026751</div><div class="p-stamp-wrap"><img src="'+STAMP_SRC+'" width="68" height="68" style="display:block;width:68px;height:68px;object-fit:contain;" crossorigin="anonymous"></div><div class="p-dates-right"><div class="p-date-row"><span class="p-date-label">発行日：</span>'+fmtDate(new Date().toISOString().slice(0,10))+'</div><div class="p-date-row"><span class="p-date-label">支払期日：</span>'+fmtDate(inv.due)+'</div><div class="p-date-row"><span class="p-date-label">対象期間：</span>'+fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd)+'</div></div></div></div><table class="p-items"><thead><tr><th style="text-align:left;width:55%">品目・内容</th><th style="text-align:center;width:10%">数量</th><th style="text-align:right;width:17%">単価（税抜）</th><th style="text-align:right;width:18%">金額（税抜）</th></tr></thead><tbody>'+linesHTML+'</tbody></table><div class="p-subtotal-block"><div class="p-subtotal-row"><span>小計</span><span>¥'+sub.toLocaleString()+'</span></div><div class="p-subtotal-row"><span>消費税（10%）</span><span>¥'+tax.toLocaleString()+'</span></div><div class="p-subtotal-row grand"><span>合計（税込）</span><span>¥'+total.toLocaleString()+'</span></div></div><div class="p-bank"><div class="p-bank-title">【お振込先】</div>三井住友銀行　上野支店　普通　8690693　シンニホンフジアシスト(カ<br><span style="font-size:11px">＊振込手数料はご負担にてお願い申し上げます。</span></div><div class="p-note"><div class="p-note-title">備考</div><div class="p-note-body">'+noteHTML+'</div></div></div>';
+  return '<div class="inv-page"><div class="p-title">請求書</div><div class="p-top"><div class="p-top-left"><div class="p-to">'+inv.name+' <span class="p-ochu">御中</span></div><div class="p-greeting">下記の通りご請求申し上げます。</div><div class="p-amount-box"><div class="p-amount-label">ご請求金額（税込）</div><div class="p-amount-value">¥'+total.toLocaleString()+'<span class="p-kiri">-</span></div></div></div><div class="p-top-right"><div class="p-issuer-name">新日本富士アシスト株式会社</div><div class="p-issuer-row"><div class="p-issuer-info">〒110-0016　東京都台東区台東4-31-7-203<br>TEL 03-6806-0988　FAX 03-6806-0128<br>登録番号：T3010801026751</div><div class="p-stamp-wrap"><img src="'+STAMP_SRC+'" width="68" height="68" style="display:block;width:68px;height:68px;object-fit:contain;" crossorigin="anonymous"></div></div><div class="p-dates-right"><div class="p-date-row"><span class="p-date-label">発行日：</span>'+fmtDate(new Date().toISOString().slice(0,10))+'</div><div class="p-date-row"><span class="p-date-label">支払期日：</span>'+fmtDate(inv.due)+'</div><div class="p-date-row"><span class="p-date-label">対象期間：</span>'+fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd)+'</div></div></div><table class="p-items"><thead><tr><th style="text-align:left;width:55%">品目・内容</th><th style="text-align:center;width:10%">数量</th><th style="text-align:right;width:17%">単価（税抜）</th><th style="text-align:right;width:18%">金額（税抜）</th></tr></thead><tbody>'+linesHTML+'</tbody></table><div class="p-subtotal-block"><div class="p-subtotal-row"><span>小計</span><span>¥'+sub.toLocaleString()+'</span></div><div class="p-subtotal-row"><span>消費税（10%）</span><span>¥'+tax.toLocaleString()+'</span></div><div class="p-subtotal-row grand"><span>合計（税込）</span><span>¥'+total.toLocaleString()+'</span></div></div><div class="p-bank"><div class="p-bank-title">【お振込先】</div>三井住友銀行　上野支店　普通　8690693　シンニホンフジアシスト(カ<br><span style="font-size:11px">＊振込手数料はご負担にてお願い申し上げます。</span></div><div class="p-note"><div class="p-note-title">備考</div><div class="p-note-body">'+noteHTML+'</div></div></div>';
 }
 
 function showLoading(msg){const el=document.getElementById('pdfLoadingMsg');if(el)el.textContent=msg||'PDF生成中...';const ov=document.getElementById('pdfLoading');if(ov)ov.classList.add('show');}
@@ -789,31 +789,58 @@ async function renderToPDF(invList){
   const pdfW=doc.internal.pageSize.getWidth();
   const pdfH=doc.internal.pageSize.getHeight();
 
-  // スタイル付き非表示コンテナ（clip で画面外、opacityなし）
-  const container=document.createElement('div');
-  container.style.position='fixed';
-  container.style.left='0px';
-  container.style.top='0px';
-  container.style.width='794px';
-  container.style.height='1123px';
-  container.style.overflow='hidden';
-  container.style.zIndex='999999';
-  container.style.background='white';
-  // clip で視覚的に隠す（opacityではない）
-  container.style.clip='rect(0,0,0,0)';
-  document.body.appendChild(container);
-
   for(let pi=0;pi<invList.length;pi++){
     if(pi>0) doc.addPage();
 
-    container.style.clip='auto'; // キャプチャ前に clip を解除
+    // コンテナを body 直下に追加
+    const container=document.createElement('div');
+    container.style.cssText=[
+      'position:fixed',
+      'top:0',
+      'left:0',
+      'width:794px',
+      'height:1123px',
+      'overflow:hidden',
+      'z-index:999999',
+      'background:#fff',
+      'transform:scale(1)',
+      'transform-origin:top left'
+    ].join(';');
+    document.body.appendChild(container);
+
+    // HTML挿入 + スタイル強制上書き
     container.innerHTML = buildInvHTML(invList[pi]);
     const pg = container.querySelector('.inv-page');
-    if(!pg) continue;
+    if(!pg){ document.body.removeChild(container); continue; }
 
+    // .inv-page のスタイルを完全に固定
+    pg.style.cssText=[
+      'width:794px',
+      'min-height:1123px',
+      'max-width:794px',
+      'padding:44px 52px 40px',
+      'font-size:13px',
+      'line-height:1.75',
+      'font-family:Noto Sans JP,sans-serif',
+      'color:#111',
+      'background:#fff',
+      'box-sizing:border-box',
+      'overflow:visible',
+      'margin:0',
+      'position:relative'
+    ].join(';');
+
+    // テーブルも幅を固定
+    container.querySelectorAll('table').forEach(t=>{
+      t.style.width='690px';
+      t.style.maxWidth='690px';
+      t.style.tableLayout='fixed';
+    });
+
+    // レンダリング待ち
     await new Promise(r=>setTimeout(r,600));
 
-    const canvas=await html2canvas(pg,{
+    const canvas=await html2canvas(container,{
       scale:2,
       useCORS:true,
       allowTaint:true,
@@ -822,17 +849,22 @@ async function renderToPDF(invList){
       height:1123,
       windowWidth:794,
       windowHeight:1123,
+      x:0,
+      y:0,
       scrollX:0,
       scrollY:0,
       logging:false,
-      imageTimeout:10000
+      imageTimeout:10000,
+      onclone:function(doc){
+        const p=doc.querySelector('.inv-page');
+        if(p) p.style.cssText='width:794px;max-width:794px;padding:44px 52px 40px;font-size:13px;line-height:1.75;color:#111;background:#fff;box-sizing:border-box;overflow:visible;margin:0;position:relative;';
+      }
     });
 
-    container.style.clip='rect(0,0,0,0)'; // キャプチャ後に再び隠す
+    document.body.removeChild(container);
     doc.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,pdfW,pdfH);
   }
 
-  document.body.removeChild(container);
   return doc;
 }
 
