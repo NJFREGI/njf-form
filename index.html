@@ -785,7 +785,7 @@ function buildInvHTML(inv){
 
   <table style="width:690px;border-collapse:collapse;margin-bottom:20px;table-layout:fixed;">
     <tr>
-      <td style="width:310px;vertical-align:top;padding-right:16px;">
+      <td style="width:270px;vertical-align:top;padding-right:16px;">
         <div style="font-size:17px;font-weight:700;border-bottom:1.5px solid #111;padding-bottom:4px;margin-bottom:8px;">${inv.name} <span style="font-size:13px;font-weight:400;">御中</span></div>
         <div style="font-size:12px;color:#444;margin-bottom:16px;">下記の通りご請求申し上げます。</div>
         <div style="border:2px solid #111;padding:10px 14px;display:inline-block;min-width:220px;">
@@ -793,7 +793,7 @@ function buildInvHTML(inv){
           <div style="font-size:24px;font-weight:700;">¥${total.toLocaleString()}<span style="font-size:16px;font-weight:400;">-</span></div>
         </div>
       </td>
-      <td style="width:380px;vertical-align:top;">
+      <td style="width:420px;vertical-align:top;">
         <div style="font-size:14px;font-weight:700;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #ccc;">新日本富士アシスト株式会社</div>
         <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
           <div style="font-size:11px;color:#444;line-height:1.8;flex:1;">
@@ -1134,7 +1134,7 @@ function saveMitsumori(){
 }
 
 function buildMitsumoriHTML(m){
-  const{sub,tax,total}=calcMit(m);let dateStr='';if(m.date){const parts=m.date.split('-');dateStr=parts[0]+'年'+parseInt(parts[1])+'月'+parseInt(parts[2])+'日';}
+  const{sub,tax,total}=calcMit(m);let dateStr='';if(m.date){try{const parts=m.date.split('-');dateStr=parts[0]+'年'+parseInt(parts[1])+'月'+parseInt(parts[2])+'日';}catch(e){dateStr=m.date||'';} }
   const emptyRows=Math.max(0,8-(m.lines||[]).length);
   let linesHTML='';(m.lines||[]).forEach(function(l){const amt=Math.max(0,(l.qty||0)*(l.price||0)-(l.discount||0));linesHTML+='<tr><td>'+l.name+'</td><td style="text-align:center">'+l.qty+'</td><td style="text-align:center">'+(l.unit||'台')+'</td><td style="text-align:right">'+(l.price||0).toLocaleString()+'</td><td style="text-align:right">'+(l.discount?'-'+l.discount.toLocaleString():'-')+'</td><td style="text-align:right">'+amt.toLocaleString()+'</td></tr>';});
   for(var i=0;i<emptyRows;i++){linesHTML+='<tr class="empty"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';}
@@ -1145,7 +1145,37 @@ function buildMitsumoriHTML(m){
 async function downloadMitsumoriPDF(id){
   const m=(data.mitsumori||[]).find(x=>x.id===id);if(!m)return;
   showLoading('見積書 No.'+m.seq+' を生成中...');
-  try{const doc=await renderToPDF(buildMitsumoriHTML(m));doc.save('見積書_No'+m.seq+'_'+m.name+'.pdf');}
+  try{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pdfW=doc.internal.pageSize.getWidth();
+    const pdfH=doc.internal.pageSize.getHeight();
+
+    const container=document.createElement('div');
+    container.style.cssText='position:fixed;top:0;left:0;width:794px;height:1123px;overflow:hidden;z-index:999999;background:white;';
+    container.style.clip='rect(0,0,0,0)';
+    document.body.appendChild(container);
+    container.style.clip='auto';
+    container.innerHTML=buildMitsumoriHTML(m);
+
+    const imgs=[...container.querySelectorAll('img')];
+    await Promise.all(imgs.map(img=>{
+      if(img.complete)return Promise.resolve();
+      return new Promise(r=>{img.onload=r;img.onerror=r;setTimeout(r,3000);});
+    }));
+    await new Promise(r=>setTimeout(r,400));
+
+    const pg=container.querySelector('.inv-page')||container.firstElementChild;
+    const canvas=await html2canvas(pg||container,{
+      scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',
+      width:794,height:1123,windowWidth:794,windowHeight:1123,
+      scrollX:0,scrollY:0,logging:false
+    });
+    container.style.clip='rect(0,0,0,0)';
+    document.body.removeChild(container);
+    doc.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,pdfW,pdfH);
+    doc.save('見積書_No'+m.seq+'_'+m.name+'.pdf');
+  }
   catch(e){alert('PDF生成エラー: '+e.message);}
   finally{hideLoading();}
 }
