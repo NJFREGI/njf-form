@@ -858,21 +858,8 @@ async function renderToPDF(invList){
 
     // コンテナを body 直下に追加
     const container=document.createElement('div');
-    container.style.cssText=[
-      'position:fixed',
-      'top:0',
-      'left:0',
-      'width:794px',
-      'height:1123px',
-      'overflow:hidden',
-      'z-index:999999',
-      'background:#fff',
-      'transform:scale(1)',
-      'transform-origin:top left'
-    ].join(';');
+    container.style.cssText='position:fixed;top:0;left:-9999px;width:794px;height:1123px;overflow:hidden;z-index:-1;background:white;';
     document.body.appendChild(container);
-
-    // HTML挿入 + スタイル強制上書き
     container.innerHTML = buildInvHTML(invList[pi]);
     const pg = container.firstElementChild;
     if(!pg){ document.body.removeChild(container); continue; }
@@ -1152,10 +1139,8 @@ async function downloadMitsumoriPDF(id){
     const pdfH=doc.internal.pageSize.getHeight();
 
     const container=document.createElement('div');
-    container.style.cssText='position:fixed;top:0;left:0;width:794px;height:1123px;overflow:hidden;z-index:999999;background:white;';
-    container.style.clip='rect(0,0,0,0)';
+    container.style.cssText='position:fixed;top:0;left:-9999px;width:794px;height:1123px;overflow:hidden;z-index:-1;background:white;';
     document.body.appendChild(container);
-    container.style.clip='auto';
     container.innerHTML=buildMitsumoriHTML(m);
 
     const imgs=[...container.querySelectorAll('img')];
@@ -1171,7 +1156,6 @@ async function downloadMitsumoriPDF(id){
       width:794,height:1123,windowWidth:794,windowHeight:1123,
       scrollX:0,scrollY:0,logging:false
     });
-    container.style.clip='rect(0,0,0,0)';
     document.body.removeChild(container);
     doc.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,pdfW,pdfH);
     doc.save('見積書_No'+m.seq+'_'+m.name+'.pdf');
