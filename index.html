@@ -472,7 +472,10 @@ main{padding:24px;max-width:1100px;margin:0 auto}
 <!-- MODAL: INVOICE -->
 <div class="modal-overlay" id="invoiceModal">
   <div class="modal">
-    <h2 id="invoiceModalTitle">新增请求书</h2>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+      <button onclick="closeModal('invoiceModal')" style="background:var(--paper-warm);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--ink);display:flex;align-items:center;gap:4px;flex-shrink:0">← 戻る</button>
+      <h2 id="invoiceModalTitle" style="margin:0;padding:0;border:none;font-family:'Noto Serif JP',serif;font-size:17px;font-weight:700">新增请求书</h2>
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label>选择店铺</label>
