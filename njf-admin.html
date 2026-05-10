@@ -493,21 +493,26 @@ async function gasGet(params) {
   catch(e) { throw new Error("レスポンスエラー: " + txt.slice(0,120)); }
 }
 
-/* ══ gasPost — JSON形式で送信（SyntaxError修正済み）══ */
+/* ══ gasPost — GAS CORS回避版：送信だけ行い、戻り値は読まない ══ */
 async function gasPost(body) {
-  // GAS CORS回避: form-encoded + no-cors
-  const qs = Object.entries(body).map(([k,v]) =>
-    encodeURIComponent(k) + "=" + encodeURIComponent(typeof v === "object" ? JSON.stringify(v) : String(v))
+  const qs = Object.entries(body).map(([k, v]) =>
+    encodeURIComponent(k) + "=" + encodeURIComponent(
+      typeof v === "object" ? JSON.stringify(v) : String(v)
+    )
   ).join("&");
-  const res = await fetch(GAS_URL, {
-    method:  "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body:    qs,
-    redirect:"follow"
+
+  // Google Apps Script は通常の fetch POST で CORS に引っかかるため、
+  // no-cors で送信だけ行う。レスポンス本文は読めないので、IDは前端で生成する。
+  await fetch(GAS_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+    },
+    body: qs
   });
-  const txt = await res.text();
-  try { return JSON.parse(txt); }
-  catch(e) { throw new Error("レスポンスエラー: " + txt.slice(0,120)); }
+
+  return { success: true };
 }
 
 /* ══ DEVICES ══ */
@@ -633,15 +638,24 @@ async function generateLink() {
   btn.disabled = true; btn.textContent = "生成中…";
   setMsg("gen-msg","Google Sheetsに保存しています…","info");
   try {
-    const result = await gasPost({
-      action:  "createRecord",
-      payload: JSON.stringify({ customerCode: code, installName: shop, items: devices })
+    // CORS回避のため、IDは前端で先に生成する。
+    // GASには同じIDを保存し、画面側はレスポンスを待たずにリンクを表示する。
+    const recordId = "R" + Date.now();
+
+    await gasPost({
+      action: "createRecord",
+      payload: JSON.stringify({
+        id: recordId,
+        customerCode: code,
+        installName: shop,
+        items: devices
+      })
     });
-    if (!result.success) throw new Error(result.message || "Failed");
-    const url = `${FORM_BASE}?id=${result.id}`;
+
+    const url = `${FORM_BASE}?id=${recordId}`;
     document.getElementById("link-url-text").textContent = url;
     document.getElementById("link-box").classList.add("show");
-    setMsg("gen-msg","✅ 申込リンクを発行しました！","ok");
+    setMsg("gen-msg","✅ 申込リンクを発行しました！Google Sheetsへ保存送信済みです。","ok");
     saveLocal(); loadDash();
   } catch(err) {
     setMsg("gen-msg","❌ エラー：" + err.message, "err");
