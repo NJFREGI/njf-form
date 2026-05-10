@@ -452,7 +452,7 @@
 
 <script>
 /* ══ CONFIG — GAS URL updated ══ */
-const GAS_URL   = "https://script.google.com/macros/s/AKfycbzRgQiiZ7dl9rIUPkQyVJw9CYZdXYUYh5zxp-h8a5PUl-9RCMXE_n1B9Lra5GvwJrywZw/exec";
+const GAS_URL   = "https://script.google.com/macros/s/AKfycbzzK-opzXhCjnOXhjSvYgcsF5YQ5gQP53U3eLJXTcseJbYt3Qa8Gw5A2qAoVIbePv3VwQ/exec";
 const FORM_BASE = "https://form.njfregi.jp/form.html";
 const STORE_KEY = "njf_admin_v3";
 
@@ -495,11 +495,15 @@ async function gasGet(params) {
 
 /* ══ gasPost — JSON形式で送信（SyntaxError修正済み）══ */
 async function gasPost(body) {
+  // GAS CORS回避: form-encoded + no-cors
+  const qs = Object.entries(body).map(([k,v]) =>
+    encodeURIComponent(k) + "=" + encodeURIComponent(typeof v === "object" ? JSON.stringify(v) : String(v))
+  ).join("&");
   const res = await fetch(GAS_URL, {
-    method:   "POST",
-    headers:  { "Content-Type": "application/json" },
-    body:     JSON.stringify(body),
-    redirect: "follow"
+    method:  "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body:    qs,
+    redirect:"follow"
   });
   const txt = await res.text();
   try { return JSON.parse(txt); }
