@@ -519,6 +519,7 @@ main{padding:24px;max-width:1100px;margin:0 auto}
       <div class="line-items">
         <div id="lineItemsBody"></div>
         <button class="add-line-btn" onclick="addLineItem()">＋ 手动添加项目</button>
+        <button class="add-line-btn" onclick="openMultiMonthPicker()" style="color:#8e44ad;border-top:1px solid var(--border)">📅 複数月分を一括追加</button>
       </div>
     </div>
     <div style="background:var(--paper);border-radius:6px;padding:10px 14px;font-size:13px;display:flex;justify-content:flex-end;gap:20px">
@@ -1036,7 +1037,87 @@ function saveStore(){
 }
 function deleteStore(id){if(!confirm('确认删除？'))return;data.stores=data.stores.filter(s=>s.id!==id);saveData();renderStores();}
 function onFeeTypeChange(){const ft=document.getElementById('st-feetype').value;document.getElementById('st-cycle-extra').style.display=ft==='monthly'?'none':'block';const nextLabel=document.getElementById('st-next-label');if(nextLabel){nextLabel.textContent=ft==='quarterly'?'次回請求月（3ヶ月ごと）':'次回請求月（年1回）';}}
-function syncStoreAmounts(){
+/* ══ 複数月分一括追加 ══════════════════════════════════════ */
+function openMultiMonthPicker() {
+  // 获取当前选择的月份作为默认值
+  const currentMonth = document.getElementById('currentMonth').value || '';
+  const store = data.stores.find(s => s.id === document.getElementById('inv-store').value);
+  const defaultPrice = store ? store.monthly : 9000;
+
+  // 生成月份选择弹窗
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:flex;align-items:center;justify-content:center';
+
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;width:320px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <h3 style="font-size:15px;font-weight:800;margin-bottom:16px;color:#1a1a2e">📅 複数月分一括追加</h3>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:#666;display:block;margin-bottom:4px">開始月</label>
+        <input type="month" id="multi-start" value="${currentMonth}" style="width:100%;padding:9px 12px;border:1.5px solid #d4cfc5;border-radius:8px;font-size:14px">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:#666;display:block;margin-bottom:4px">終了月</label>
+        <input type="month" id="multi-end" value="${currentMonth}" style="width:100%;padding:9px 12px;border:1.5px solid #d4cfc5;border-radius:8px;font-size:14px">
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;font-weight:600;color:#666;display:block;margin-bottom:4px">月額単価（¥）</label>
+        <input type="number" id="multi-price" value="${defaultPrice}" style="width:100%;padding:9px 12px;border:1.5px solid #d4cfc5;border-radius:8px;font-size:14px">
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;font-weight:600;color:#666;display:block;margin-bottom:4px">項目名テンプレート</label>
+        <select id="multi-type" style="width:100%;padding:9px 12px;border:1.5px solid #d4cfc5;border-radius:8px;font-size:14px">
+          <option value="service">サービス料金</option>
+          <option value="monthly">月額料金</option>
+          <option value="support">特定技能支援費</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:11px;background:#f0f0f0;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">キャンセル</button>
+        <button onclick="applyMultiMonth(this)" style="flex:1;padding:11px;background:#8e44ad;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">追加</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+}
+
+function applyMultiMonth(btn) {
+  const overlay = btn.closest('div[style*="inset"]');
+  const startVal = document.getElementById('multi-start').value;
+  const endVal   = document.getElementById('multi-end').value;
+  const price    = parseInt(document.getElementById('multi-price').value) || 9000;
+  const typeVal  = document.getElementById('multi-type').value;
+
+  if (!startVal || !endVal) { alert('開始月と終了月を選択してください'); return; }
+  if (startVal > endVal) { alert('開始月は終了月より前にしてください'); return; }
+
+  const typeNames = { service:'サービス料金', monthly:'月額料金', support:'特定技能支援費' };
+  const typeName = typeNames[typeVal] || 'サービス料金';
+
+  // 生成各月的明细行
+  let [sy, sm] = startVal.split('-').map(Number);
+  let [ey, em] = endVal.split('-').map(Number);
+
+  const months = [];
+  let cy = sy, cm = sm;
+  while (cy < ey || (cy === ey && cm <= em)) {
+    const ld = new Date(cy, cm, 0).getDate();
+    months.push({ cy, cm, ld });
+    cm++;
+    if (cm > 12) { cm = 1; cy++; }
+  }
+
+  if (months.length > 24) { alert('最大24ヶ月まで選択できます'); return; }
+
+  months.forEach(({cy, cm, ld}) => {
+    const name = `${cy}.${cm}.1-${cy}.${cm}.${ld} ${typeName}`;
+    addLineItem({ name, qty: 1, price });
+  });
+
+  overlay.remove();
+  updateModalCalc();
+}
+  function syncStoreAmounts(){
   const month=document.getElementById('currentMonth').value;const invs=data.invoices.filter(i=>i.month===month);if(!invs.length){alert('本月暂无请求书');return;}
   let updated=0;invs.forEach(inv=>{const store=data.stores.find(s=>s.id===inv.storeId);if(!store)return;let changed=false;inv.lines=inv.lines.map(line=>{if(line.name.includes('月額料金')&&line.price!==store.monthly){changed=true;return{...line,price:store.monthly};}return line;});const techIdx=inv.lines.findIndex(l=>l.name.includes('技能'));if(store.persons>0){if(techIdx>=0){if(inv.lines[techIdx].qty!==store.persons){inv.lines[techIdx]={...inv.lines[techIdx],qty:store.persons};changed=true;}}else{inv.lines.push({name:'特定技能支援費',qty:store.persons,price:10000});changed=true;}}else{if(techIdx>=0){inv.lines.splice(techIdx,1);changed=true;}}if(changed)updated++;});
   saveData();loadInvoices();alert('✅ '+updated+'件の請求書を最新の店舗情報に同期しました。');
