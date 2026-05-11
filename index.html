@@ -82,6 +82,10 @@ main{padding:24px;max-width:1100px;margin:0 auto}
 .status-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
 .status-pending{background:#fef3cd;color:#856404}
 .status-paid{background:#d1f2e1;color:#1a7a41}
+.status-select{border:none;border-radius:10px;padding:3px 22px 3px 8px;font-size:11px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;appearance:auto;outline:none}
+.status-select.status-pending{background:#fef3cd;color:#856404}
+.status-select.status-paid{background:#d1f2e1;color:#1a7a41}
+.status-select:focus{box-shadow:0 0 0 2px rgba(41,128,185,.18)}
 .total-row{
   background:var(--paper-warm);display:flex;justify-content:flex-end;
   padding:12px 18px;border-top:2px solid var(--border);gap:28px;flex-wrap:wrap;
@@ -713,22 +717,37 @@ function loadInvoices(){
   const month=document.getElementById('currentMonth').value;
   const invs=data.invoices.filter(i=>i.month===month);
   const tbody=document.getElementById('invoiceTableBody');
+  const statEl=document.getElementById('monthStat');
   if(!invs.length){
     tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--ink-light)">本月暂无请求书，点击「⚡ 生成选择月份请求书」</td></tr>';
     document.getElementById('invoiceCardList').innerHTML='<div class="empty-state"><div class="icon">📋</div><p>本月暂无请求书</p></div>';
     document.getElementById('totalRow').style.display='none';
-    document.getElementById('monthStat').innerHTML='';
+    if(statEl)statEl.innerHTML=`共 <strong>0</strong> 件　未支付 <strong style="color:#d35400">0</strong> 件　合計 <strong>${yen(0)}</strong>`;
     return;
   }
   let tSub=0,tTax=0,tTotal=0;
-  const rows=invs.map(inv=>{const{sub,tax,total}=calcInv(inv);tSub+=sub;tTax+=tax;tTotal+=total;const pl=(inv.lines||[]).find(l=>l.name.includes('技能'));const period=inv.periodStart?fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd):'-';const sc=inv.status==='paid'?'status-paid':'status-pending';const sl=inv.status==='paid'?'支払済':'未支払';return{inv,sub,tax,total,pl,period,sc,sl};});
+  let unpaidCount=0;
+  const rows=invs.map(inv=>{
+    const{sub,tax,total}=calcInv(inv);tSub+=sub;tTax+=tax;tTotal+=total;
+    if(inv.status!=='paid')unpaidCount++;
+    const pl=(inv.lines||[]).find(l=>l.name.includes('技能'));
+    const period=inv.periodStart?fmtDate(inv.periodStart)+'〜'+fmtDate(inv.periodEnd):'-';
+    const sc=inv.status==='paid'?'status-paid':'status-pending';
+    const sl=inv.status==='paid'?'支払済':'未支払';
+    return{inv,sub,tax,total,pl,period,sc,sl};
+  });
   tbody.innerHTML=rows.map(({inv,sub,tax,total,pl,period,sc,sl})=>`<tr>
     <td><strong>${inv.name}</strong></td>
     <td style="font-size:11px;color:var(--ink-light)">${period}</td>
     <td>${pl&&pl.qty>0?pl.qty+'人':'-'}</td>
     <td>${yen(sub)}</td><td>${yen(tax)}</td>
     <td class="amount">${yen(total)}</td>
-    <td><span class="status-badge ${sc}">${sl}</span></td>
+    <td>
+      <select class="status-select ${sc}" onchange="changeInvoiceStatus('${inv.id}',this.value)">
+        <option value="pending" ${inv.status==='paid'?'':'selected'}>未支払</option>
+        <option value="paid" ${inv.status==='paid'?'selected':''}>支払済</option>
+      </select>
+    </td>
     <td class="actions">
       <button class="btn btn-outline btn-sm" onclick="editInvoice('${inv.id}')">編集</button>
       <button class="btn btn-pdf btn-sm" onclick="downloadOnePDF('${inv.id}')">📥PDF</button>
@@ -736,7 +755,7 @@ function loadInvoices(){
     </td></tr>`).join('');
   document.getElementById('invoiceCardList').innerHTML=rows.map(({inv,sub,tax,total,pl,period,sc,sl})=>`
     <div class="inv-card">
-      <div class="inv-card-header"><div class="inv-card-name">${inv.name}</div><span class="status-badge ${sc}">${sl}</span></div>
+      <div class="inv-card-header"><div class="inv-card-name">${inv.name}</div><select class="status-select ${sc}" onclick="event.stopPropagation()" onchange="changeInvoiceStatus('${inv.id}',this.value)"><option value="pending" ${inv.status==='paid'?'':'selected'}>未支払</option><option value="paid" ${inv.status==='paid'?'selected':''}>支払済</option></select></div>
       <div class="inv-card-body">
         <div class="inv-card-row"><label>対象期間</label><span class="val" style="font-size:12px">${period}</span></div>
         ${pl&&pl.qty>0?`<div class="inv-card-row"><label>支援人数</label><span class="val">${pl.qty}人</span></div>`:''}
@@ -754,7 +773,15 @@ function loadInvoices(){
   document.getElementById('totalSubtotal').textContent=yen(tSub);
   document.getElementById('totalTax').textContent=yen(tTax);
   document.getElementById('totalGrand').textContent=yen(tTotal);
-  document.getElementById('monthStat').innerHTML=`共 <strong>${invs.length}</strong> 件　合計 <strong>${yen(tTotal)}</strong>`;
+  statEl.innerHTML=`共 <strong>${invs.length}</strong> 件　未支付 <strong style="color:#d35400">${unpaidCount}</strong> 件　合計 <strong>${yen(tTotal)}</strong>`;
+}
+
+function changeInvoiceStatus(id,status){
+  const inv=data.invoices.find(i=>i.id===id);
+  if(!inv)return;
+  inv.status=status;
+  saveData();
+  loadInvoices();
 }
 
 function generateMonth(){
