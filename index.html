@@ -133,6 +133,10 @@ main{padding:24px;max-width:1100px;margin:0 auto}
 .btn-icon{width:26px;height:26px;border:none;background:#fee2e2;color:#991b1b;border-radius:4px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
 .add-line-btn{width:100%;padding:7px;background:white;border:none;border-top:1px solid var(--border);cursor:pointer;color:var(--blue);font-size:13px;font-family:'Noto Sans JP',sans-serif;margin-top:4px}
 .template-items{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:10px}
+.annual-helper{margin-top:8px;padding:10px;background:#fff8e6;border:1px solid #f3d38a;border-radius:6px;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px;font-size:12px;color:#6b4e00}
+.annual-helper input[type="month"]{padding:6px 8px;border:1px solid var(--border);border-radius:4px;background:white;font-family:'Noto Sans JP',sans-serif;font-size:13px}
+.annual-helper small{grid-column:1/-1;color:#8a6d1d;line-height:1.5}
+
 .tpl-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:white;border-radius:6px;border:1px solid var(--border);cursor:pointer;transition:all .15s;user-select:none}
 .tpl-item:hover{border-color:var(--blue);background:#f0f7ff}
 .tpl-item input[type="checkbox"]{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0;margin:0}
@@ -519,6 +523,11 @@ main{padding:24px;max-width:1100px;margin:0 auto}
         <label class="tpl-item"><input type="checkbox" value="年額料金" data-price="80000"><span class="tpl-name">年額料金</span><span class="tpl-price">¥80,000</span></label>
         <label class="tpl-item"><input type="checkbox" value="感熱ロール紙80mm（48巻入）" data-price="8000"><span class="tpl-name">感熱ロール紙80mm</span><span class="tpl-price">¥8,000</span></label>
       </div>
+      <div class="annual-helper">
+        <label for="annual-start-month" style="margin:0;font-weight:700;color:#6b4e00">年額料金開始月</label>
+        <input type="month" id="annual-start-month">
+        <small>「年額料金」を勾選して追加すると、選択月から1年分の明細と対象期間を自動生成します。</small>
+      </div>
       <button class="btn btn-blue btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="addTemplateItems()">＋ 添加选中项目</button>
     </div>
     <div class="form-group">
@@ -662,6 +671,28 @@ function fmtDate(s){if(!s)return'';const[y,m,d]=s.split('-');return y+'年'+pars
 function getMonthStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function calcInv(inv){let sub=0;(inv.lines||[]).forEach(l=>sub+=(l.qty||0)*(l.price||0));const tax=Math.floor(sub*.1);return{sub,tax,total:sub+tax};}
 function lastDayOf(y,m){return new Date(y,m,0).getDate();}
+function addMonthsToMonthValue(monthValue, add){
+  if(!monthValue)return '';
+  let [y,m]=monthValue.split('-').map(Number);
+  m += add;
+  while(m>12){m-=12;y++;}
+  while(m<1){m+=12;y--;}
+  return y+'-'+String(m).padStart(2,'0');
+}
+function fmtDottedDate(y,m,d){return Number(y)+'.'+Number(m)+'.'+Number(d);}
+function annualPeriodFromStartMonth(startMonth){
+  const endMonth=addMonthsToMonthValue(startMonth,11);
+  if(!startMonth||!endMonth)return null;
+  const [sy,sm]=startMonth.split('-').map(Number);
+  const [ey,em]=endMonth.split('-').map(Number);
+  const eld=lastDayOf(ey,em);
+  return {
+    start: monthStartDate(startMonth),
+    end: monthEndDate(endMonth),
+    endMonth,
+    label: fmtDottedDate(sy,sm,1)+'-'+fmtDottedDate(ey,em,eld)
+  };
+}
 function getPreviousMonthStr(baseDate=new Date()){
   const d=new Date(baseDate.getFullYear(),baseDate.getMonth()-1,1);
   return getMonthStr(d);
@@ -824,10 +855,10 @@ function generateMonth(){
     function fmtD(yy,mm,dd){return yy+'.'+String(mm).padStart(2,'0')+'.'+String(dd).padStart(2,'0');}
     if(feeType==='monthly'){lineName=fmtD(y,m,1)+'-'+fmtD(y,m,ld)+' サービス料金';}
     else if(feeType==='quarterly'){let startM=m-2,startY=y;if(startM<=0){startM+=12;startY-=1;}periodStart=`${startY}-${String(startM).padStart(2,'0')}-01`;lineName=fmtD(startY,startM,1)+'-'+fmtD(y,m,ld)+' サービス料金';}
-    else if(feeType==='yearly'){let startM=m+1,startY=y-1;if(startM>12){startM-=12;startY+=1;}periodStart=`${startY}-${String(startM).padStart(2,'0')}-01`;lineName=fmtD(startY,startM,1)+'-'+fmtD(y,m,ld)+' サービス料金';}
+    else if(feeType==='yearly'){const annual=annualPeriodFromStartMonth(month);periodStart=annual.start;periodEnd=annual.end;lineName=annual.label+' 年額料金';}
     const lines=[{name:lineName,qty:1,price:s.monthly}];
     if(s.persons>0)lines.push({name:'特定技能支援費',qty:s.persons,price:10000});
-    data.invoices.push({id:uid(),month,name:s.name,storeId:s.id,periodStart,periodEnd:pe,due,issueDate,lines,status:'pending'});
+    data.invoices.push({id:uid(),month,name:s.name,storeId:s.id,periodStart,periodEnd,due,issueDate,lines,status:'pending'});
     generated++;
     if(feeType==='quarterly'){const nm=m+3>12?m-9:m+3;const ny=m+3>12?y+1:y;s.nextMonth=`${ny}-${String(nm).padStart(2,'0')}`;}
     else if(feeType==='yearly'){s.nextMonth=`${y+1}-${String(m).padStart(2,'0')}`;}
@@ -1033,6 +1064,8 @@ function openNewInvoice(){
   sel.innerHTML='<option value="">-- 选择 --</option>'+data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
   sel.value='';document.getElementById('inv-name').value='';document.getElementById('inv-status').value='pending';
   const month=document.getElementById('currentMonth').value;
+  const annualInput=document.getElementById('annual-start-month');
+  if(annualInput) annualInput.value=month||'';
   if(month){setInvoicePeriodByMonthRange(month,month);}
   setLineItems([{name:'月額料金',qty:1,price:9000},{name:'特定技能支援費',qty:1,price:10000}]);
   document.getElementById('inv-note').value='';openModal('invoiceModal');
@@ -1044,6 +1077,8 @@ function editInvoice(id){
   sel.innerHTML='<option value="">-- 选择 --</option>'+data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
   sel.value=inv.storeId||'';document.getElementById('inv-name').value=inv.name;
   document.getElementById('inv-period-start').value=inv.periodStart||'';document.getElementById('inv-period-end').value=inv.periodEnd||'';document.getElementById('inv-due').value=inv.due||'';document.getElementById('inv-status').value=inv.status||'pending';
+  const annualInput=document.getElementById('annual-start-month');
+  if(annualInput) annualInput.value=(inv.periodStart?inv.periodStart.slice(0,7):document.getElementById('currentMonth').value);
   setLineItems(inv.lines||[]);document.getElementById('inv-note').value=inv.note||'';openModal('invoiceModal');
 }
 function onStoreSelect(){
@@ -1055,9 +1090,23 @@ function onStoreSelect(){
 }
 function setLineItems(lines){document.getElementById('lineItemsBody').innerHTML='';lines.forEach(l=>addLineItem(l));updateModalCalc();}
 function addTemplateItems(){
-  const checked=document.querySelectorAll('.template-items input[type="checkbox"]:checked');
+  const checked=document.querySelectorAll('#invoiceModal .template-items input[type="checkbox"]:checked');
   if(!checked.length){alert('请先勾选要添加的项目');return;}
-  checked.forEach(cb=>{addLineItem({name:cb.value,qty:1,price:parseInt(cb.dataset.price)});cb.checked=false;});
+  checked.forEach(cb=>{
+    const price=parseInt(cb.dataset.price)||0;
+    if(cb.value==='年額料金'){
+      const startMonth=(document.getElementById('annual-start-month')&&document.getElementById('annual-start-month').value)||document.getElementById('currentMonth').value;
+      const annual=annualPeriodFromStartMonth(startMonth);
+      if(!annual){alert('年額料金の開始月を選択してください');return;}
+      addLineItem({name: annual.label+' 年額料金', qty:1, price});
+      document.getElementById('inv-period-start').value=annual.start;
+      document.getElementById('inv-period-end').value=annual.end;
+      if(!document.getElementById('inv-due').value) document.getElementById('inv-due').value=monthEndDate(startMonth);
+    }else{
+      addLineItem({name:cb.value,qty:1,price});
+    }
+    cb.checked=false;
+  });
 }
 function addLineItem(line){
   const body=document.getElementById('lineItemsBody');const row=document.createElement('div');row.className='line-item-row';
@@ -1196,7 +1245,7 @@ function applyMultiMonth(btn) {
 }
   function syncStoreAmounts(){
   const month=document.getElementById('currentMonth').value;const invs=data.invoices.filter(i=>i.month===month);if(!invs.length){alert('本月暂无请求书');return;}
-  let updated=0;invs.forEach(inv=>{const store=data.stores.find(s=>s.id===inv.storeId);if(!store)return;let changed=false;inv.lines=inv.lines.map(line=>{if(line.name.includes('月額料金')&&line.price!==store.monthly){changed=true;return{...line,price:store.monthly};}return line;});const techIdx=inv.lines.findIndex(l=>l.name.includes('技能'));if(store.persons>0){if(techIdx>=0){if(inv.lines[techIdx].qty!==store.persons){inv.lines[techIdx]={...inv.lines[techIdx],qty:store.persons};changed=true;}}else{inv.lines.push({name:'特定技能支援費',qty:store.persons,price:10000});changed=true;}}else{if(techIdx>=0){inv.lines.splice(techIdx,1);changed=true;}}if(changed)updated++;});
+  let updated=0;invs.forEach(inv=>{const store=data.stores.find(s=>s.id===inv.storeId);if(!store)return;let changed=false;inv.lines=inv.lines.map(line=>{if((line.name.includes('月額料金')||line.name.includes('年額料金')||line.name.includes('サービス料金'))&&line.price!==store.monthly){changed=true;return{...line,price:store.monthly};}return line;});const techIdx=inv.lines.findIndex(l=>l.name.includes('技能'));if(store.persons>0){if(techIdx>=0){if(inv.lines[techIdx].qty!==store.persons){inv.lines[techIdx]={...inv.lines[techIdx],qty:store.persons};changed=true;}}else{inv.lines.push({name:'特定技能支援費',qty:store.persons,price:10000});changed=true;}}else{if(techIdx>=0){inv.lines.splice(techIdx,1);changed=true;}}if(changed)updated++;});
   saveData();loadInvoices();alert('✅ '+updated+'件の請求書を最新の店舗情報に同期しました。');
 }
 
