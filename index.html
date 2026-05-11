@@ -273,12 +273,12 @@ main{padding:24px;max-width:1100px;margin:0 auto}
 <div id="tab-invoices" class="tab-content active">
   <div class="auto-notice">
     <span style="font-size:20px">🤖</span>
-    <div><strong>自动生成：</strong>每月1日打开工具时自动生成本月所有请求书。也可手动选月份后点击生成。</div>
+    <div><strong>自动生成：</strong>默认显示上一个月。每月1日打开工具时自动生成上个月所有请求书。也可手动选月份后点击生成。</div>
   </div>
   <div class="month-bar">
     <label>月份：</label>
     <input type="month" id="currentMonth" onchange="loadInvoices()">
-    <button class="btn btn-success" onclick="generateMonth()">⚡ 生成本月请求书</button>
+    <button class="btn btn-success" onclick="generateMonth()">⚡ 生成选择月份请求书</button>
     <button class="btn btn-primary" onclick="openNewInvoice()">＋ 新增</button>
     <button class="btn btn-pdf" onclick="openBatchDownload()">📥 批量下载PDF</button>
     <div style="display:flex;gap:8px;flex-wrap:nowrap">
@@ -658,6 +658,46 @@ function fmtDate(s){if(!s)return'';const[y,m,d]=s.split('-');return y+'年'+pars
 function getMonthStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function calcInv(inv){let sub=0;(inv.lines||[]).forEach(l=>sub+=(l.qty||0)*(l.price||0));const tax=Math.floor(sub*.1);return{sub,tax,total:sub+tax};}
 function lastDayOf(y,m){return new Date(y,m,0).getDate();}
+function getPreviousMonthStr(baseDate=new Date()){
+  const d=new Date(baseDate.getFullYear(),baseDate.getMonth()-1,1);
+  return getMonthStr(d);
+}
+function monthStartDate(month){
+  if(!month)return '';
+  const [y,m]=month.split('-').map(Number);
+  return `${y}-${String(m).padStart(2,'0')}-01`;
+}
+function monthEndDate(month){
+  if(!month)return '';
+  const [y,m]=month.split('-').map(Number);
+  const ld=lastDayOf(y,m);
+  return `${y}-${String(m).padStart(2,'0')}-${String(ld).padStart(2,'0')}`;
+}
+function normalizeDateParts(y,m,d){
+  return `${Number(y)}-${String(Number(m)).padStart(2,'0')}-${String(Number(d)).padStart(2,'0')}`;
+}
+function derivePeriodFromLines(lines){
+  let start='',end='';
+  (lines||[]).forEach(line=>{
+    const name=String(line.name||'');
+    const re=/(\d{4})[.\/年-](\d{1,2})[.\/月-](\d{1,2})日?\s*[-〜~～]\s*(\d{4})[.\/年-](\d{1,2})[.\/月-](\d{1,2})日?/g;
+    let m;
+    while((m=re.exec(name))!==null){
+      const s=normalizeDateParts(m[1],m[2],m[3]);
+      const e=normalizeDateParts(m[4],m[5],m[6]);
+      if(!start||s<start)start=s;
+      if(!end||e>end)end=e;
+    }
+  });
+  return start&&end?{start,end}:null;
+}
+function setInvoicePeriodByMonthRange(startMonth,endMonth){
+  const ps=monthStartDate(startMonth);
+  const pe=monthEndDate(endMonth||startMonth);
+  if(ps)document.getElementById('inv-period-start').value=ps;
+  if(pe)document.getElementById('inv-period-end').value=pe;
+  if(pe)document.getElementById('inv-due').value=pe;
+}
 
 function switchTab(name,btn){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
@@ -674,7 +714,7 @@ function loadInvoices(){
   const invs=data.invoices.filter(i=>i.month===month);
   const tbody=document.getElementById('invoiceTableBody');
   if(!invs.length){
-    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--ink-light)">本月暂无请求书，点击「⚡ 生成本月请求书」</td></tr>';
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--ink-light)">本月暂无请求书，点击「⚡ 生成选择月份请求书」</td></tr>';
     document.getElementById('invoiceCardList').innerHTML='<div class="empty-state"><div class="icon">📋</div><p>本月暂无请求书</p></div>';
     document.getElementById('totalRow').style.display='none';
     document.getElementById('monthStat').innerHTML='';
@@ -966,7 +1006,7 @@ function openNewInvoice(){
   sel.innerHTML='<option value="">-- 选择 --</option>'+data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
   sel.value='';document.getElementById('inv-name').value='';document.getElementById('inv-status').value='pending';
   const month=document.getElementById('currentMonth').value;
-  if(month){const[y,m]=month.split('-').map(Number);const ld=lastDayOf(y,m);document.getElementById('inv-period-start').value=`${y}-${String(m).padStart(2,'0')}-01`;document.getElementById('inv-period-end').value=`${y}-${String(m).padStart(2,'0')}-${ld}`;document.getElementById('inv-due').value=`${y}-${String(m).padStart(2,'0')}-${ld}`;}
+  if(month){setInvoicePeriodByMonthRange(month,month);}
   setLineItems([{name:'月額料金',qty:1,price:9000},{name:'特定技能支援費',qty:1,price:10000}]);
   document.getElementById('inv-note').value='';openModal('invoiceModal');
 }
@@ -984,7 +1024,7 @@ function onStoreSelect(){
   const s=data.stores.find(x=>x.id===sid);if(!s)return;
   document.getElementById('inv-name').value=s.name;
   const month=document.getElementById('currentMonth').value;
-  if(month){const[y,m]=month.split('-').map(Number);const ld=lastDayOf(y,m);const lines=[{name:`${y}.${m}.1-${y}.${m}.${ld} 月額料金`,qty:1,price:s.monthly}];if(s.persons>0)lines.push({name:'特定技能支援費',qty:s.persons,price:10000});setLineItems(lines);}
+  if(month){const[y,m]=month.split('-').map(Number);const ld=lastDayOf(y,m);setInvoicePeriodByMonthRange(month,month);const lines=[{name:`${y}.${m}.1-${y}.${m}.${ld} 月額料金`,qty:1,price:s.monthly}];if(s.persons>0)lines.push({name:'特定技能支援費',qty:s.persons,price:10000});setLineItems(lines);}
 }
 function setLineItems(lines){document.getElementById('lineItemsBody').innerHTML='';lines.forEach(l=>addLineItem(l));updateModalCalc();}
 function addTemplateItems(){
@@ -1005,7 +1045,11 @@ function updateModalCalc(){
 function saveInvoice(){
   const name=document.getElementById('inv-name').value.trim();if(!name){alert('请输入请求对象名称');return;}
   const lines=[];document.querySelectorAll('.line-item-row').forEach(row=>{const inp=row.querySelectorAll('input');lines.push({name:inp[0].value,qty:parseFloat(inp[1].value)||0,price:parseFloat(inp[2].value)||0});});
-  const inv={id:editingInvoiceId||uid(),month:document.getElementById('currentMonth').value,name,storeId:document.getElementById('inv-store').value,periodStart:document.getElementById('inv-period-start').value,periodEnd:document.getElementById('inv-period-end').value,due:document.getElementById('inv-due').value,lines,status:document.getElementById('inv-status').value,note:document.getElementById('inv-note').value.trim()};
+  const autoPeriod=derivePeriodFromLines(lines);
+  const periodStart=autoPeriod?autoPeriod.start:document.getElementById('inv-period-start').value;
+  const periodEnd=autoPeriod?autoPeriod.end:document.getElementById('inv-period-end').value;
+  if(autoPeriod){document.getElementById('inv-period-start').value=periodStart;document.getElementById('inv-period-end').value=periodEnd;}
+  const inv={id:editingInvoiceId||uid(),month:document.getElementById('currentMonth').value,name,storeId:document.getElementById('inv-store').value,periodStart,periodEnd,due:document.getElementById('inv-due').value,lines,status:document.getElementById('inv-status').value,note:document.getElementById('inv-note').value.trim()};
   if(editingInvoiceId){const idx=data.invoices.findIndex(i=>i.id===editingInvoiceId);data.invoices[idx]=inv;}else{data.invoices.push(inv);}
   saveData();closeModal('invoiceModal');loadInvoices();
 }
@@ -1116,6 +1160,9 @@ function applyMultiMonth(btn) {
     const name = `${cy}.${cm}.1-${cy}.${cm}.${ld} ${typeName}`;
     addLineItem({ name, qty: 1, price });
   });
+
+  // PDFの「対象期間」を選択した請求月範囲に同期
+  setInvoicePeriodByMonthRange(startVal,endVal);
 
   overlay.remove();
   updateModalCalc();
@@ -1256,16 +1303,21 @@ document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click
 // Auto generate
 function checkAutoGen(){
   const today=new Date();if(today.getDate()!==1)return;
-  const thisMonth=getMonthStr(today);if(data.lastAutoGenMonth===thisMonth)return;
-  if(data.invoices.filter(i=>i.month===thisMonth).length){data.lastAutoGenMonth=thisMonth;saveData();return;}
-  document.getElementById('currentMonth').value=thisMonth;generateMonth();data.lastAutoGenMonth=thisMonth;saveData();
+  const targetMonth=getPreviousMonthStr(today);
+  const autoKey='auto-'+targetMonth;
+  if(data.lastAutoGenMonth===autoKey)return;
+  if(data.invoices.filter(i=>i.month===targetMonth).length){data.lastAutoGenMonth=autoKey;saveData();return;}
+  document.getElementById('currentMonth').value=targetMonth;
+  generateMonth();
+  data.lastAutoGenMonth=autoKey;
+  saveData();
 }
 
 // Init
 function init(){
   loadData();if(!data.mitsumori){data.mitsumori=[];saveData();}
   const now=new Date();
-  document.getElementById('currentMonth').value=getMonthStr(now);
+  document.getElementById('currentMonth').value=getPreviousMonthStr(now);
   document.getElementById('headerDate').textContent=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
   loadInvoices();checkAutoGen();
 }
