@@ -82,11 +82,12 @@
       position:fixed;left:-9999px;top:0;width:794px;background:#fff;
       color:#111;
       font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","MS Mincho",serif;
-      font-size:10.5pt;line-height:1.9;
+      font-size:10.5pt;line-height:1.78;
+      -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;
     }
     .pdf-page{
-      width:794px;min-height:1123px;padding:52px 58px 60px 64px;
-      position:relative;background:#fff;
+      width:794px;min-height:1123px;padding:46px 56px 58px 60px;
+      position:relative;background:#fff;overflow:hidden;
     }
     .pdf-stamp{display:none}
     .pdf-docref{
@@ -138,14 +139,14 @@
     .ctr{text-align:center}
     /* ── clause boxes ── */
     .pdf-clause-box{
-      border:1px solid #bbb;border-radius:3px;padding:10px 14px;margin-bottom:10px;
-      font-size:8.8pt;line-height:1.85;
+      border:1px solid #bbb;border-radius:3px;padding:8px 12px;margin-bottom:8px;
+      font-size:7.9pt;line-height:1.55;
       font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
     }
     .pdf-clause-title{
       font-weight:700;font-size:9.5pt;border-bottom:1px solid #ddd;
       padding-bottom:4px;margin-bottom:6px;background:#f5f5f2;padding:5px 8px;
-      margin:-10px -14px 8px;border-radius:3px 3px 0 0;
+      margin:-8px -12px 6px;border-radius:3px 3px 0 0;
     }
     .pdf-clause-box p{margin:0 0 4px}
     .pdf-clause-box p:last-child{margin-bottom:0}
@@ -179,7 +180,7 @@
     .pdf-sign-panel .sign-label{min-width:55px;font-weight:600;flex-shrink:0}
     .pdf-sign-panel .sign-val{border-bottom:1px solid #888;flex:1;min-height:18px}
     .pdf-signature-img{
-      width:auto;max-width:200px;height:60px;
+      width:200px;max-width:200px;height:70px;
       object-fit:contain;object-position:left center;
       margin-top:6px;border-bottom:1px solid #888;background:#fff;
       display:block;
@@ -228,7 +229,7 @@
       height:108px !important;
       max-width:108px !important;
       max-height:108px !important;
-      object-fit:fill !important;
+      object-fit:contain !important;
       display:block !important;
       flex:0 0 auto !important;
       opacity:.95;
@@ -309,19 +310,33 @@
       <div class="jp-box content-switchable">
         <div data-lang="ja" class="show">
           <h3>第１条　契約重要事項説明書</h3>
-          <p>本サービスの契約期間は2年間です。契約期間満了後は、2年毎の自動更新となります。</p>
+          <p>本サービスの契約期間は1年間です。契約期間満了後は、1年毎の自動更新となります。</p>
           <p>ご利用開始日は、本サービス・オプションサービス専用機器の設置（設定を含む）が完了した日とさせていただきます。</p>
-          <p>利用開始日より24ヶ月（最低利用期間）経過前にご利用契約を中途解約する場合は、既にお支払い済みの利用料金を除く最低利用期間分の利用料金をお支払いいただきます。</p>
+          <p>利用開始日より12ヶ月（最低利用期間）経過前にご利用契約を中途解約する場合は、既にお支払い済みの利用料金を除く最低利用期間分の利用料金をお支払いいただきます。</p>
           <p>ご契約者様がご利用される無線機器、プリンター等の接続機器について、当社推奨機器以外をご利用される場合は当社は一切の動作保証を行いません。外部接続機器メーカー保証外の故障の場合は、機器の再購入又は修理費用が発生致します。</p>
           <p>お客様のデータ保存期間は最大24ヶ月です。25ヶ月目以降データは消去されますので、お客様ご自身でのバックアップをお願い致します。</p>
+          <p>オプションサービスをご利用の場合は、当社指定の無線LAN機器のご利用が必須となる場合があります。</p>
+          <p>初期登録に必要な帳票は、「サービス加入申込書」「契約確認書」のご提出が必須です。設置日を基点として、10営業日前までに「基本情報」「店舗ロゴデータ」、7営業日前までに「メニューデータ」のご提出をお願い致します。</p>
+          <p>納品時には、お客様ご自身で基本情報・メニュー情報の内容にお間違いがないかご確認をお願い致します。</p>
+          <p>本サービスの利用により生じる損害については、お客様の責任と負担により解決するものとし、当社は当社の故意または重過失がある場合を除き責任を負いません。</p>
+          <p>不具合・不良があった際は、まず当社案内資料をご確認いただき、それでも解決しない場合は担当者までお問い合わせください。</p>
+          <p>ご契約者様からの申し出により本サービスを解約される場合は、1ヶ月前の書面（解約申請書）による申請が必要です。</p>
+          <p>他商材とのキャンペーン割引でご契約された場合、契約期間中にいずれかのサービスを解約した際には、当該キャンペーン割引の適用は終了します。</p>
         </div>
         <div data-lang="zh">
           <h3>第1条　合同重要事项说明</h3>
           <p>本服务合同期限为2年，合同期满后将按每2年自动续约。</p>
           <p>服务开始日原则上为本服务及可选服务相关设备安装与设定完成之日，实际启用日可能晚于该日期。</p>
-          <p>自服务开始日起未满24个月（最低使用期间）而中途解约时，需支付扣除已支付部分后的最低使用期间剩余费用。</p>
+          <p>自服务开始日起未满12个月（最低使用期间）而中途解约时，需支付扣除已支付部分后的最低使用期间剩余费用。</p>
           <p>对于客户自行使用的非推荐设备，本公司不承担任何运行保证责任，保修范围外故障将产生额外费用。</p>
           <p>客户数据保存期限最长为24个月，超过25个月后数据可能被删除，请客户自行做好备份。</p>
+          <p>使用选项服务时，可能需要使用本公司指定的无线LAN设备。</p>
+          <p>初期登记所需资料包括「服务加入申请书」「合同确认书」。以安装日为基准，请于10个工作日前提交基本信息及店铺Logo数据，于7个工作日前提交菜单数据。</p>
+          <p>交付时，请客户自行确认基本信息及菜单信息是否正确。</p>
+          <p>因使用本服务产生的损害，原则上由客户自行负责处理；除本公司故意或重大过失外，本公司不承担责任。</p>
+          <p>如发生故障或异常，请先确认本公司提供的说明资料；仍无法解决时，请联系担当者。</p>
+          <p>客户希望解约时，需提前1个月以书面形式提交解约申请。</p>
+          <p>如因与其他产品组合活动优惠签约，合同期间内解约其中任一服务时，该活动优惠将终止适用。</p>
         </div>
         <div class="confirm-inline">
           <label>
@@ -536,11 +551,18 @@
 
     <div class="pdf-clause-box">
       <div class="pdf-clause-title">第１条　契約重要事項（サービス条件・契約期間・解約・保証）</div>
-      <p>１．本サービスの契約期間は<strong>2年間</strong>とし、契約期間満了後は<strong>2年毎の自動更新</strong>となります。</p>
+      <p>１．本サービスの契約期間は<strong>1年間</strong>とし、契約期間満了後は<strong>1年毎の自動更新</strong>となります。</p>
       <p>２．ご利用開始日は、本サービス・オプションサービス専用機器の設置（設定を含む）が完了した日とします。設置完了日以降になる場合がございます。</p>
-      <p>３．利用開始日より<strong>24ヶ月（最低利用期間）</strong>経過前に中途解約する場合は、既払い分を除く最低利用期間分の利用料金をお支払いいただきます。</p>
+      <p>３．利用開始日より<strong>12ヶ月（最低利用期間）</strong>経過前に中途解約する場合は、既払い分を除く最低利用期間分の利用料金をお支払いいただきます。</p>
       <p>４．当社推奨機器以外の無線機器・プリンター等については一切の動作保証を行いません。また、外部接続機器のメーカー保証外故障については機器の再購入または修理費用が発生します。</p>
       <p>５．お客様のデータ保存期間は最大<strong>24ヶ月</strong>です。25ヶ月目以降のデータは消去されますので、お客様ご自身でのバックアップをお願いいたします。</p>
+      <p>６．オプションサービスをご利用の場合は、当社指定の無線LAN機器のご利用が必須となる場合があります。</p>
+      <p>７．初期登録に必要な帳票は、「サービス加入申込書」「契約確認書」のご提出が必須です。設置日を基点として、10営業日前までに「基本情報」「店舗ロゴデータ」、7営業日前までに「メニューデータ」のご提出をお願いいたします。</p>
+      <p>８．納品時には、お客様ご自身で基本情報・メニュー情報の内容にお間違いがないかご確認をお願いいたします。</p>
+      <p>９．お客様は自己の責任により本サービスを利用するものとし、当社の故意または重過失がある場合を除き、本サービスの利用から生じる損害について当社は責任を負いません。</p>
+      <p>１０．不具合・不良があった際は、まず当社案内資料をご確認いただき、それでも解決しない場合は担当者までお問い合わせください。</p>
+      <p>１１．ご契約者様からの申し出により本サービスを解約される場合は、1ヶ月前の書面（解約申請書）による申請が必要です。</p>
+      <p>１２．他商材とのキャンペーン割引でご契約された場合、契約期間中にいずれかのサービスを解約した際には、当該キャンペーン割引の適用は終了します。</p>
     </div>
 
     <div class="pdf-clause-box">
@@ -570,7 +592,7 @@
     <div class="pdf-consent-list">
       <div class="pdf-consent-item">
         <div class="pdf-check-box">✓</div>
-        <div><strong>第１条「契約重要事項説明書」</strong>の内容（契約期間・自動更新・中途解約・機器保証・データ保存）を十分に確認し、同意いたします。</div>
+        <div><strong>第１条「契約重要事項説明書」</strong>の内容（契約期間・自動更新・最低利用期間・中途解約・機器保証・データ保存）を十分に確認し、同意いたします。</div>
       </div>
       <div class="pdf-consent-item">
         <div class="pdf-check-box">✓</div>
@@ -760,7 +782,7 @@
       const pg=pages[i];
       // windowWidth=794 でブラウザの実際の幅に関係なく794px固定でレンダリング
       const c=await html2canvas(pg,{
-        scale:2,
+        scale:2.4,
         useCORS:true,
         logging:false,
         backgroundColor:"#ffffff",
@@ -770,7 +792,7 @@
       });
       const imgH=(c.height*pw)/c.width;
       if(i>0)doc.addPage();
-      doc.addImage(c.toDataURL("image/jpeg",.94),"JPEG",0,0,pw,Math.min(imgH,ph));
+      doc.addImage(c.toDataURL("image/png"),"PNG",0,0,pw,Math.min(imgH,ph));
     }
     area.style.left="-9999px";area.style.position="fixed";area.style.zIndex="";
     return doc.output("blob");
