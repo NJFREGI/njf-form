@@ -216,25 +216,29 @@
     }
     /* ── company seal fix: force square area, prevent PDF rendering distortion ── */
     .pdf-company-seal-box{
-      margin-top:6px;
-      border-bottom:1px solid #888;
-      min-height:112px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:visible;
-    }
+  margin-top:6px;
+  border-bottom:1px solid #888;
+  width:110px;
+  height:110px;
+  min-height:110px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+  margin-left:auto;
+  margin-right:auto;
+}
     .pdf-company-seal{
-      width:108px !important;
-      height:108px !important;
-      max-width:108px !important;
-      max-height:108px !important;
-      object-fit:contain !important;
-      display:block !important;
-      flex:0 0 auto !important;
-      opacity:.95;
-      image-rendering:auto;
-    }
+  width:90px !important;
+  height:90px !important;
+  max-width:90px !important;
+  max-height:90px !important;
+  aspect-ratio:1 / 1 !important;
+  object-fit:contain !important;
+  display:block !important;
+  flex:0 0 auto !important;
+  opacity:.95;
+}
 
     .pdf-footer{
       position:absolute;bottom:20px;left:64px;right:58px;
