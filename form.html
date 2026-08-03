@@ -803,7 +803,9 @@
       });
       const imgH=(c.height*pw)/c.width;
       if(i>0)doc.addPage();
-      doc.addImage(c.toDataURL("image/png"),"PNG",0,0,pw,Math.min(imgH,ph));
+      // JPEG keeps the two-page contract small enough for reliable mobile upload.
+      // PNG made multi-megabyte files that frequently exceeded the old timeout.
+      doc.addImage(c.toDataURL("image/jpeg",0.86),"JPEG",0,0,pw,Math.min(imgH,ph),undefined,"FAST");
     }
     area.style.left="-9999px";area.style.position="fixed";area.style.zIndex="";
     return doc.output("blob");
@@ -851,7 +853,7 @@
 
     // 送信タイムアウト対策：GAS/スマホ内蔵ブラウザで無限待機しないようにする
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45000);
+    const timer = setTimeout(() => controller.abort(), 180000);
     let res, text;
     try{
       res = await fetch(GAS_URL, {
@@ -864,7 +866,7 @@
       text = await res.text();
     }catch(e){
       if(e && e.name === "AbortError"){
-        throw new Error("アップロードが45秒以内に完了しませんでした。PDFは端末に保存済みです。通信環境を変えて再送信してください。");
+        throw new Error("アップロードが3分以内に完了しませんでした。PDFは端末に保存済みです。通信環境を変えて再送信してください。");
       }
       throw e;
     }finally{
