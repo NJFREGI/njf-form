@@ -652,7 +652,16 @@ async function generateLink() {
       })
     });
 
-    const url = `${FORM_BASE}?id=${recordId}`;
+    // Include a read-only snapshot in the link as a fallback. This lets the
+    // customer see the application details even if GAS is still writing or
+    // its deployment temporarily requires Google authentication.
+    const linkParams = new URLSearchParams({
+      id: recordId,
+      code,
+      shop,
+      items: JSON.stringify(devices)
+    });
+    const url = `${FORM_BASE}?${linkParams.toString()}`;
     document.getElementById("link-url-text").textContent = url;
     document.getElementById("link-box").classList.add("show");
     setMsg("gen-msg","✅ 申込リンクを発行しました！Google Sheetsへ保存送信済みです。","ok");
