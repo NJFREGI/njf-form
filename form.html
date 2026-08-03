@@ -643,7 +643,8 @@
 </div>
 
 <script>
-  const GAS_URL="https://script.google.com/macros/s/AKfycbzkhKCeNIf8HaQQlI7ENk_7QsjIQpghS-6CkVgESEapiDo4UfgyIptMCL_-pERkm1dr-Q/exec";
+  // Must match njf-admin.html: application links and records use the same data source.
+  const GAS_URL="https://script.google.com/macros/s/AKfycbyxHtNnnGgcJ5AVbbqDhd1yTINJSJO1bEoX7VGiwEZwniTmJOWzNmYld4MLs5g2mWY9Dw/exec";
   const FIXED_TO_EMAIL="liu922506@gmail.com";
   let PRODUCTS=[],currentLang="ja";
   const form=document.getElementById("contractForm");
@@ -860,16 +861,25 @@
   async function loadRecordById(){
     const id=new URLSearchParams(window.location.search).get("id");
     if(!id){statusEl.textContent="未検出到短链接 ID。";statusEl.className="status warn";return;}
-    try{
-      const res=await fetch(`${GAS_URL}?action=getRecord&id=${encodeURIComponent(id)}`);
-      const result=await res.json();
-      if(!result.success)throw new Error(result.message||"not found");
-      const data=result.data;
-      customerCodeCell.textContent=data.customerCode||"-";
-      installNameCell.textContent=data.installName||"-";
-      PRODUCTS=(data.items||[]).map(i=>({nameJa:i.name||"",nameZh:i.name||"",price:Number(i.price||0),qty:Number(i.qty||0)}));
-      renderFixedDevices();
-    }catch(err){statusEl.textContent=`読込失敗：${err.message}`;statusEl.className="status warn";}
+    let lastError=null;
+    for(let attempt=0;attempt<5;attempt++){
+      try{
+        if(attempt>0)await new Promise(resolve=>setTimeout(resolve,800));
+        const res=await fetch(`${GAS_URL}?action=getRecord&id=${encodeURIComponent(id)}&_=${Date.now()}`,{cache:"no-store"});
+        const result=await res.json();
+        if(!result.success||!result.data)throw new Error(result.message||"not found");
+        const record=result.data;
+        customerCodeCell.textContent=record.customerCode||"-";
+        installNameCell.textContent=record.installName||"-";
+        PRODUCTS=(record.items||[]).map(i=>({nameJa:i.name||"",nameZh:i.name||"",price:Number(i.price||0),qty:Number(i.qty||0)}));
+        renderFixedDevices();
+        statusEl.textContent="";
+        statusEl.className="status";
+        return;
+      }catch(err){lastError=err;}
+    }
+    statusEl.textContent=`読込失敗：${lastError?lastError.message:"not found"}`;
+    statusEl.className="status warn";
   }
 
   const signature=initSignature();
