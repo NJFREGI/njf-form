@@ -96,7 +96,7 @@
       font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
     }
     .pdf-main-title{
-      text-align:center;font-size:18pt;font-weight:900;letter-spacing:.06em;
+      text-align:center;font-size:18pt;font-weight:900;letter-spacing:0;
       border-bottom:3px double #111;padding-bottom:10px;margin-bottom:18px;
     }
     .pdf-subtitle{
@@ -235,6 +235,8 @@
   max-height:90px !important;
   aspect-ratio:auto !important;
   object-fit:contain !important;
+  transform:scaleX(.78) !important;
+  transform-origin:center center !important;
   display:block !important;
   flex:0 0 auto !important;
   opacity:.95;
@@ -555,7 +557,7 @@
 
   <!-- PAGE 2 -->
   <div class="pdf-page" id="pdfPage2">
-    <div class="pdf-main-title" style="font-size:14pt;margin-bottom:12px">重要事項説明書　および　同意確認書</div>
+    <div class="pdf-main-title" style="font-size:14pt;margin-bottom:12px">重要事項説明書 および 同意確認書</div>
 
     <div class="pdf-clause-box">
       <div class="pdf-clause-title">第１条　契約重要事項（サービス条件・契約期間・解約・保証）</div>
