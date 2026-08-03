@@ -630,9 +630,60 @@ main{padding:24px;max-width:1100px;margin:0 auto}
 
 <script>
 const STORAGE_KEY='seikyusho_v3';
+const DB_NAME='njf_document_storage';
+const DB_STORE='backups';
 let data={stores:[],invoices:[],lastAutoGenMonth:''};
-function loadData(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)data=JSON.parse(r);if(data.stores.length===0)seedDefaultData();}catch(e){seedDefaultData();}}
-function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}
+function isValidData(value){return value&&typeof value==='object'&&Array.isArray(value.stores)&&Array.isArray(value.invoices);}
+function normalizeData(value){
+  const normalized=isValidData(value)?value:{stores:[],invoices:[],lastAutoGenMonth:''};
+  if(!Array.isArray(normalized.mitsumori))normalized.mitsumori=[];
+  if(typeof normalized.lastAutoGenMonth!=='string')normalized.lastAutoGenMonth='';
+  normalized.invoices=normalized.invoices.filter(inv=>inv&&typeof inv==='object').map(inv=>{
+    if(!inv.month&&typeof inv.periodStart==='string')inv.month=inv.periodStart.slice(0,7);
+    return inv;
+  });
+  return normalized;
+}
+function openDataDb(){
+  return new Promise((resolve,reject)=>{
+    if(!window.indexedDB){reject(new Error('IndexedDB unavailable'));return;}
+    const req=indexedDB.open(DB_NAME,1);
+    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(DB_STORE))db.createObjectStore(DB_STORE);};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function readDataBackup(){
+  try{
+    const db=await openDataDb();
+    return await new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readonly');const req=tx.objectStore(DB_STORE).get(STORAGE_KEY);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close();});
+  }catch(e){console.warn('Backup read failed',e);return null;}
+}
+async function writeDataBackup(snapshot){
+  try{
+    const db=await openDataDb();
+    await new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readwrite');tx.objectStore(DB_STORE).put(snapshot,STORAGE_KEY);tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);});
+  }catch(e){console.warn('Backup write failed',e);}
+}
+async function loadData(){
+  let local=null;
+  try{const raw=localStorage.getItem(STORAGE_KEY);if(raw)local=JSON.parse(raw);}catch(e){console.warn('Local data read failed',e);}
+  const backup=await readDataBackup();
+  const localValid=isValidData(local),backupValid=isValidData(backup);
+  if(localValid&&backupValid)data=(Number(backup.updatedAt)||0)>(Number(local.updatedAt)||0)?backup:local;
+  else if(localValid)data=local;
+  else if(backupValid)data=backup;
+  else{seedDefaultData();return;}
+  data=normalizeData(data);
+  saveData(false);
+}
+function saveData(touch=true){
+  data=normalizeData(data);
+  if(touch)data.updatedAt=Date.now();
+  const snapshot=JSON.parse(JSON.stringify(data));
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(snapshot));}catch(e){console.error('Local data save failed',e);alert('保存失败：浏览器存储空间不足。请先备份数据。');}
+  void writeDataBackup(snapshot);
+}
 function seedDefaultData(){
   data.stores=[
     {id:'s1',name:'マルヤス酒場 北千住店',monthly:9000,persons:2,feeType:'monthly'},
@@ -1408,15 +1459,16 @@ function checkAutoGen(){
 }
 
 // Init
-function init(){
-  loadData();if(!data.mitsumori){data.mitsumori=[];saveData();}
+async function init(){
+  await loadData();if(!data.mitsumori){data.mitsumori=[];saveData();}
+  if(navigator.storage&&navigator.storage.persist){try{await navigator.storage.persist();}catch(e){console.warn('Persistent storage request failed',e);}}
   normalizeInvoiceDueDefaults();
   const now=new Date();
   document.getElementById('currentMonth').value=getPreviousMonthStr(now);
   document.getElementById('headerDate').textContent=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
   loadInvoices();checkAutoGen();
 }
-init();
+void init();
 
 /* ══ 原価マスタ ══════════════════════════════════════════════ */
 const COST_MASTER_KEY = 'njf_cost_master_v1';
