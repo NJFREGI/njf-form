@@ -6,7 +6,7 @@
   <title>NJF REGI 契約申込フォーム</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg:#f3f3f1;--paper:#ffffff;--ink:#222;--sub:#666;--line:#cfcfc9;--line-dark:#b4b4ae;
@@ -87,31 +87,31 @@
       -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;
     }
     .pdf-page{
-      width:794px;min-height:1123px;padding:46px 56px 58px 60px;
+      width:794px;height:1123px;min-height:1123px;padding:46px 56px 58px 60px;
       position:relative;background:#fff;overflow:hidden;
     }
     .pdf-stamp{display:none}
     .pdf-docref{
       text-align:right;font-size:9pt;color:#444;margin-bottom:8px;
-      font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      font-family:"Noto Sans JP",sans-serif;
     }
     .pdf-main-title{
-      text-align:center;font-size:18pt;font-weight:900;letter-spacing:0;
+      text-align:center;font-size:18pt;font-weight:700;letter-spacing:0;
       border-bottom:3px double #111;padding-bottom:10px;margin-bottom:18px;
     }
     .pdf-subtitle{
       text-align:center;font-size:9.5pt;color:#555;margin-top:-14px;margin-bottom:18px;
-      font-family:"Noto Sans JP","Yu Gothic","Hiragino Kaku Gothic ProN",sans-serif;letter-spacing:0;
+      font-family:"Noto Sans JP",sans-serif;letter-spacing:0;
     }
     .pdf-parties{
       border:1px solid #aaa;border-radius:4px;padding:12px 16px;margin-bottom:18px;
       font-size:9.5pt;background:#fafaf8;
-      font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      font-family:"Noto Sans JP",sans-serif;
     }
     .pdf-parties p{margin:3px 0}
     .pdf-parties .label{font-weight:700;min-width:90px;display:inline-block}
     .pdf-h1{
-      font-size:11pt;font-weight:900;border-left:4px solid #111;
+      font-size:11pt;font-weight:700;border-left:4px solid #111;
       padding-left:8px;margin:20px 0 8px;letter-spacing:0;
     }
     .pdf-h2{
@@ -120,7 +120,7 @@
     }
     .pdf-tbl{
       width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:12px;
-      font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      font-family:"Noto Sans JP",sans-serif;
     }
     .pdf-tbl th{
       background:#f0f0ec;border:1px solid #bbb;padding:6px 10px;
@@ -129,7 +129,7 @@
     .pdf-tbl td{border:1px solid #bbb;padding:6px 10px;vertical-align:top}
     .pdf-items{
       width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:6px;
-      font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      font-family:"Noto Sans JP",sans-serif;
     }
     .pdf-items thead tr{background:#222;color:#fff}
     .pdf-items thead th{padding:6px 10px;text-align:center;font-weight:700;border:1px solid #555}
@@ -142,7 +142,7 @@
     .pdf-clause-box{
       border:1px solid #bbb;border-radius:3px;padding:8px 12px;margin-bottom:8px;
       font-size:7.9pt;line-height:1.55;
-      font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      font-family:"Noto Sans JP",sans-serif;
     }
     .pdf-clause-title{
       font-weight:700;font-size:9.5pt;border-bottom:1px solid #ddd;
@@ -153,7 +153,7 @@
     .pdf-clause-box p:last-child{margin-bottom:0}
     /* ── consent list ── */
     .pdf-consent-list{
-      font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      font-family:"Noto Sans JP",sans-serif;
       font-size:9pt;padding:10px 14px;border:1.5px solid #444;
       border-radius:3px;margin-bottom:14px;background:#fafaf9;
     }
@@ -162,14 +162,14 @@
     .pdf-check-box{
       width:16px;height:16px;border:1.5px solid #222;
       display:inline-flex;align-items:center;justify-content:center;
-      flex-shrink:0;margin-top:2px;font-size:11pt;font-weight:900;color:#111;
+      flex-shrink:0;margin-top:2px;font-size:11pt;font-weight:700;color:#111;
       background:#fff;
     }
     /* ── signature block ── */
     .pdf-sign-block{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
     .pdf-sign-panel{
       border:1px solid #aaa;border-radius:3px;padding:12px 14px;
-      font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;font-size:9pt;
+      font-family:"Noto Sans JP",sans-serif;font-size:9pt;
     }
     .pdf-sign-panel .panel-title{
       font-weight:700;font-size:9.5pt;border-bottom:1px solid #ccc;
@@ -195,7 +195,7 @@
       flex-wrap:wrap;
       margin:0 0 4px;
       line-height:1.85;
-      font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;
+      font-family:"Noto Sans JP",sans-serif;
       font-size:9pt;
     }
     .pdf-purpose-item{
@@ -210,7 +210,7 @@
       display:inline-block;
       min-width:2.35em;
       font-size:9.6pt;
-      font-weight:800;
+      font-weight:700;
       letter-spacing:0;
       transform:none;
     }
@@ -229,17 +229,15 @@
   margin-right:auto;
 }
     .pdf-company-seal{
-  width:auto !important;
-  height:auto !important;
-  max-width:90px !important;
-  max-height:90px !important;
-  aspect-ratio:auto !important;
+  width:70px !important;
+  height:70px !important;
+  max-width:70px !important;
+  max-height:70px !important;
   object-fit:contain !important;
-  transform:scaleX(.78) !important;
-  transform-origin:center center !important;
   display:block !important;
   flex:0 0 auto !important;
-  opacity:.95;
+  opacity:.6;
+  mix-blend-mode:multiply;
 }
 
     .pdf-footer{
@@ -247,7 +245,7 @@
       border-top:1px solid #ccc;padding-top:6px;
       display:flex;justify-content:space-between;
       font-size:8pt;color:#777;
-      font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      font-family:"Noto Sans JP",sans-serif;
     }
     @media(min-width:760px){
       .grid.two{grid-template-columns:1fr 1fr}
@@ -771,7 +769,7 @@
     document.getElementById("pdfItemsFoot").innerHTML=`
       <tr><td colspan="3" style="text-align:right;background:#555;color:#fff;font-weight:700">税抜合計</td><td class="num" style="background:#f7f7f5">¥${fmt(totals.subtotal)}</td></tr>
       <tr><td colspan="3" style="text-align:right;background:#555;color:#fff;font-weight:700">消費税（10%）</td><td class="num" style="background:#f7f7f5">¥${fmt(totals.tax)}</td></tr>
-      <tr><td colspan="3" style="text-align:right;background:#111;color:#fff;font-weight:900;font-size:10.5pt">合計金額（税込）</td><td class="num" style="background:#000;color:#fff;font-weight:900;font-size:11pt">¥${fmt(totals.total)}</td></tr>`;
+      <tr><td colspan="3" style="text-align:right;background:#111;color:#fff;font-weight:700;font-size:10.5pt">合計金額（税込）</td><td class="num" style="background:#000;color:#fff;font-weight:700;font-size:11pt">¥${fmt(totals.total)}</td></tr>`;
     document.getElementById("pdfSignCompany").textContent=form.companyName.value;
     document.getElementById("pdfSignContact").textContent=form.companyContact.value;
     document.getElementById("pdfSignDate").textContent=today;
@@ -797,19 +795,25 @@
       const pg=pages[i];
       // windowWidth=794 でブラウザの実際の幅に関係なく794px固定でレンダリング
       const c=await html2canvas(pg,{
-        scale:1.8,
+        scale:2,
         useCORS:true,
+        allowTaint:true,
         logging:false,
         backgroundColor:"#ffffff",
         width:794,
+        height:1123,
         windowWidth:794,
-        height:pg.scrollHeight
+        windowHeight:1123,
+        x:0,
+        y:0,
+        scrollX:0,
+        scrollY:0,
+        imageTimeout:10000
       });
-      const imgH=(c.height*pw)/c.width;
       if(i>0)doc.addPage();
       // JPEG keeps the two-page contract small enough for reliable mobile upload.
       // PNG made multi-megabyte files that frequently exceeded the old timeout.
-      doc.addImage(c.toDataURL("image/jpeg",0.86),"JPEG",0,0,pw,Math.min(imgH,ph),undefined,"FAST");
+      doc.addImage(c.toDataURL("image/jpeg",0.92),"JPEG",0,0,pw,ph);
     }
     area.style.left="-9999px";area.style.position="fixed";area.style.zIndex="";
     return doc.output("blob");
