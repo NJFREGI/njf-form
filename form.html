@@ -859,8 +859,23 @@
   }
 
   async function loadRecordById(){
-    const id=new URLSearchParams(window.location.search).get("id");
+    const params=new URLSearchParams(window.location.search);
+    const id=params.get("id");
     if(!id){statusEl.textContent="未検出到短链接 ID。";statusEl.className="status warn";return;}
+    let hasLinkFallback=false;
+    const fallbackCode=params.get("code")||"";
+    const fallbackShop=params.get("shop")||"";
+    const fallbackItems=params.get("items")||"";
+    if(fallbackCode||fallbackShop||fallbackItems){
+      try{
+        const parsedItems=fallbackItems?JSON.parse(fallbackItems):[];
+        customerCodeCell.textContent=fallbackCode||"-";
+        installNameCell.textContent=fallbackShop||"-";
+        PRODUCTS=(Array.isArray(parsedItems)?parsedItems:[]).map(i=>({nameJa:i.name||"",nameZh:i.name||"",price:Number(i.price||0),qty:Number(i.qty||0)}));
+        renderFixedDevices();
+        hasLinkFallback=true;
+      }catch(err){console.warn("Invalid link fallback",err);}
+    }
     let lastError=null;
     for(let attempt=0;attempt<5;attempt++){
       try{
@@ -878,8 +893,13 @@
         return;
       }catch(err){lastError=err;}
     }
-    statusEl.textContent=`読込失敗：${lastError?lastError.message:"not found"}`;
-    statusEl.className="status warn";
+    if(hasLinkFallback){
+      statusEl.textContent="";
+      statusEl.className="status";
+    }else{
+      statusEl.textContent=`読込失敗：${lastError?lastError.message:"not found"}`;
+      statusEl.className="status warn";
+    }
   }
 
   const signature=initSignature();
