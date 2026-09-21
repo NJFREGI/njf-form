@@ -774,7 +774,7 @@ function renderSubs(data) {
   if (!data.length) { list.innerHTML = ""; empty.style.display = "block"; return; }
   empty.style.display = "none";
   list.innerHTML = data.map(row => {
-    const hasFile = !!row.viewUrl;
+    const viewUrl=safeDriveUrl(row.viewUrl),downloadUrl=safeDriveUrl(row.downloadUrl);
     return `<div class="sub-card">
       <div class="sub-card-top"><div>
         <span class="sub-code">${esc(row.customerCode)}</span>
@@ -782,21 +782,23 @@ function renderSubs(data) {
         <div class="sub-company">${esc(row.companyName)}</div>
       </div></div>
       <div class="sub-meta">
-        <span>📅 申込日：${fmtSubDate(row.signedDate)}</span>
+        <span>📅 申込日：${esc(fmtSubDate(row.signedDate))}</span>
         <span>🕐 受信：${esc(row.receivedAt||"-")}</span>
       </div>
       <div class="sub-actions">
-        ${hasFile
-          ? `<a class="sa-btn sa-view" href="${row.viewUrl}" target="_blank">👁 オンライン閲覧</a>
-             <a class="sa-btn sa-dl"   href="${row.downloadUrl}" target="_blank">⬇ ダウンロード</a>`
-          : '<span style="font-size:12px;color:var(--ink3)">処理中…</span>'}
-        <button class="sa-btn" onclick="deleteSub('${row.submissionId}')"
-          style="background:var(--red-l);color:var(--red);border:none;cursor:pointer;font-family:inherit">🗑 削除</button>
+        ${viewUrl ? `<a class="sa-btn sa-view" href="${esc(viewUrl)}" target="_blank">👁 オンライン閲覧</a>` : ''}
+        ${downloadUrl ? `<a class="sa-btn sa-dl" href="${esc(downloadUrl)}" target="_blank">⬇ ダウンロード</a>` : ''}
+        ${!viewUrl && !downloadUrl ? '<span style="font-size:12px;color:var(--ink3)">処理中…</span>' : ''}
+        <button class="sa-btn" data-submission-id="${esc(row.submissionId??'')}" style="background:var(--red-l);color:var(--red);border:none;cursor:pointer;font-family:inherit">🗑 削除</button>
       </div>
     </div>`;
   }).join("");
 }
 
+document.getElementById('sub-list').addEventListener('click',event=>{
+  const button=event.target.closest('button[data-submission-id]');
+  if(button&&!button.disabled)void deleteSub(button.dataset.submissionId,button);
+});
 async function deleteSub(submissionId) {
   if (!confirm('この申込記録を削除しますか？')) return;
   allSubs = allSubs.filter(s => s.submissionId !== submissionId);
@@ -844,6 +846,16 @@ async function loadDash() {
 
 /* ══ UTILS ══ */
 function fmt(n) { return new Intl.NumberFormat("ja-JP").format(n); }
+function safeDriveUrl(value) {
+  if(typeof value!=='string' || !value.trim())return '';
+  try {
+    const url=new URL(value);
+    if(url.protocol!=='https:' || url.hostname!=='drive.google.com' || url.username || url.password || url.port)return '';
+    const filePath=/^\/file\/d\/[A-Za-z0-9_-]+\/(?:view|preview)\/?$/.test(url.pathname);
+    const queryPath=['/uc','/open'].includes(url.pathname) && /^[A-Za-z0-9_-]+$/.test(url.searchParams.get('id')||'');
+    return filePath || queryPath ? url.href : '';
+  } catch (_) { return ''; }
+}
 function esc(s) { return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function fmtSubDate(d) {
   if (!d) return '-';

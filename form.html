@@ -728,7 +728,13 @@
     PRODUCTS.forEach(item=>{
       const name=currentLang==="ja"?item.nameJa:item.nameZh,sub=item.price*item.qty;
       const card=document.createElement("div");card.className="device-fixed-card";
-      card.innerHTML=`<div class="device-fixed-name">${name}</div><div class="device-fixed-meta"><span>${currentLang==="ja"?"単価":"单价"}：¥${fmt(item.price)}</span><span>${currentLang==="ja"?"数量":"数量"}：${item.qty}</span></div><div class="device-fixed-subtotal">${currentLang==="ja"?"小計":"小计"}：¥${fmt(sub)}</div>`;
+      const title=document.createElement("div");title.className="device-fixed-name";title.textContent=name;
+      const meta=document.createElement("div");meta.className="device-fixed-meta";
+      const price=document.createElement("span");price.textContent=(currentLang==="ja"?"単価":"单价")+"：¥"+fmt(item.price);
+      const qty=document.createElement("span");qty.textContent=(currentLang==="ja"?"数量":"数量")+"："+item.qty;
+      meta.append(price,qty);
+      const subtotal=document.createElement("div");subtotal.className="device-fixed-subtotal";subtotal.textContent=(currentLang==="ja"?"小計":"小计")+"：¥"+fmt(sub);
+      card.append(title,meta,subtotal);
       deviceFixedListEl.appendChild(card);
     });
     calcTotals();
@@ -757,7 +763,9 @@
 
   function hasSignature(canvas){const d=canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;for(let i=3;i<d.length;i+=4)if(d[i]!==0)return true;return false;}
 
-  function rows(pairs){return pairs.map(([th,td])=>`<tr><th>${th}</th><td>${td||"　"}</td></tr>`).join("");}
+  function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+
+  function rows(pairs){return pairs.map(([th,td])=>`<tr><th>${escapeHTML(th)}</th><td>${escapeHTML(td||"　")}</td></tr>`).join("");}
 
   function buildPdfArea(signDataUrl){
     const totals=calcTotals();
@@ -770,7 +778,7 @@
     document.getElementById("pdfBasicTbl").innerHTML=rows([["顧客コード",code],["設置先名称",shop],["申込日",today]]);
     document.getElementById("pdfCompanyTbl").innerHTML=rows([["会社名",form.companyName.value],["法人番号",form.companyNumber.value||"-"],["担当者名",form.companyContact.value],["電話番号",form.companyPhone.value],["メールアドレス",form.companyEmail.value],["住所",`〒${form.companyZip.value}　${form.companyAddrAuto.value}　${form.companyAddrDetail.value}`]]);
     document.getElementById("pdfShopTbl").innerHTML=rows([["店舗名",form.shopName.value],["電話番号",form.shopPhone.value],["住所",`〒${form.shopZip.value}　${form.shopAddrAuto.value}　${form.shopAddrDetail.value}`]]);
-    document.getElementById("pdfItemsTbody").innerHTML=PRODUCTS.map(item=>`<tr><td>${item.nameJa}</td><td class="num">¥${fmt(item.price)}</td><td class="ctr">${item.qty}</td><td class="num">¥${fmt(item.price*item.qty)}</td></tr>`).join("");
+    document.getElementById("pdfItemsTbody").innerHTML=PRODUCTS.map(item=>`<tr><td>${escapeHTML(item.nameJa)}</td><td class="num">¥${fmt(item.price)}</td><td class="ctr">${item.qty}</td><td class="num">¥${fmt(item.price*item.qty)}</td></tr>`).join("");
     document.getElementById("pdfItemsFoot").innerHTML=`
       <tr><td colspan="3" style="text-align:right;background:#555;color:#fff;font-weight:700">税抜合計</td><td class="num" style="background:#f7f7f5">¥${fmt(totals.subtotal)}</td></tr>
       <tr><td colspan="3" style="text-align:right;background:#555;color:#fff;font-weight:700">消費税（10%）</td><td class="num" style="background:#f7f7f5">¥${fmt(totals.tax)}</td></tr>
