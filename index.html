@@ -298,6 +298,7 @@ main{padding:24px;max-width:1100px;margin:0 auto}
       <button class="btn btn-outline" onclick="syncStoreAmounts()" title="将已生成请求书的金额同步为最新店铺设置">🔄 同步金额</button>
       <button class="btn btn-outline" onclick="switchTab('stores',null);document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));">🏪 店舗設定</button>
       <button class="btn btn-outline" onclick="openStats()">📊 统计・Excel</button>
+      <button class="btn btn-outline" onclick="openCostManager()">💰 原価管理</button>
     </div>
     <div class="stat" id="monthStat"></div>
   </div>
@@ -618,6 +619,31 @@ main{padding:24px;max-width:1100px;margin:0 auto}
 </div>
 
 <!-- MODAL: 统计 / Excel -->
+<div class="modal-overlay" id="costModal">
+  <div class="modal" style="width:780px">
+    <h2>💰 原価管理</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 10px;line-height:1.6">设备・商品的原価按「生效日」保存历史，统计时按请求书发行日取当时的原価。<br>服务费（月額・年額・サービス・支援費・料金）原価自动按 <b>售价×30%</b> 计算，不需要登记。</p>
+    <div style="background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:10px">
+      <div class="form-row" style="margin-bottom:0">
+        <div class="form-group" style="flex:2"><label>品目名</label><input type="text" id="cost-name" list="costNameList" placeholder="例：レジスター"><datalist id="costNameList"></datalist></div>
+        <div class="form-group"><label>原価（税抜）</label><input type="number" id="cost-value" min="0" placeholder="0"></div>
+        <div class="form-group"><label>生效日</label><input type="date" id="cost-from"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="saveCostEntry()">保存原価</button>
+    </div>
+    <div id="costUnregistered"></div>
+    <div id="costList" style="max-height:40vh;overflow:auto;border:1px solid var(--border);border-radius:6px"></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;background:#f0f7ff;border:1px solid #cfe3f7;border-radius:6px;padding:10px">
+      <span style="font-size:13px;font-weight:600">月度成本表</span>
+      <input type="month" id="cost-export-month" style="padding:6px 8px;border:1px solid var(--border);border-radius:4px">
+      <button class="btn btn-success btn-sm" onclick="const m=document.getElementById('cost-export-month').value;exportCostExcel(m,m,'all')">📥 导出成本Excel</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('costModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="statsModal">
   <div class="modal" style="width:760px">
     <h2>📊 销售统计 / Excel导出</h2>
@@ -631,6 +657,7 @@ main{padding:24px;max-width:1100px;margin:0 auto}
     <div id="statPreview"></div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('statsModal')">关闭</button>
+      <button class="btn btn-outline" onclick="exportCostExcel(document.getElementById('stat-from').value,document.getElementById('stat-to').value,document.getElementById('stat-status').value)">💰 导出成本Excel</button>
       <button class="btn btn-success" onclick="exportStatsExcel()">📥 导出Excel</button>
     </div>
   </div>
@@ -1823,8 +1850,9 @@ function itemCategory(n){
   if(STAT_INSTALL_RE.test(n))return STAT_CATS[2];
   return STAT_CATS[0];
 }
-function collectStats(){
-  const from=document.getElementById('stat-from').value,to=document.getElementById('stat-to').value,st=document.getElementById('stat-status').value;
+function collectStats(opt){
+  opt=opt||{};
+  const from=opt.from||document.getElementById('stat-from').value,to=opt.to||document.getElementById('stat-to').value,st=opt.status||document.getElementById('stat-status').value;
   const invs=(data.invoices||[]).filter(function(i){
     return i.month>=from&&i.month<=to&&(st==='all'||(i.status||'pending')===st);
   }).sort(function(a,b){return a.month<b.month?-1:a.month>b.month?1:String(a.name).localeCompare(String(b.name),'ja');});
@@ -1837,7 +1865,7 @@ function collectStats(){
       const cat=itemCategory(name),key=cat+'|'+name;
       const o=byItem[key]||(byItem[key]={cat:cat,name:name,qty:0,amount:0,stores:{}});
       o.qty+=qty;o.amount+=amt;o.stores[inv.storeId||inv.name]=1;
-      rows.push({month:inv.month,store:inv.name,cat:cat,name:name,qty:qty,price:price,amount:amt});
+      rows.push({month:inv.month,store:inv.name,cat:cat,name:name,rawName:l.name,qty:qty,price:price,amount:amt,date:invIssueDate(inv)});
     });
     const sk=inv.name,s=byStore[sk]||(byStore[sk]={store:sk,count:0,sub:0,tax:0,total:0});
     s.count++;s.sub+=c.sub;s.tax+=c.tax;s.total+=c.total;
@@ -1874,6 +1902,8 @@ function renderStats(){
   });
   h+='</tbody></table></div>';
   h+='<div style="background:var(--paper);border-radius:6px;padding:10px 14px;font-size:13px;display:flex;justify-content:flex-end;gap:20px;flex-wrap:wrap;margin-top:10px"><span>小计: <strong>'+yen(S.sub)+'</strong></span><span>消费税: <strong>'+yen(S.tax)+'</strong></span><span>合计: <strong style="color:var(--accent);font-size:15px">'+yen(S.total)+'</strong></span></div>';
+  const C=costSummary(S);
+  h+='<div style="font-size:12px;color:var(--ink-light);text-align:right;margin-top:6px">原価合计 <b>'+yen(C.cost)+'</b>　毛利 <b style="color:#2e7d32">'+yen(C.profit)+'</b>（'+C.rate+'）'+(C.unregistered?'　<span style="color:#c0392b">未登记原価 '+C.unregistered+' 项</span>':'')+'</div>';
   box.innerHTML=h;
 }
 function exportStatsExcel(){
@@ -1911,6 +1941,133 @@ function exportStatsExcel(){
   a4.push(['合计',S.invs.length,S.sub,S.tax,S.total]);
   addSheet('月度汇总',a4,[12,10,16,14,16]);
   XLSX.writeFile(wb,'销售统计_'+(S.from===S.to?S.from:S.from+'_'+S.to)+'.xlsx');
+}
+
+/* ══ 原価管理・成本统计 ═════════════════════════════════════ */
+function costLookup(name,rawName,price,date){
+  if(isServiceItem(name))return {unit:Math.round((price||0)*0.3),src:'服务费30%'};
+  let c=getCostAtDate(name,date);
+  if(c==null&&rawName&&rawName!==name)c=getCostAtDate(rawName,date);
+  if(c==null)return {unit:0,src:'未登记'};
+  return {unit:c,src:'原価マスタ'};
+}
+function costRows(S){
+  return S.rows.map(function(r){
+    const c=costLookup(r.name,r.rawName,r.price,r.date);
+    const cost=c.unit*r.qty;
+    return Object.assign({},r,{unitCost:c.unit,cost:cost,profit:r.amount-cost,src:c.src});
+  });
+}
+function pct(a,b){return b?(Math.round(a/b*1000)/10)+'%':'-';}
+function costSummary(S){
+  const rows=costRows(S);let cost=0,sales=0;const un={};
+  rows.forEach(function(r){cost+=r.cost;sales+=r.amount;if(r.src==='未登记'&&r.amount)un[r.name]=1;});
+  return {rows:rows,cost:cost,sales:sales,profit:sales-cost,rate:pct(sales-cost,sales),unregistered:Object.keys(un).length};
+}
+function exportCostExcel(from,to,status){
+  if(typeof XLSX==='undefined'){alert('Excel组件未加载，请检查网络后刷新页面。');return;}
+  if(!from||!to){alert('请选择月份');return;}
+  const S=collectStats({from:from,to:to,status:status||'all'});
+  if(!S.invs.length){alert('所选期间没有请求书');return;}
+  const C=costSummary(S),rows=C.rows;
+  const wb=XLSX.utils.book_new();
+  function addSheet(name,aoa,widths){
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    Object.keys(ws).forEach(function(a){if(a[0]!=='!'&&typeof ws[a].v==='number')ws[a].z='#,##0';});
+    ws['!cols']=widths.map(function(w){return {wch:w};});
+    XLSX.utils.book_append_sheet(wb,ws,name);
+  }
+  const period=from===to?from:from+' ~ '+to;
+  // 1) 成本汇总（按品目）
+  const byItem={};
+  rows.forEach(function(r){const k=r.cat+'|'+r.name;const o=byItem[k]||(byItem[k]={cat:r.cat,name:r.name,qty:0,sales:0,cost:0,src:{}});o.qty+=r.qty;o.sales+=r.amount;o.cost+=r.cost;o.src[r.src]=1;});
+  const items=Object.keys(byItem).map(function(k){return byItem[k];}).sort(function(a,b){return STAT_CATS.indexOf(a.cat)-STAT_CATS.indexOf(b.cat)||b.sales-a.sales;});
+  const a1=[['成本统计（月度）'],['期间',period],['请求书件数',S.invs.length],[],['类别','品目','数量','销售额(税抜)','原価单价','原価合计','毛利','毛利率','原価来源']];
+  items.forEach(function(o){a1.push([o.cat,o.name,o.qty,o.sales,o.qty?Math.round(o.cost/o.qty):0,o.cost,o.sales-o.cost,pct(o.sales-o.cost,o.sales),Object.keys(o.src).join('/')]);});
+  a1.push([],['合计','',  '',C.sales,'',C.cost,C.profit,C.rate,'']);
+  if(C.unregistered)a1.push([],['※ 有 '+C.unregistered+' 个品目未登记原価（按0计算），请在「原価管理」登记后重新导出']);
+  addSheet('成本汇总',a1,[14,32,8,14,12,14,14,10,14]);
+  // 2) 类别汇总
+  const a2=[['类别','销售额(税抜)','原価合计','毛利','毛利率']];
+  STAT_CATS.forEach(function(cn){const xs=items.filter(function(o){return o.cat===cn;});if(!xs.length)return;const sa=xs.reduce(function(a,o){return a+o.sales;},0),co=xs.reduce(function(a,o){return a+o.cost;},0);a2.push([cn,sa,co,sa-co,pct(sa-co,sa)]);});
+  a2.push(['合计',C.sales,C.cost,C.profit,C.rate]);
+  addSheet('类别汇总',a2,[16,16,16,16,10]);
+  // 3) 店铺毛利
+  const bySt={};
+  rows.forEach(function(r){const o=bySt[r.store]||(bySt[r.store]={store:r.store,sales:0,cost:0});o.sales+=r.amount;o.cost+=r.cost;});
+  const a3=[['店铺','销售额(税抜)','原価合计','毛利','毛利率']];
+  Object.keys(bySt).map(function(k){return bySt[k];}).sort(function(a,b){return (b.sales-b.cost)-(a.sales-a.cost);}).forEach(function(o){a3.push([o.store,o.sales,o.cost,o.sales-o.cost,pct(o.sales-o.cost,o.sales)]);});
+  a3.push(['合计',C.sales,C.cost,C.profit,C.rate]);
+  addSheet('店铺毛利',a3,[30,16,16,16,10]);
+  // 4) 成本明细
+  const a4=[['月份','发行日','店铺','类别','品目','数量','单价(税抜)','销售额','原価单价','原価合计','毛利','原価来源']];
+  rows.forEach(function(r){a4.push([r.month,r.date,r.store,r.cat,r.name,r.qty,r.price,r.amount,r.unitCost,r.cost,r.profit,r.src]);});
+  addSheet('成本明细',a4,[10,12,28,14,32,8,12,12,12,12,12,12]);
+  // 5) 月度（多月时）
+  if(from!==to){
+    const bm={};rows.forEach(function(r){const o=bm[r.month]||(bm[r.month]={sales:0,cost:0});o.sales+=r.amount;o.cost+=r.cost;});
+    const a5=[['月份','销售额(税抜)','原価合计','毛利','毛利率']];
+    Object.keys(bm).sort().forEach(function(m){const o=bm[m];a5.push([m,o.sales,o.cost,o.sales-o.cost,pct(o.sales-o.cost,o.sales)]);});
+    a5.push(['合计',C.sales,C.cost,C.profit,C.rate]);
+    addSheet('月度毛利',a5,[12,16,16,16,10]);
+  }
+  XLSX.writeFile(wb,'成本统计_'+(from===to?from:from+'_'+to)+'.xlsx');
+}
+// ── 原価管理画面 ──
+function openCostManager(){
+  document.getElementById('cost-name').value='';document.getElementById('cost-value').value='';
+  document.getElementById('cost-from').value=jstToday();
+  document.getElementById('cost-export-month').value=document.getElementById('currentMonth').value||getPreviousMonthStr(new Date());
+  renderCostManager();openModal('costModal');
+}
+function knownItemNames(){
+  const set={};
+  (data.invoices||[]).forEach(function(i){(i.lines||[]).forEach(function(l){const n=normItemName(l.name);if(n&&!isServiceItem(n))set[n]=1;});});
+  (data.mitsumori||[]).forEach(function(m){(m.lines||[]).forEach(function(l){const n=normItemName(l.name);if(n&&!isServiceItem(n))set[n]=1;});});
+  getInvTemplates().forEach(function(t){if(t.name&&!isServiceItem(t.name))set[t.name]=1;});
+  return Object.keys(set);
+}
+function renderCostManager(){
+  const master=getCostMaster(),names=Object.keys(master).filter(function(n){return (master[n]||[]).length;}).sort(function(a,b){return a.localeCompare(b,'ja');});
+  const known=knownItemNames();
+  document.getElementById('costNameList').innerHTML=known.concat(names).filter(function(v,i,a){return a.indexOf(v)===i;}).map(function(n){return '<option value="'+escH(n).replace(/"/g,'&quot;')+'">';}).join('');
+  const un=known.filter(function(n){return !master[n]||!master[n].length;}).sort(function(a,b){return a.localeCompare(b,'ja');});
+  document.getElementById('costUnregistered').innerHTML=un.length?'<div style="background:#fff4f2;border:1px solid #f5c6bf;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:12px"><b style="color:#c0392b">未登记原価（点击登记）：</b> '+un.map(function(n){return '<a href="javascript:void 0" style="display:inline-block;margin:2px 8px 2px 0;color:#1565c0" data-n="'+escH(n).replace(/"/g,'&quot;')+'" onclick="pickCostName(this.dataset.n)">'+escH(n)+'</a>';}).join('')+'</div>':'';
+  if(!names.length){document.getElementById('costList').innerHTML='<div style="padding:24px;text-align:center;color:#888;font-size:13px">还没有登记原価</div>';return;}
+  let h='<table class="inv-table" style="font-size:12.5px"><thead><tr><th>品目</th><th style="text-align:right">当前原価</th><th>生效日</th><th>历史</th><th></th></tr></thead><tbody>';
+  names.forEach(function(n,idx){
+    const hist=master[n].slice().sort(function(a,b){return a.from<b.from?-1:a.from>b.from?1:0;});
+    const today=jstToday();let cur=hist[0];hist.forEach(function(e){if(e.from<=today)cur=e;});
+    const nAttr=escH(n).replace(/"/g,'&quot;');
+    h+='<tr><td><b>'+escH(n)+'</b></td><td style="text-align:right">'+yen(cur.cost)+'</td><td>'+escH(cur.from)+'</td><td>'
+      +hist.map(function(e,i){return '<span style="display:inline-block;margin:1px 6px 1px 0;white-space:nowrap">'+escH(e.from)+'：'+yen(e.cost)+' <a href="javascript:void 0" title="删除这条" style="color:#c0392b" data-n="'+nAttr+'" data-f="'+escH(e.from)+'" onclick="deleteCostEntry(this.dataset.n,this.dataset.f)">×</a></span>';}).join('')
+      +'</td><td style="white-space:nowrap"><button class="btn btn-outline btn-sm" data-n="'+nAttr+'" onclick="pickCostName(this.dataset.n)">改价</button></td></tr>';
+  });
+  document.getElementById('costList').innerHTML=h+'</tbody></table>';
+}
+function pickCostName(n){
+  document.getElementById('cost-name').value=n;
+  const c=getCostAtDate(n,jstToday());document.getElementById('cost-value').value=c!=null?c:'';
+  document.getElementById('cost-from').value=jstToday();document.getElementById('cost-value').focus();
+}
+function saveCostEntry(){
+  const name=document.getElementById('cost-name').value.trim(),v=document.getElementById('cost-value').value,from=document.getElementById('cost-from').value||jstToday();
+  if(!name){alert('请输入品目名');return;}
+  if(v===''||isNaN(parseFloat(v))){alert('请输入原価');return;}
+  const master=getCostMaster();const arr=master[name]||(master[name]=[]);
+  const i=arr.findIndex(function(e){return e.from===from;});
+  if(i>=0)arr[i].cost=parseFloat(v);else arr.push({cost:parseFloat(v),from:from});
+  arr.sort(function(a,b){return a.from<b.from?-1:a.from>b.from?1:0;});
+  saveCostMaster(master);
+  document.getElementById('cost-name').value='';document.getElementById('cost-value').value='';
+  renderCostManager();
+}
+function deleteCostEntry(name,from){
+  if(!confirm('删除「'+name+'」'+from+' 起的原価记录？'))return;
+  const master=getCostMaster();if(!master[name])return;
+  master[name]=master[name].filter(function(e){return e.from!==from;});
+  if(!master[name].length)delete master[name];
+  saveCostMaster(master);renderCostManager();
 }
 
 /* ══ 起動 ═══════════════════════════════════════════════════ */
