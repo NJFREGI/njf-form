@@ -1315,7 +1315,7 @@ function rpInit() {
 /* ══ クラウド同期 (GAS ↔ Google Sheets) ═══════════════════════
    請求書・見積書・店舗設定・原価マスタを GAS の Sync シートへ保存し、
    スマホ／PC 間で共有する。レコード単位で差分だけ送受信する。 */
-const GAS_URL="https://script.google.com/macros/s/AKfycbzFmW-0iAgerN-irIvNTq9faY0NPW88PY9so7iq9Pzz5pi2FaB5W4fRNigU64hNbm0MDQ/exec";
+const GAS_URL="https://script.google.com/macros/s/AKfycbxPYBTbqDfLK6NY0AZ3vGgWurHjwDUUH-tdQCfluzP1Ct8hXeWwYANuBZ4qou_qKokx/exec";
 const SYNC_STATE_KEY='njf_sync_state_v1';
 function freshSyncState(){return {inited:false,hashes:{},lastPull:0};}
 let syncState=(function(){try{return JSON.parse(localStorage.getItem(SYNC_STATE_KEY))||freshSyncState();}catch(_){return freshSyncState();}})();
