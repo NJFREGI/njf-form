@@ -496,7 +496,10 @@ main{padding:24px;max-width:1100px;margin:0 auto}
       <div class="form-group"><label>期间结束</label><input type="date" id="inv-period-end"></div>
     </div>
     <div class="form-row">
+      <div class="form-group"><label>発行日</label><input type="date" id="inv-issue"></div>
       <div class="form-group"><label>支払期日</label><input type="date" id="inv-due"></div>
+    </div>
+    <div class="form-row">
       <div class="form-group">
         <label>状态</label>
         <select id="inv-status">
@@ -506,18 +509,8 @@ main{padding:24px;max-width:1100px;margin:0 auto}
       </div>
     </div>
     <div class="form-group">
-      <label>快速添加项目</label>
-      <div class="template-items">
-        <label class="tpl-item"><input type="checkbox" value="レジスター" data-price="80000"><span class="tpl-name">レジスター</span><span class="tpl-price">¥80,000</span></label>
-        <label class="tpl-item"><input type="checkbox" value="計量レジスター" data-price="90000"><span class="tpl-name">計量レジスター</span><span class="tpl-price">¥90,000</span></label>
-        <label class="tpl-item"><input type="checkbox" value="タブレット" data-price="35000"><span class="tpl-name">タブレット</span><span class="tpl-price">¥35,000</span></label>
-        <label class="tpl-item"><input type="checkbox" value="キャッシュドロア" data-price="8000"><span class="tpl-name">キャッシュドロア</span><span class="tpl-price">¥8,000</span></label>
-        <label class="tpl-item"><input type="checkbox" value="プリンター" data-price="29000"><span class="tpl-name">プリンター</span><span class="tpl-price">¥29,000</span></label>
-        <label class="tpl-item"><input type="checkbox" value="月額料金" data-price="9000"><span class="tpl-name">月額料金</span><span class="tpl-price">¥9,000</span></label>
-        <label class="tpl-item"><input type="checkbox" value="特定技能支援費" data-price="10000"><span class="tpl-name">特定技能支援費</span><span class="tpl-price">¥10,000/人</span></label>
-        <label class="tpl-item"><input type="checkbox" value="年額料金" data-price="80000"><span class="tpl-name">年額料金</span><span class="tpl-price">¥80,000</span></label>
-        <label class="tpl-item"><input type="checkbox" value="感熱ロール紙80mm（48巻入）" data-price="8000"><span class="tpl-name">感熱ロール紙80mm</span><span class="tpl-price">¥8,000</span></label>
-      </div>
+      <label style="display:flex;justify-content:space-between;align-items:center">快速添加项目<button type="button" class="btn btn-outline btn-sm" onclick="openTplManager()">⚙ 管理常用项目</button></label>
+      <div class="template-items" id="invTplList"></div>
       <button class="btn btn-blue btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="addTemplateItems()">＋ 添加选中项目</button>
     </div>
     <div class="form-group">
@@ -539,6 +532,23 @@ main{padding:24px;max-width:1100px;margin:0 auto}
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('invoiceModal')">取消</button>
       <button class="btn btn-primary" onclick="saveInvoice()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 常用项目管理 -->
+<div class="modal-overlay" id="tplModal">
+  <div class="modal">
+    <h2>管理常用项目（请求书）</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 10px">修改后点「保存」，手机和电脑会自动同步。单价为税抜。</p>
+    <div id="tplRows"></div>
+    <button class="add-line-btn" onclick="addTplRow()">＋ 添加一项</button>
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="resetTplDefaults()">恢复默认</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="closeModal('tplModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveTplManager()">保存</button>
+      </div>
     </div>
   </div>
 </div>
@@ -829,7 +839,7 @@ function buildInvHTML(inv){
           <img src="${STAMP_SRC}" width="70" height="70" style="position:absolute;top:15px;right:0;width:70px;height:70px;object-fit:contain;opacity:0.82;mix-blend-mode:multiply;" crossorigin="anonymous">
         </div>
         <div style="padding-top:6px;border-top:1px solid #ddd;font-size:11.5px;">
-          <div style="color:#333;line-height:1.9;"><span style="color:#666;">発行日：</span>${fmtDate(today)}</div>
+          <div style="color:#333;line-height:1.9;"><span style="color:#666;">発行日：</span>${fmtDate(invIssueDate(inv))}</div>
           <div style="color:#333;line-height:1.9;"><span style="color:#666;">支払期日：</span>${fmtDate(inv.due)}</div>
           <div style="color:#333;line-height:1.9;"><span style="color:#666;">対象期間：</span>${fmtDate(inv.periodStart)}〜${fmtDate(inv.periodEnd)}</div>
         </div>
@@ -988,7 +998,9 @@ function openNewInvoice(){
   sel.value='';document.getElementById('inv-name').value='';document.getElementById('inv-status').value='pending';
   const month=document.getElementById('currentMonth').value;
   if(month){const[y,m]=month.split('-').map(Number);const ld=lastDayOf(y,m);document.getElementById('inv-period-start').value=`${y}-${String(m).padStart(2,'0')}-01`;document.getElementById('inv-period-end').value=`${y}-${String(m).padStart(2,'0')}-${ld}`;document.getElementById('inv-due').value=`${y}-${String(m).padStart(2,'0')}-${ld}`;}
-  setLineItems([{name:'月額料金',qty:1,price:9000},{name:'特定技能支援費',qty:1,price:10000}]);
+  document.getElementById('inv-issue').value=jstToday();
+  renderInvTemplates();
+  setLineItems([]);
   document.getElementById('inv-note').value='';openModal('invoiceModal');
 }
 function editInvoice(id){
@@ -997,7 +1009,7 @@ function editInvoice(id){
   const sel=document.getElementById('inv-store');
   sel.innerHTML='<option value="">-- 选择 --</option>'+data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
   sel.value=inv.storeId||'';document.getElementById('inv-name').value=inv.name;
-  document.getElementById('inv-period-start').value=inv.periodStart||'';document.getElementById('inv-period-end').value=inv.periodEnd||'';document.getElementById('inv-due').value=inv.due||'';document.getElementById('inv-status').value=inv.status||'pending';
+  document.getElementById('inv-period-start').value=inv.periodStart||'';document.getElementById('inv-period-end').value=inv.periodEnd||'';document.getElementById('inv-due').value=inv.due||'';document.getElementById('inv-issue').value=invIssueDate(inv);renderInvTemplates();document.getElementById('inv-status').value=inv.status||'pending';
   setLineItems(inv.lines||[]);document.getElementById('inv-note').value=inv.note||'';openModal('invoiceModal');
 }
 function onStoreSelect(){
@@ -1005,13 +1017,54 @@ function onStoreSelect(){
   const s=data.stores.find(x=>x.id===sid);if(!s)return;
   document.getElementById('inv-name').value=s.name;
   const month=document.getElementById('currentMonth').value;
-  if(month){const[y,m]=month.split('-').map(Number);const ld=lastDayOf(y,m);const lines=[{name:`${y}.${m}.1-${y}.${m}.${ld} 月額料金`,qty:1,price:s.monthly}];if(s.persons>0)lines.push({name:'特定技能支援費',qty:s.persons,price:10000});setLineItems(lines);}
+}
+// ── 発行日 ──
+function jstToday(){const d=new Date(Date.now()+9*3600*1000);return d.toISOString().slice(0,10);}
+function invIssueDate(inv){
+  if(inv.issueDate)return inv.issueDate;
+  // 発行日が未保存の旧請求書：対象期間の翌月1日
+  const base=inv.periodEnd||(inv.month?inv.month+'-01':'');
+  if(!base)return jstToday();
+  let[y,m]=base.split('-').map(Number);m++;if(m>12){m=1;y++;}
+  return y+'-'+String(m).padStart(2,'0')+'-01';
+}
+// ── 常用项目（快速添加）── data.invTemplates に保存・同期
+const DEFAULT_INV_TEMPLATES=[
+  {name:'レジスター',price:80000},{name:'計量レジスター',price:90000},{name:'タブレット',price:35000},
+  {name:'キャッシュドロア',price:8000},{name:'プリンター',price:29000},{name:'月額料金',price:9000},
+  {name:'特定技能支援費',price:10000},{name:'年額料金',price:80000},{name:'感熱ロール紙80mm（48巻入）',price:8000}
+];
+function getInvTemplates(){return Array.isArray(data.invTemplates)?data.invTemplates:DEFAULT_INV_TEMPLATES;}
+function renderInvTemplates(){
+  const box=document.getElementById('invTplList');if(!box)return;
+  const list=getInvTemplates();
+  if(!list.length){box.innerHTML='<div style="font-size:12px;color:#888;grid-column:1/-1">还没有常用项目，点「⚙ 管理常用项目」添加</div>';return;}
+  box.innerHTML=list.map(function(t,i){return '<label class="tpl-item"><input type="checkbox" data-idx="'+i+'"><span class="tpl-name">'+escH(t.name)+'</span><span class="tpl-price">'+yen(t.price||0)+'</span></label>';}).join('');
+}
+function tplRowHTML(t){
+  return '<div class="tpl-edit-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'
+   +'<input type="text" placeholder="项目名" value="'+escH(t.name||'').replace(/"/g,'&quot;')+'" style="flex:1;min-width:0">'
+   +'<input type="number" placeholder="单价" value="'+(t.price!=null?t.price:'')+'" style="width:100px">'
+   +'<button type="button" class="btn-icon" title="上移" style="background:#eef2f7;color:#333" onclick="moveTplRow(this,-1)">↑</button>'
+   +'<button type="button" class="btn-icon" title="删除" onclick="this.parentNode.remove()">×</button></div>';
+}
+function openTplManager(){
+  document.getElementById('tplRows').innerHTML=getInvTemplates().map(tplRowHTML).join('');
+  openModal('tplModal');
+}
+function addTplRow(){document.getElementById('tplRows').insertAdjacentHTML('beforeend',tplRowHTML({name:'',price:''}));}
+function moveTplRow(btn,dir){const row=btn.parentNode,prev=row.previousElementSibling;if(dir<0&&prev)row.parentNode.insertBefore(row,prev);}
+function resetTplDefaults(){if(!confirm('恢复成默认的常用项目？（点保存后才生效）'))return;document.getElementById('tplRows').innerHTML=DEFAULT_INV_TEMPLATES.map(tplRowHTML).join('');}
+function saveTplManager(){
+  const list=[];
+  document.querySelectorAll('#tplRows .tpl-edit-row').forEach(function(r){const inp=r.querySelectorAll('input');const name=inp[0].value.trim();if(!name)return;list.push({name:name,price:parseFloat(inp[1].value)||0});});
+  data.invTemplates=list;saveData();renderInvTemplates();closeModal('tplModal');
 }
 function setLineItems(lines){document.getElementById('lineItemsBody').innerHTML='';lines.forEach(l=>addLineItem(l));updateModalCalc();}
 function addTemplateItems(){
-  const checked=document.querySelectorAll('.template-items input[type="checkbox"]:checked');
+  const checked=document.querySelectorAll('#invTplList input[type="checkbox"]:checked');
   if(!checked.length){alert('请先勾选要添加的项目');return;}
-  checked.forEach(cb=>{addLineItem({name:cb.value,qty:1,price:parseInt(cb.dataset.price)});cb.checked=false;});
+  const list=getInvTemplates();checked.forEach(cb=>{const t=list[+cb.dataset.idx];if(t)addLineItem({name:t.name,qty:1,price:t.price||0});cb.checked=false;});
 }
 function addLineItem(line){
   const body=document.getElementById('lineItemsBody');const row=document.createElement('div');row.className='line-item-row';
@@ -1026,7 +1079,7 @@ function updateModalCalc(){
 function saveInvoice(){
   const name=document.getElementById('inv-name').value.trim();if(!name){alert('请输入请求对象名称');return;}
   const lines=[];document.querySelectorAll('.line-item-row').forEach(row=>{const inp=row.querySelectorAll('input');lines.push({name:inp[0].value,qty:parseFloat(inp[1].value)||0,price:parseFloat(inp[2].value)||0});});
-  const inv={id:editingInvoiceId||uid(),month:document.getElementById('currentMonth').value,name,storeId:document.getElementById('inv-store').value,periodStart:document.getElementById('inv-period-start').value,periodEnd:document.getElementById('inv-period-end').value,due:document.getElementById('inv-due').value,lines,status:document.getElementById('inv-status').value,note:document.getElementById('inv-note').value.trim()};
+  const inv={id:editingInvoiceId||uid(),month:document.getElementById('currentMonth').value,name,storeId:document.getElementById('inv-store').value,periodStart:document.getElementById('inv-period-start').value,periodEnd:document.getElementById('inv-period-end').value,due:document.getElementById('inv-due').value,issueDate:document.getElementById('inv-issue').value,lines,status:document.getElementById('inv-status').value,note:document.getElementById('inv-note').value.trim()};
   if(editingInvoiceId){const idx=data.invoices.findIndex(i=>i.id===editingInvoiceId);data.invoices[idx]=inv;}else{data.invoices.push(inv);}
   saveData();closeModal('invoiceModal');loadInvoices();
 }
@@ -1347,6 +1400,7 @@ function buildSyncItems(){
   (data.mitsumori||[]).forEach(function(x){m['mit:'+x.id]=x;});
   const cm=getCostMaster();
   if(Object.keys(cm).length)m['cost']=cm;
+  if(Array.isArray(data.invTemplates))m['tpl:inv']=data.invTemplates;
   return m;
 }
 function mergeCostMaster(a,b){
@@ -1361,6 +1415,7 @@ function mergeCostMaster(a,b){
 function applyRemoteItem(it){
   const k=it.key,ci=k.indexOf(':'),type=ci<0?k:k.slice(0,ci),id=ci<0?'':k.slice(ci+1);
   if(type==='cost'){if(!it.deleted)localStorage.setItem(COST_MASTER_KEY,JSON.stringify(it.value));return;}
+  if(type==='tpl'){if(id==='inv'){if(it.deleted)delete data.invTemplates;else data.invTemplates=it.value;try{renderInvTemplates();}catch(_){}}return;}
   const coll={store:'stores',inv:'invoices',mit:'mitsumori'}[type];
   if(!coll)return;
   if(!data[coll])data[coll]=[];
