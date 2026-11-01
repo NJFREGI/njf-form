@@ -1315,7 +1315,7 @@ function rpInit() {
 /* ══ クラウド同期 (GAS ↔ Google Sheets) ═══════════════════════
    請求書・見積書・店舗設定・原価マスタを GAS の Sync シートへ保存し、
    スマホ／PC 間で共有する。レコード単位で差分だけ送受信する。 */
-const GAS_URL="https://script.google.com/macros/s/AKfycbxPYBTbqDfLK6NY0AZ3vGgWurHjwDUUH-tdQCfluzP1Ct8hXeWwYANuBZ4qou_qKokx/exec";
+const GAS_URL="https://script.google.com/macros/s/AKfycbxVGY_eyrJb8eYAV24l47dUBNuBYIF3vwnjQK1-narzRySj1WScSaRib_EFKx_ywHo9/exec";
 const SYNC_STATE_KEY='njf_sync_state_v1';
 function freshSyncState(){return {inited:false,hashes:{},lastPull:0};}
 let syncState=(function(){try{return JSON.parse(localStorage.getItem(SYNC_STATE_KEY))||freshSyncState();}catch(_){return freshSyncState();}})();
@@ -1326,10 +1326,13 @@ function persistLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(function(){syncNow();},1500);}
 
 async function gasFetchJson(url,opt){
-  const ctl=new AbortController();const t=setTimeout(function(){ctl.abort();},25000);
+  // AbortSignal を使わずにタイムアウト（一部のブラウザ／プレビュー環境で signal が送れないため）
+  let t;
+  const timeout=new Promise(function(_,rej){t=setTimeout(function(){rej(new Error('timeout'));},25000);});
   try{
-    const res=await fetch(url,Object.assign({redirect:'follow',signal:ctl.signal},opt||{}));
-    const j=await res.json();
+    const res=await Promise.race([fetch(url,Object.assign({redirect:'follow'},opt||{})),timeout]);
+    const txt=await res.text();
+    let j=null;try{j=JSON.parse(txt);}catch(_){throw new Error(txt.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,80)||('HTTP '+res.status));}
     if(!j||!j.success)throw new Error((j&&j.message)||'GAS error');
     return j;
   }finally{clearTimeout(t);}
